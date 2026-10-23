@@ -208,14 +208,14 @@ const _cache = new Map();
 //  AGENTS DATA
 // ═══════════════════════════════════
 const AGENTS=[
-  {id:"CMD-00",layer:"command",emoji:"👑",name:"Eun-Sang", role:"CEO · Lead Scientist",color:"#f5c842",status:"meeting",energy:97,
+  {id:"CMD-00",layer:"command",emoji:"👑",name:"대표님", role:"CEO · Lead Scientist",color:"#f5c842",status:"meeting",energy:97,
    personality:"결단력 있고 따뜻한 리더. 임상과 창작 두 세계를 잇는 CEO.",
    skills:["HLA/NGS","CHS","Strategy"],tasks:["방향 결정","쇼츠 아이디어·초안 승인","투자 로드맵 확인"],collab:["Atlas","NOVA","Sterling"],
    bubbles:["결재 검토 중","방향 결정","승인 대기"]},
   {id:"ADM-00",layer:"command",emoji:"🧭",name:"Atlas", role:"운영 · 품질 관리",color:"#f5c842",status:"busy",energy:96,
    personality:"운영 총괄. 각 기능이 제 역할을 하는지, 비용 대비 쓸모가 있는지 점검한다. (v12: ARIA·Tempo·Verity 업무 통합)",
    skills:["Ops Monitoring","QA","중복 차단","회의 진행"],
-   tasks:["기능별 사용량·성과 점검","보고 전 중복·동일본 차단","회의 소집·기록","분기별 팀 재편 제안"],collab:["Eun-Sang","Nakamura"],
+   tasks:["기능별 사용량·성과 점검","보고 전 중복·동일본 차단","회의 소집·기록","분기별 팀 재편 제안"],collab:["대표님","Nakamura"],
    bubbles:["운영 점검 중","중복 확인","회의 정리"]},
   // ── 콘텐츠 (쇼츠 → Mint 자동 영상) ──
   {id:"CRE-02",layer:"creative",emoji:"💡",name:"NOVA", role:"아이디어 · 초안",color:"#f87090",status:"busy",energy:94,
@@ -228,7 +228,7 @@ const AGENTS=[
    bubbles:["나레이션 다듬는 중","반전 점검","후크 고르는 중"]},
   {id:"CRE-04",layer:"creative",emoji:"🎞️",name:"Choi", role:"Mint 자동 영상 · 개발 코치",color:"#f87090",status:"work",energy:92,
    personality:"사람 손이 안 가게 만드는 엔지니어. 리눅스·GitHub로 일하는 법을 가르친다. (v12: Kang·Jung·Dane 영상 업무 통합 + Dev 코치)",
-   skills:["Mint 파이프라인","edge-tts","ffmpeg","Linux · Git"],tasks:["장면표·배경음악 분위기 선택","story.json → 영상 자동화","GitHub 저장소·배포 정리","리눅스 사용 코칭"],collab:["Theo","Eun-Sang"],
+   skills:["Mint 파이프라인","edge-tts","ffmpeg","Linux · Git"],tasks:["장면표·배경음악 분위기 선택","story.json → 영상 자동화","GitHub 저장소·배포 정리","리눅스 사용 코칭"],collab:["Theo","대표님"],
    bubbles:["장면표 작성 중","스크립트 점검","git push"]},
   {id:"CRE-05",layer:"creative",emoji:"📊",name:"MAX", role:"채널 분석 · 성장",color:"#f87090",status:"busy",energy:90,
    personality:"감이 아니라 숫자로 말한다. 24시간 기준으로 판단. (v12: Nina·Hana·Nara 통합)",
@@ -250,11 +250,11 @@ const AGENTS=[
   // ── 가족 · 영어 ──
   {id:"FAM-00",layer:"family",emoji:"🧺",name:"Maple", role:"가족 여가",color:"#4ade80",status:"busy",energy:95,
    personality:"날씨·계절·아이 나이를 보고 집 안팎 할 일을 고른다. 차로 3시간 안까지 넓게 본다.",
-   skills:["날씨·계절","아이 관심사","지역 행사","지도·캘린더"],tasks:["주말 가족 여가 제안","집 안 활동 대안","캘린더 추가"],collab:["Eun-Sang"],
+   skills:["날씨·계절","아이 관심사","지역 행사","지도·캘린더"],tasks:["주말 가족 여가 제안","집 안 활동 대안","캘린더 추가"],collab:["대표님"],
    bubbles:["날씨 확인","행사 찾는 중","일정 추가"]},
   {id:"EDU-01",layer:"edu",emoji:"📚",name:"Emma", role:"영어 한 장",color:"#f59e0b",status:"busy",energy:96,
    personality:"한눈에 들어오는 카드 한 장. 오늘 바로 쓸 표현과 고급 단어 하나. (v12: James 통합)",
-   skills:["일상 회화","고급 어휘","발음"],tasks:["하루 한 장 카드","직장·육아 상황 표현","복습 퀴즈"],collab:["Eun-Sang"],
+   skills:["일상 회화","고급 어휘","발음"],tasks:["하루 한 장 카드","직장·육아 상황 표현","복습 퀴즈"],collab:["대표님"],
    bubbles:["카드 만드는 중","예문 고르는 중","발음 표시"]},
   // ── 투자 · 은퇴 (v12 재편: 계좌 연결 없이 거시·기업·로드맵) ──
   {id:"FIN-00",layer:"finance",emoji:"🧭",name:"Sterling", role:"투자 전략 총괄",color:"#34d399",status:"meeting",energy:95,
@@ -503,7 +503,7 @@ function syncPanel(){
     <div style="font-size:9px;color:var(--sub);margin-bottom:3px">anon public key</div>
     <input id="supaKey" placeholder="eyJ... (anon key)" value="${esc(SUPA_KEY)}" style="margin-bottom:8px" autocomplete="off">
     <div style="font-size:9px;color:var(--sub);margin-bottom:3px">동기화 코드 (내가 정하는 비밀 문구 — 두 기기 동일하게)</div>
-    <input id="syncCode" placeholder="예: hajuna-2026-eunsang" value="${esc(SYNC_CODE)}" style="margin-bottom:10px" autocomplete="off">
+    <input id="syncCode" placeholder="예: hajuna-2026-mycode" value="${esc(SYNC_CODE)}" style="margin-bottom:10px" autocomplete="off">
     <button class="btn-gold" style="background:var(--sky)" onclick="handleSyncSave()">💾 설정 저장</button>
     <div style="font-size:9px;color:var(--muted);margin-top:8px">현재: URL ${SUPA_URL?'✓':'—'} · key ${mask(SUPA_KEY)} · code ${SYNC_CODE?'✓':'—'}</div>
   </div>
@@ -1031,7 +1031,7 @@ function domainDirective(domain){
   const recent=REPORTS.filter(r=>r.section===secMap[domain]).slice(0,8).map(r=>(r.title||"").replace(/^[^\w가-힣]+/,"").trim()).filter(Boolean);
   let d=`VARIETY & RELEVANCE (avoid repeating recent work):
 - Bring a FRESH focus this time: ${focus}
-- Stay relevant to Eun-Sang's real situation and the current date/season.`;
+- Stay relevant to the owner's real situation and the current date/season.`;
   if(recent.length) d+=`\n- Do NOT closely repeat these recent items: ${recent.slice(0,6).join(" / ")}.`;
   return d;
 }
@@ -2711,26 +2711,40 @@ const $k=(v)=>"$"+(v>=1e6?(v/1e6).toFixed(2)+"M":Math.round(v/1000).toLocaleStri
 //  💰 내 자산 · 명세서 (v15.0) — 계좌·카드·급여명세서 CSV/PDF/사진을 올리면 Ledger가 숫자만 뽑고,
 //  Sterling·Grant가 재정·세금을 점검. 원본 파일은 저장하지 않고, 뽑은 숫자는 이 기기에만 (계좌번호는 끝 4자리)
 // ══════════════════════════════════════════════════════════════════
-const FIN=(function(){ try{ return Object.assign({docs:[]}, JSON.parse(localStorage.getItem('histara_fin')||'{}')); }catch(e){ return {docs:[]}; } })();
-function persistFin(){ try{ localStorage.setItem('histara_fin', JSON.stringify({docs:FIN.docs.slice(0,240), filing:FIN.filing||""})); }catch(e){ showErr("저장 공간이 부족해요 — 오래된 명세서를 몇 개 지워 주세요"); } }
-const FIN_TYPES={bank:["🏦","은행"],card:["💳","카드"],brokerage:["📊","증권"],retirement:["🧓","은퇴 계좌"],paystub:["🧾","급여명세서"],loan:["🏠","대출"],other:["📄","기타"]};
+const FIN=(function(){ try{ return Object.assign({docs:[],home:{},tags:{}}, JSON.parse(localStorage.getItem('histara_fin')||'{}')); }catch(e){ return {docs:[],home:{},tags:{}}; } })();
+function persistFin(){ try{ localStorage.setItem('histara_fin', JSON.stringify({docs:FIN.docs.slice(0,240), filing:FIN.filing||"", home:FIN.home||{}, tags:FIN.tags||{}})); }catch(e){ showErr("저장 공간이 부족해요 — 오래된 명세서를 몇 개 지워 주세요"); } }
+const FIN_TYPES={bank:["🏦","은행"],card:["💳","카드"],brokerage:["📊","증권"],retirement:["🧓","은퇴 계좌"],paystub:["🧾","급여명세서"],loan:["🏠","대출"],w2:["📑","W-2"],insurance:["🛡","보험"],property:["🏡","재산세·평가"],fee_notice:["🔎","수수료 안내"],other:["📄","기타"]};
+// v15.1 기준 숫자 (매년 바뀜 — Grant 점검은 검색으로 다시 확인). 출처: IRS Rev. Proc. 2025-32, OBBBA
+const FIN_REF={year:2026, std:{mfj:32200,single:16100,hoh:24150,mfs:16100}, salt:40400, saltMfs:20200, k401:24500, k401catch:8000, k401catch6063:11250, ira:7500, dcfsa:7500, hysa:4.0, ot:{mfj:25000,other:12500}};
+const P2P_CATS=["아이 돌봄","생활비·가족","집 수리·공사","저축·투자로 옮김","기부","빌려준 돈","기타"];
 const FIN_CATS=["장보기","외식","교통·차","주거·공과금","보험","의료","아이·교육","쇼핑","여가·여행","구독","기부","기타"];
 const $m=v=>typeof v==="number"&&isFinite(v)?(v<0?"-$":"$")+Math.abs(Math.round(v)).toLocaleString("en-US"):"–";
 const $p=v=>typeof v==="number"&&isFinite(v)?(v*100).toFixed(1)+"%":"–";
-const LEDGER_SYS=`You are Ledger, the statement reader on Histara's finance team. You read ONE financial document (bank / credit card / brokerage / retirement (401k, IRA) / pay stub / loan) and return ONLY the numbers as JSON.
+const LEDGER_SYS=`You are Ledger, the statement reader on Histara's finance team. You read ONE financial document (bank / credit card / brokerage / retirement (401k, IRA) / pay stub / loan or mortgage or escrow analysis / W-2 / insurance bill / property tax or assessment notice / retirement plan fee or safe-harbor notice) and return ONLY the numbers as JSON.
 PRIVACY: never output full account numbers, SSN, street addresses, phone numbers, or names of other people. Account → last 4 digits only. Do not copy free-text notes.
 Rules: numbers are plain numbers in USD (no $ or commas; negatives for money out). Dates YYYY-MM-DD. If a section does not apply, omit it. Do not invent values — use null when unsure.
 Card/bank: do NOT list every transaction. Summarize spending into these Korean categories only: ${FIN_CATS.join(", ")}; plus top merchants and recurring charges.
+Bank "spending" EXCLUDES: credit-card payments, loan/mortgage payments, transfers between the owner's own accounts, and person-to-person money (those go elsewhere, so nothing is counted twice).
+Bank "p2p": every Venmo/Zelle/PayPal/Cash App payment, written check, mobile/check deposit and benefit reimbursement (FSA/HSA claim) — date, direction, amount, channel ONLY, never the other person's name or memo. Own-account transfers → "internal_transfers" totals. Savings interest rate → balance.apy (percent number, 0.04 means 0.04%).
+Loan / mortgage / home-equity statement or escrow analysis → doc_type "loan" + "loan" section (escrow analysis: yearly tax & insurance, surplus or shortage, payment change).
+W-2 → doc_type "w2". Insurance bill or declarations → "insurance" (term_months is 6 or 12 — read it, do not assume). Property tax bill / assessment notice → "property".
+401k plan fee disclosure (404a-5), safe-harbor or match notice, quarterly fee lines → "fee_notice" or "retirement" with the "retirement" section; fund expense ratios as percent numbers (0.47 means 0.47%).
 Pay stub: fill "paystub" carefully, current period AND year-to-date.
 Holdings: asset_class one of us_stock, intl_stock, bond, cash, real_estate, other (target-date or balanced funds → "other" with a note of their stock %).
 Respond with ONLY the JSON object (start with {).
-JSON: {"doc_type":"bank|card|brokerage|retirement|paystub|loan|other","institution":"","account_name":"","account_last4":"","period_start":"","period_end":"","as_of":"",
-"balance":{"ending":null,"beginning":null,"cash":null,"credit_limit":null,"min_payment":null,"apr":null,"due_date":null},
+JSON: {"doc_type":"bank|card|brokerage|retirement|paystub|loan|w2|insurance|property|fee_notice|other","institution":"","account_name":"","account_last4":"","period_start":"","period_end":"","as_of":"",
+"balance":{"ending":null,"beginning":null,"cash":null,"credit_limit":null,"min_payment":null,"apr":null,"apy":null,"due_date":null,"interest_charged":null,"promo_ending":""},
 "flows":{"deposits":null,"withdrawals":null,"contributions":null,"employer_contributions":null,"dividends":null,"interest":null,"fees":null},
 "holdings":[{"symbol":"","name":"","qty":null,"price":null,"value":null,"cost_basis":null,"asset_class":"","expense_ratio":null}],
 "spending":[{"category":"","amount":null}],"top_merchants":[{"name":"","amount":null,"count":null}],"recurring":[{"name":"","amount":null,"cadence":"monthly"}],
-"paystub":{"pay_date":"","period_start":"","period_end":"","hours":null,"rate":null,"gross":null,"net":null,"federal_tax":null,"state_tax":null,"local_tax":null,"social_security":null,"medicare":null,"pretax_401k":null,"roth_401k":null,"employer_match":null,"health_dental_vision":null,"hsa":null,"fsa":null,"other_pretax":null,"other_posttax":null,
- "ytd":{"gross":null,"federal_tax":null,"state_tax":null,"local_tax":null,"social_security":null,"medicare":null,"pretax_401k":null,"roth_401k":null,"employer_match":null}},
+"paystub":{"pay_date":"","pay_frequency":"weekly|biweekly|semimonthly|monthly","period_start":"","period_end":"","hours":null,"rate":null,"gross":null,"overtime":null,"dependent_care_fsa":null,"net":null,"federal_tax":null,"state_tax":null,"local_tax":null,"social_security":null,"medicare":null,"pretax_401k":null,"roth_401k":null,"employer_match":null,"health_dental_vision":null,"hsa":null,"fsa":null,"other_pretax":null,"other_posttax":null,
+ "ytd":{"gross":null,"overtime":null,"federal_tax":null,"state_tax":null,"local_tax":null,"social_security":null,"medicare":null,"pretax_401k":null,"roth_401k":null,"employer_match":null}},
+"p2p":[{"date":"","direction":"out|in","amount":null,"channel":"venmo|zelle|paypal|check|mobile_deposit|reimbursement|other"}],"internal_transfers":{"in":null,"out":null},
+"loan":{"kind":"mortgage|home_equity|auto|student|personal|other","principal_balance":null,"rate":null,"payment":null,"principal_part":null,"interest_part":null,"escrow_part":null,"escrow_tax_annual":null,"escrow_insurance_annual":null,"escrow_surplus":null,"escrow_shortage":null,"new_payment":null,"ytd_interest":null,"ytd_principal":null},
+"w2":{"tax_year":null,"wages":null,"federal_withheld":null,"ss_wages":null,"medicare_wages":null,"state_wages":null,"state_tax":null,"local_tax":null,"dependent_care":null,"box12":[{"code":"","amount":null}],"box14":[{"label":"","amount":null}]},
+"insurance":{"kind":"auto|home|umbrella|life|other","premium":null,"term_months":null,"dwelling_coverage":null,"deductible":null,"renewal":""},
+"property":{"tax_year":null,"market_value":null,"assessed_total":null,"assessed_land":null,"equalization_rate":null,"tax_annual":null,"exemptions":null},
+"retirement":{"deferral_pct":null,"match_formula":"","managed_fee":null,"admin_fee":null,"fee_period":"quarter|year"},
 "notes":["특이사항 한 줄 (한국어)"],"confidence":"high|medium|low"}`;
 function _b64(file){ return new Promise((ok,no)=>{ const r=new FileReader(); r.onload=()=>ok(String(r.result).split(",")[1]||""); r.onerror=()=>no(r.error); r.readAsDataURL(file); }); }
 function _txt(file){ return new Promise((ok,no)=>{ const r=new FileReader(); r.onload=()=>ok(String(r.result||"")); r.onerror=()=>no(r.error); r.readAsText(file); }); }
@@ -2747,6 +2761,7 @@ async function _finBlocks(file){
   if(/heic|heif/.test(t+n)) throw new Error("HEIC 사진은 못 읽어요 — 사진 앱에서 JPG로 공유하거나 화면 캡처로 올려 주세요");
   throw new Error("CSV · PDF · 사진(JPG·PNG)만 올릴 수 있어요");
 }
+async function _finHash(file){ const buf=await crypto.subtle.digest("SHA-256", await file.arrayBuffer()); return [...new Uint8Array(buf)].slice(0,12).map(b=>b.toString(16).padStart(2,"0")).join(""); }
 async function _finCall(blocks, prompt){
   if(!API_KEY) return "__NO_KEY__";
   const content=blocks.concat([{type:"text",text:prompt||"이 문서를 읽고 JSON만 돌려줘."}]);
@@ -2762,6 +2777,9 @@ async function finUpload(files){
   CUR_FEATURE="invest";
   for(let i=0;i<files.length;i++){
     const f=files[i];
+    let hash="";
+    try{ hash=await _finHash(f); }catch(e){}
+    if(hash&&(FIN.docs.some(o=>o.hash===hash)||FIN_PENDING.some(p=>p.hash===hash))){ FIN_PENDING.push({err:"같은 파일이 이미 있어요 — 건너뜀 (API 비용 없음)", name:f.name}); continue; }
     liveLog(box,`📄 ${i+1}/${files.length} 「${esc(f.name)}」 Ledger가 읽는 중... (20~60초)`);
     try{
       const raw=await _finCall(await _finBlocks(f));
@@ -2769,13 +2787,14 @@ async function finUpload(files){
       if(raw==="__ERR__"||raw==="__RATE__"){ FIN_PENDING.push({err:(LAST_ERR||"읽기 실패").slice(0,140), name:f.name}); continue; }
       const d=pj(raw);
       if(!d||!d.doc_type){ FIN_PENDING.push({err:LAST_TRUNC?"내용이 길어서 끝이 잘렸어요 — 기간을 나눠 올려 주세요":"숫자를 읽지 못했어요", name:f.name}); continue; }
-      FIN_PENDING.push({id:Date.now()+i, file:{name:f.name,size:f.size}, d, partial:!!d._partial});
+      FIN_PENDING.push({id:Date.now()+i, hash, file:{name:f.name,size:f.size}, d, partial:!!d._partial});
     }catch(e){ FIN_PENDING.push({err:String(e.message||e).slice(0,140), name:f.name}); }
   }
   CUR_FEATURE=null;
   box.innerHTML=finPendingHTML();
 }
-function _finKey(d){ return [d.doc_type, (d.institution||"").toLowerCase().replace(/\W/g,""), d.account_last4||"", d.period_end||d.as_of||(d.paystub&&d.paystub.pay_date)||""].join("|"); }
+function _finWhen(d){ return d.period_end||d.as_of||(d.paystub&&d.paystub.pay_date)||(d.w2&&d.w2.tax_year&&String(d.w2.tax_year))||(d.insurance&&d.insurance.renewal)||(d.property&&d.property.tax_year&&String(d.property.tax_year))||""; }
+function _finKey(d){ return [d.doc_type, (d.institution||"").toLowerCase().replace(/\W/g,""), d.account_last4||"", (d.loan&&d.loan.kind)||(d.insurance&&d.insurance.kind)||"", _finWhen(d)].join("|"); }
 function finPendingHTML(){
   if(!FIN_PENDING.length) return "";
   return `<div style="font-size:10px;color:var(--sub);margin:4px 0 6px">읽은 숫자가 맞는지 보고 <b>저장</b>해 주세요. 원본 파일은 저장하지 않아요.</div>`+FIN_PENDING.map((x,i)=>x.err
@@ -2792,7 +2811,7 @@ function finSave(i){
   const d=x.d; d.account_last4=String(d.account_last4||"").replace(/\D/g,"").slice(-4);
   const key=_finKey(d);
   FIN.docs=FIN.docs.filter(o=>_finKey(o.d)!==key);       // 같은 계좌·같은 기간은 새것으로 바꿈
-  FIN.docs.unshift({id:x.id, added:new Date().toISOString(), file:x.file, d});
+  FIN.docs.unshift({id:x.id, hash:x.hash||"", added:new Date().toISOString(), file:x.file, d});
   persistFin(); FIN_PENDING.splice(i,1);
   const b=document.getElementById("invest-body"); if(b) b.innerHTML=renderInvestBody("money");
   const r=document.getElementById("finUploadResult"); if(r) r.innerHTML=finPendingHTML();
@@ -2800,13 +2819,19 @@ function finSave(i){
 function finDel(id){ if(!confirm("이 명세서 기록을 지울까요?")) return; FIN.docs=FIN.docs.filter(o=>o.id!==id); persistFin(); const b=document.getElementById("invest-body"); if(b) b.innerHTML=renderInvestBody("money"); }
 function finDocSummary(d){
   const [ic,lb]=FIN_TYPES[d.doc_type]||FIN_TYPES.other; const b=d.balance||{}, ps=d.paystub||{};
-  const when=d.period_end||d.as_of||ps.pay_date||"";
+  const when=_finWhen(d);
   let h=`<div style="font-size:12px;font-weight:700">${ic} ${esc(d.institution||lb)}${d.account_last4?` ··${esc(d.account_last4)}`:""} <span style="font-size:9px;color:var(--sub);font-weight:500">${lb}${when?" · "+esc(when):""}${d.confidence&&d.confidence!=="high"?` · 확신 ${esc(d.confidence)}`:""}</span></div>`;
   const row=(l,v)=>`<span style="font-size:10px;color:var(--sub);margin-right:10px">${l} <b style="color:var(--text)">${v}</b></span>`;
   let r="";
   if(d.doc_type==="paystub"){ const tax=["federal_tax","state_tax","local_tax","social_security","medicare"].reduce((t,k)=>t+(Number(ps[k])||0),0);
     r+=row("총급여",$m(ps.gross))+row("실수령",$m(ps.net))+row("세금",$m(tax))+row("401k",$m((Number(ps.pretax_401k)||0)+(Number(ps.roth_401k)||0)))+(ps.ytd&&ps.ytd.gross?row("올해 누계",$m(ps.ytd.gross)):""); }
+  else if(d.doc_type==="w2"&&d.w2){ const w=d.w2; r+=row("Box1 임금",$m(w.wages))+row("연방 원천",$m(w.federal_withheld))+row("주 세금",$m(w.state_tax))+(w.dependent_care?row("부양 보육",$m(w.dependent_care)):"")+(w.box14||[]).slice(0,3).map(x=>row(esc(x.label||"14"),$m(x.amount))).join(""); }
+  else if(d.doc_type==="insurance"&&d.insurance){ const i=d.insurance; r+=row(i.kind==="home"?"주택보험":i.kind==="auto"?"자동차보험":"보험료",$m(i.premium))+row("기간",i.term_months?i.term_months+"개월":"확인 필요")+(i.dwelling_coverage?row("건물 보장",$m(i.dwelling_coverage)):""); }
+  else if(d.doc_type==="property"&&d.property){ const q=d.property; r+=row("재산세",$m(q.tax_annual))+row("평가액",$m(q.assessed_total))+(q.assessed_land?row("대지 평가",$m(q.assessed_land)):"")+(q.equalization_rate?row("균등화율",q.equalization_rate+"%"):"")+(q.market_value?row("시장가",$m(q.market_value)):""); }
   else{ if(b.ending!=null) r+=row(d.doc_type==="card"?"청구액":"잔고",$m(b.ending));
+    if(b.apy!=null) r+=row("이자",b.apy+"%");
+    const L=d.loan||{}; if(L.principal_balance!=null) r+=row("원금 잔액",$m(L.principal_balance)); if(L.payment) r+=row("월 납부",$m(L.payment)); if(L.escrow_part) r+=row("에스크로",$m(L.escrow_part)); if(L.escrow_surplus) r+=row("에스크로 남음",$m(L.escrow_surplus)); if(L.escrow_shortage) r+=row("에스크로 부족",$m(L.escrow_shortage));
+    const R=d.retirement||{}; if(R.match_formula) r+=row("매칭",esc(R.match_formula)); if(R.managed_fee) r+=row("관리 수수료",$m(R.managed_fee));
     const hv=(d.holdings||[]).reduce((t,x)=>t+(Number(x.value)||0),0); if(hv) r+=row(`보유 ${(d.holdings||[]).length}종목`,$m(hv));
     const sp=(d.spending||[]).reduce((t,x)=>t+Math.abs(Number(x.amount)||0),0); if(sp) r+=row("지출",$m(sp));
     const fl=d.flows||{}; if(fl.contributions) r+=row("납입",$m(fl.contributions)); if(fl.employer_contributions) r+=row("회사 매칭",$m(fl.employer_contributions)); if(fl.fees) r+=row("수수료",$m(fl.fees)); }
@@ -2816,14 +2841,18 @@ function finDocSummary(d){
 }
 // ── 모아 보기 (가장 최근 명세서 기준) ──
 function finLatest(){
-  const by={}; FIN.docs.forEach(o=>{ const d=o.d; if(d.doc_type==="paystub") return;
-    const k=[d.doc_type,(d.institution||"").toLowerCase().replace(/\W/g,""),d.account_last4||""].join("|");
+  const by={}; FIN.docs.forEach(o=>{ const d=o.d; if(!["bank","card","brokerage","retirement","loan"].includes(d.doc_type)) return;
+    if(d.doc_type==="loan"&&!(d.balance&&d.balance.ending!=null)&&!(d.loan&&d.loan.principal_balance!=null)) return;   // 에스크로 분석서 등 잔액 없는 문서
+    const k=[d.doc_type,(d.institution||"").toLowerCase().replace(/\W/g,""),d.account_last4||"",(d.loan&&d.loan.kind)||""].join("|");
     const t=d.period_end||d.as_of||""; if(!by[k]||t>(by[k].d.period_end||by[k].d.as_of||"")) by[k]=o; });
   return Object.values(by);
 }
 function finAgg(){
   const acc=finLatest(); let assets=0, debts=0; const cls={us_stock:0,intl_stock:0,bond:0,cash:0,other:0,real_estate:0};
+  let stmtMort=0;
   const accounts=acc.map(o=>{ const d=o.d, b=d.balance||{}; let v=Number(b.ending)||0;
+    if(d.doc_type==="loan"&&d.loan&&d.loan.principal_balance!=null) v=Number(d.loan.principal_balance)||v;
+    if(d.doc_type==="loan"&&d.loan&&d.loan.kind==="mortgage") stmtMort+=Math.abs(v);
     const hv=(d.holdings||[]).reduce((t,x)=>t+(Number(x.value)||0),0); if(!v&&hv) v=hv;
     const isDebt=d.doc_type==="card"||d.doc_type==="loan";
     if(isDebt) debts+=Math.abs(v); else assets+=v;
@@ -2832,12 +2861,176 @@ function finAgg(){
       if(v>hsum) cls.cash+=Math.max(0,(Number(b.cash)||0)||(v-hsum)); }
     if(d.doc_type==="bank") cls.cash+=v;
     return {id:o.id, d, v, isDebt}; });
-  const home=(PORTFOLIO.home||{}), mort=Number(home.mortgage)||0, hv=Number(home.value)||0;
+  const home=(PORTFOLIO.home||{}), H=FIN.home||{};
+  const mort=stmtMort?0:(Number(home.mortgage)||0);   // 모기지 명세서가 있으면 그 잔액(위 debts에 들어감)을 씀 — 두 번 세지 않게
+  const prop=FIN.docs.filter(o=>o.d.doc_type==="property"&&o.d.property).map(o=>o.d.property).sort((a,b)=>(b.tax_year||0)-(a.tax_year||0))[0]||{};
+  const hv=Number(H.market)||Number(home.value)||Number(prop.market_value)||(prop.assessed_total&&prop.equalization_rate?prop.assessed_total/(prop.equalization_rate/100):0);
   // 최근 45일 안의 카드·은행 지출을 분류별로
   const cut=new Date(Date.now()-45*864e5).toISOString().slice(0,10), spend={};
   FIN.docs.forEach(o=>{ const d=o.d; if((d.doc_type==="card"||d.doc_type==="bank")&&(d.period_end||d.as_of||"")>=cut) (d.spending||[]).forEach(x=>{ const c=FIN_CATS.includes(x.category)?x.category:"기타"; spend[c]=(spend[c]||0)+Math.abs(Number(x.amount)||0); }); });
   const pay=FIN.docs.filter(o=>o.d.doc_type==="paystub").sort((a,b)=>((b.d.paystub||{}).pay_date||"")>((a.d.paystub||{}).pay_date||"")?1:-1)[0];
   return {accounts, assets, debts, cls, home:hv, mortgage:mort, net:assets+hv-debts-mort, spend, pay:pay&&pay.d.paystub, payInst:pay&&pay.d.institution};
+}
+// ── v15.1 돈의 흐름 · 집 · 점검 신호 (API 없이 숫자로) ──
+function _latestBy(type, keyf){ const by={}; FIN.docs.forEach(o=>{ const d=o.d; if(d.doc_type!==type) return; const k=keyf(d); const t=_finWhen(d); if(!by[k]||t>_finWhen(by[k].d)) by[k]=o; }); return Object.values(by); }
+function _payPer(){
+  const ps=FIN.docs.filter(o=>o.d.doc_type==="paystub"&&o.d.paystub&&o.d.paystub.gross).map(o=>o.d.paystub).sort((a,b)=>(b.pay_date||"")>(a.pay_date||"")?1:-1);
+  const f=(ps[0]||{}).pay_frequency; const tab={weekly:52,biweekly:26,semimonthly:24,monthly:12};
+  if(tab[f]) return {per:tab[f], ps};
+  if(ps.length>1){ const g=Math.abs((new Date(ps[0].pay_date)-new Date(ps[1].pay_date))/864e5); if(g>=6&&g<=8) return {per:52,ps}; if(g>=13&&g<=15) return {per:26,ps}; if(g>=14.5&&g<=17) return {per:24,ps}; if(g>=27&&g<=32) return {per:12,ps}; }
+  return {per:26, ps, guessed:true};
+}
+function _p2p(){   // 은행 명세서의 사람 간 송금·수표: 같은 금액이 다시 들어온 건 '대신 내고 돌려받음'으로 짝지음
+  const out=[];
+  _latestBy("bank",d=>(d.institution||"")+"|"+(d.account_last4||"")).forEach(o=>{
+    const L=(o.d.p2p||[]).map((x,i)=>Object.assign({i, key:o.id+"|"+i},x,{amount:Math.abs(Number(x.amount)||0)}));
+    const ins=L.filter(x=>x.direction==="in"), used=new Set();
+    L.filter(x=>x.direction==="out"&&x.amount).forEach(x=>{
+      const m=ins.find(y=>!used.has(y.i)&&Math.abs(y.amount-x.amount)<=1);
+      if(m){ used.add(m.i); out.push(Object.assign({matched:true, by:m.channel},x)); } else out.push(Object.assign({matched:false},x));
+    });
+  });
+  return out;
+}
+function finFlow(){
+  const {per, ps, guessed}=_payPer(); const P=ps[0]; const F={per, guessed, items:{}, fixed:0, variable:0, save:0};
+  if(P){ const avg=k=>{ const v=ps.slice(0,2).map(x=>Number(x[k])||0); return v.reduce((a,b)=>a+b,0)/v.length; };
+    F.grossMo=avg("gross")*per/12; F.netMo=avg("net")*per/12;
+    F.k401Mo=(avg("pretax_401k")+avg("roth_401k"))*per/12; F.matchMo=avg("employer_match")*per/12;
+    F.dcfsaYr=(Number(P.dependent_care_fsa)||0)*per; }
+  // 회사 매칭이 급여명세서에 없으면 은퇴 계좌 명세서(분기)에서
+  if(!F.matchMo){ const r=_latestBy("retirement",d=>(d.institution||"")+"|"+(d.account_last4||""))[0]; const e=r&&Number((r.d.flows||{}).employer_contributions);
+    if(e&&r.d.period_start&&r.d.period_end){ const mo=Math.max(1,Math.round((new Date(r.d.period_end)-new Date(r.d.period_start))/(30.4*864e5))); F.matchMo=e/mo; } }
+  const add=(grp,k,v)=>{ if(!v) return; F.items[k]=(F.items[k]||0)+v; F[grp]+=v; };
+  const loans=_latestBy("loan",d=>(d.institution||"")+"|"+((d.loan||{}).kind||"")+"|"+(d.account_last4||""));
+  loans.forEach(o=>{ const L=o.d.loan||{}; const pay=Number(L.new_payment)||Number(L.payment)||Math.abs(Number((o.d.balance||{}).min_payment)||0);
+    add("fixed", L.kind==="mortgage"?"모기지 (원리금+에스크로)":L.kind==="home_equity"?"홈에퀴티 대출":"기타 대출", pay); });
+  const escIns=loans.some(o=>(o.d.loan||{}).escrow_insurance_annual>0);
+  _latestBy("insurance",d=>(d.insurance||{}).kind||"").forEach(o=>{ const I=o.d.insurance||{}; if(I.kind==="home"&&escIns) return;
+    const yr=(Number(I.premium)||0)*(12/(Number(I.term_months)||12)); add("fixed", I.kind==="auto"?"자동차 보험":I.kind==="home"?"주택 보험":"보험", yr/12); });
+  _latestBy("card",d=>(d.institution||"")+"|"+(d.account_last4||"")).forEach(o=>{ const sp=(o.d.spending||[]).reduce((t,x)=>t+Math.abs(Number(x.amount)||0),0); add("variable","카드 사용", sp); });
+  _latestBy("bank",d=>(d.institution||"")+"|"+(d.account_last4||"")).forEach(o=>{ (o.d.spending||[]).forEach(x=>add("variable", "계좌 직접 지출", Math.abs(Number(x.amount)||0))); });
+  const pp=_p2p(); F.p2p=pp; F.p2pOpen=pp.filter(x=>!x.matched&&!FIN.tags[x.key]).reduce((t,x)=>t+x.amount,0);
+  F.movedMo=0; pp.filter(x=>!x.matched).forEach(x=>{ if(FIN.tags[x.key]==="저축·투자로 옮김"){ F.movedMo+=x.amount; return; } add("variable", FIN.tags[x.key]?"송금·수표: "+FIN.tags[x.key]:"송금·수표 (분류 전)", x.amount); });
+  _latestBy("brokerage",d=>(d.institution||"")+"|"+(d.account_last4||"")).forEach(o=>{ const c=Number((o.d.flows||{}).contributions)||0; if(c) F.brokerMo=(F.brokerMo||0)+c; });
+  F.save=(F.k401Mo||0)+(F.matchMo||0)+(F.brokerMo||0)+F.movedMo;
+  F.out=F.fixed+F.variable; F.left=F.netMo!=null?F.netMo-F.out-(F.brokerMo||0)-F.movedMo:null;
+  F.saveRate=F.grossMo?(F.save/(F.grossMo+(F.matchMo||0))):null;
+  return F;
+}
+function finHouse(A){
+  const H=FIN.home||{}; const loans=_latestBy("loan",d=>(d.institution||"")+"|"+((d.loan||{}).kind||"")+"|"+(d.account_last4||""));
+  const L=k=>loans.filter(o=>(o.d.loan||{}).kind===k).map(o=>o.d.loan);
+  const m=L("mortgage").sort((a,b)=>(b.principal_balance||0)-(a.principal_balance||0))[0]||{}, he=L("home_equity")[0]||{};
+  const esc_=loans.map(o=>o.d.loan||{}).find(l=>l.escrow_tax_annual)||{};
+  const prop=FIN.docs.filter(o=>o.d.doc_type==="property"&&o.d.property).map(o=>o.d.property).sort((a,b)=>(b.tax_year||0)-(a.tax_year||0))[0]||{};
+  const hi=_latestBy("insurance",d=>(d.insurance||{}).kind||"").map(o=>o.d.insurance).find(i=>i&&i.kind==="home")||{};
+  const value=A.home||0;
+  const taxYr=Number(prop.tax_annual)||Number(esc_.escrow_tax_annual)||0, insYr=Number(esc_.escrow_insurance_annual)||Number(hi.premium)||0;
+  let landShare=null, src="";
+  if(Number(H.land)&&value){ landShare=Number(H.land)/value; src="직접 넣은 대지 가치"; }
+  else if(Number(H.landPct)){ landShare=Number(H.landPct)/100; src="직접 넣은 대지 비율"; }
+  else if(prop.assessed_land&&prop.assessed_total){ landShare=prop.assessed_land/prop.assessed_total; src="재산 평가서의 대지/전체 비율"; }
+  else if(Number(H.assessedLand)&&Number(H.assessedTotal)){ landShare=Number(H.assessedLand)/Number(H.assessedTotal); src="평가서 숫자 (직접 입력)"; }
+  const mortBal=Number(m.principal_balance)||A.mortgage||0, heBal=Number(he.principal_balance)||0;
+  return {value, landShare, src, land:landShare!=null&&value?value*landShare:null, building:landShare!=null&&value?value*(1-landShare):null,
+    coverage:Number(H.coverage)||Number(hi.dwelling_coverage)||null, mortBal, mortRate:Number(m.rate)||null, heBal, heRate:Number(he.rate)||null,
+    pi:(Number(m.principal_part)||0)+(Number(m.interest_part)||0)||null, escrow:Number(m.escrow_part)||null, hePay:Number(he.payment)||null,
+    taxYr, insYr, surplus:Number(esc_.escrow_surplus)||Number(m.escrow_surplus)||0, shortage:Number(esc_.escrow_shortage)||0,
+    mortIntYtd:Number(m.ytd_interest)||null, mortWhen:(loans.find(o=>(o.d.loan||{})===m)||{d:{}}).d.period_end||"",
+    equity:value?value-mortBal-heBal:null, cltv:value?(mortBal+heBal)/value:null, effTax:value&&taxYr?taxYr/value:null};
+}
+function finSignals(A,F,Hs){
+  const S=[], add=(lvl,t,v)=>S.push({lvl,t,v:v||""});
+  // 1) 저축 이자
+  _latestBy("bank",d=>(d.institution||"")+"|"+(d.account_last4||"")).forEach(o=>{ const b=o.d.balance||{}; const bal=Number(b.ending)||0, apy=b.apy;
+    if(apy!=null&&apy<1&&bal>10000) add("high",`${esc(o.d.institution||"은행")} ··${esc(o.d.account_last4||"")} 이자 ${apy}% — ${$m(bal)}가 거의 놀고 있어요. 고금리 저축(약 ${FIN_REF.hysa}%+)이면 연 약 ${$m(bal*(FIN_REF.hysa-apy)/100)} 더`, "연 +"+$m(bal*(FIN_REF.hysa-apy)/100)); });
+  // 2) 401k 한도·매칭
+  const {per, ps}=_payPer(), P=ps[0];
+  if(P&&P.gross){ const k=(Number(P.pretax_401k)||0)+(Number(P.roth_401k)||0), pct=k/P.gross;
+    const ytd=P.ytd||{}, ytdK=(Number(ytd.pretax_401k)||0)+(Number(ytd.roth_401k)||0);
+    const d=P.pay_date?new Date(P.pay_date):new Date(); const end=new Date(d.getFullYear(),11,31); const left=Math.max(0,Math.floor((end-d)/(365/per*864e5)));
+    const age=ageNow(), lim=FIN_REF.k401+(age>=60&&age<=63?FIN_REF.k401catch6063:age>=50?FIN_REF.k401catch:0);
+    const proj=ytdK+left*k;
+    if(ytdK&&proj<lim-500) add("mid",`401k ${(pct*100).toFixed(1)}% — 올해 예상 ${$m(proj)}, 한도 ${$m(lim)}까지 ${$m(lim-proj)} 남음 (남은 급여 약 ${left}번). 세전이라 연방·주 세금이 그만큼 줄어요`);
+    const mf=FIN.docs.map(o=>(o.d.retirement||{}).match_formula).find(Boolean); const cap=mf&&(String(mf).match(/(\d+(?:\.\d+)?)\s*%\s*(?:of\s+)?(?:compensation|pay|salary|급여)/i)||String(mf).match(/up to\s*(\d+(?:\.\d+)?)\s*%/i));
+    if(cap&&pct*100+0.05<Number(cap[1])) add("high",`회사 매칭(${esc(mf)})을 다 못 받고 있어요 — 401k를 ${cap[1]}% 이상으로`);
+    else if(cap) add("ok",`회사 매칭(${esc(mf)}) 다 받는 중 ✓`);
+    if(F.dcfsaYr&&F.dcfsaYr<FIN_REF.dcfsa-100) add("info",`부양가족 보육 FSA 연 약 ${$m(F.dcfsaYr)} — ${FIN_REF.year} 한도 ${$m(FIN_REF.dcfsa)} (보육비가 더 있으면 다음 등록 때 올리기)`);
+  }
+  // 3) 은퇴 계좌 수수료·펀드 비용
+  _latestBy("retirement",d=>(d.institution||"")+"|"+(d.account_last4||"")).forEach(o=>{ const d=o.d, R=d.retirement||{}, bal=Number((d.balance||{}).ending)||(d.holdings||[]).reduce((t,x)=>t+(Number(x.value)||0),0);
+    const k=R.fee_period==="quarter"?4:1; const mg=(Number(R.managed_fee)||0)*k, ad=(Number(R.admin_fee)||0)*k;
+    const hv=(d.holdings||[]).filter(x=>x.expense_ratio!=null&&x.value), hs=hv.reduce((t,x)=>t+x.value,0); const er=hs?hv.reduce((t,x)=>t+x.value*x.expense_ratio,0)/hs:null;
+    if(mg&&bal) add("high",`관리형 계좌 수수료 연 약 ${$m(mg)} (잔고의 ${(mg/bal*100).toFixed(2)}%)${er!=null?` + 펀드 비용 평균 ${er.toFixed(2)}%`:""} — 저비용 target-date·인덱스(약 0.05~0.10%)로 직접 고르면 대부분 아낄 수 있어요`, "연 -"+$m(mg));
+    else if(er!=null&&er>0.3) add("mid",`펀드 비용 평균 ${er.toFixed(2)}% — 같은 계좌의 저비용 인덱스로 바꾸면 연 약 ${$m(bal*(er-0.08)/100)}`);
+    if(ad) add("info",`은퇴 계좌 관리비 연 약 ${$m(ad)} (플랜 공통 — 바꿀 수 없는 비용)`);
+    const hi=(d.holdings||[]).filter(x=>x.expense_ratio>=0.5); if(hi.length) add("info",`비싼 펀드 ${hi.length}개 (0.5%+): ${hi.slice(0,5).map(x=>esc(x.symbol||x.name||"")+" "+x.expense_ratio+"%").join(", ")}`);
+  });
+  // 4) 빚 금리 vs 현금 이자
+  const cash=A.accounts.filter(a=>a.d.doc_type==="bank").reduce((t,a)=>t+a.v,0);
+  if(Hs.heBal&&Hs.heRate&&Hs.heRate>FIN_REF.hysa+1){ const spare=Math.max(0,cash-(F.out||0)*6); if(spare>2000) add("mid",`홈에퀴티 ${Hs.heRate}% > 저축 이자 — 비상금(지출 6개월 ${$m((F.out||0)*6)})을 뺀 ${$m(spare)}로 일부 갚으면 연 약 ${$m(spare*Hs.heRate/100)} 이자 절약 (고정 금리·조기 상환 조건 확인)`); }
+  _latestBy("card",d=>(d.institution||"")+"|"+(d.account_last4||"")).forEach(o=>{ const b=o.d.balance||{}; if(Number(b.interest_charged)>0) add("high",`${esc(o.d.institution||"카드")} 이자 ${$m(b.interest_charged)} 붙었어요 — 전액 결제로`); if(b.promo_ending) add("info",`${esc(o.d.institution||"카드")} 프로모션 금리 끝남 (${esc(b.promo_ending)}) — 남은 잔액 확인`); });
+  // 5) 항목별 공제 vs 표준 공제
+  const filing=FIN.filing||"", std=FIN_REF.std[filing]||null;
+  if(std){ const _mo=x=>Math.max(1,Number(String(x||"").slice(5,7))||12); let mi=Hs.mortIntYtd&&Hs.mortWhen?Hs.mortIntYtd/_mo(Hs.mortWhen)*12:0;
+    const yt=(P&&P.ytd)||{}; const stYr=P&&yt.state_tax&&P.pay_date?Number(yt.state_tax)/(_mo(P.pay_date)/12)+(Number(yt.local_tax)||0):(FIN.docs.find(o=>o.d.doc_type==="w2")||{d:{w2:{}}}).d.w2.state_tax||0;
+    const salt=Math.min(filing==="mfs"?FIN_REF.saltMfs:FIN_REF.salt,(Hs.taxYr||0)+(Number(stYr)||0));
+    const give=(A.spend["기부"]||0)*12; const item=mi+salt+give;
+    if(item>std*0.8) add(item>std?"high":"mid",`항목별 공제 추정 ${$m(item)} (모기지 이자 ${$m(mi)} + SALT ${$m(salt)} + 기부 ${$m(give)}) vs 표준 ${$m(std)} — ${item>std?"항목별이 유리할 수 있어요 (배우자 주세금 포함 시 더 커짐)":"거의 비슷 — 배우자 숫자까지 넣으면 넘을 수 있어요"}. 홈에퀴티 이자는 집 구입·증축·수리에 썼을 때만 공제`, item>std?"공제 +"+$m(item-std):"");
+  }
+  // 6) W-2 초과근무 공제 (연방, 2025–2028)
+  FIN.docs.filter(o=>o.d.doc_type==="w2"&&o.d.w2).forEach(o=>{ const w=o.d.w2; const ot=(w.box14||[]).find(x=>/\bOT\b|overtime|TTOC/i.test(x.label||""));
+    if(ot&&ot.amount) add("mid",`${w.tax_year||""} W-2 초과근무(Box 14) ${$m(ot.amount)} — 연방 '초과근무 공제'(2025–2028, 1.5배 중 웃돈 부분만, MFJ 최대 ${$m(FIN_REF.ot.mfj)}). 신고에 넣었는지 확인 · NY 주세금엔 적용 안 됨`); });
+  // 7) 보험 기간 확인
+  _latestBy("insurance",d=>(d.insurance||{}).kind||"").forEach(o=>{ const I=o.d.insurance||{}; if(!I.term_months) add("info",`${I.kind==="auto"?"자동차":"보험"}료 ${$m(I.premium)} — 6개월 약관인지 12개월인지 확인 (연 비용이 두 배 차이)`); });
+  // 8) 송금·수표
+  if(F.p2pOpen>300) add("mid",`분류 안 된 송금·수표 ${$m(F.p2pOpen)} — 아래에서 무엇인지 골라 주세요 (돈 흐름 정확도)`);
+  const mt=(F.p2p||[]).filter(x=>x.matched); if(mt.length) add("ok",`대신 내고 돌려받은 송금 ${mt.length}건 ${$m(mt.reduce((t,x)=>t+x.amount,0))} — 지출에서 뺐어요 (같은 금액 입금·FSA 환급과 짝지음)`);
+  // 9) 주거비 비율
+  if(F.grossMo&&Hs){ const hp=F.items["모기지 (원리금+에스크로)"]||0, he=F.items["홈에퀴티 대출"]||0; if(hp){ const r=(hp+he)/F.grossMo; add(r>0.36?"high":r>0.28?"mid":"ok",`주거비(모기지+홈에퀴티) ${$m(hp+he)}/월 = 급여 세전의 ${(r*100).toFixed(0)}% (흔한 기준 28%, 빚 전체 36%) — 배우자 소득을 넣으면 가구 기준으로 다시 계산`); } }
+  if(Hs.surplus) add("info",`에스크로 남은 돈 ${$m(Hs.surplus)} 돌려받음/받을 예정 — 비상금이나 빚 상환으로`);
+  if(Hs.shortage) add("mid",`에스크로 부족 ${$m(Hs.shortage)} — 월 납부가 오를 수 있어요`);
+  const ord={high:0,mid:1,info:2,ok:3}; return S.sort((a,b)=>ord[a.lvl]-ord[b.lvl]);
+}
+function finTag(key, v){ if(v) FIN.tags[key]=v; else delete FIN.tags[key]; persistFin(); const b=document.getElementById("invest-body"); if(b) b.innerHTML=renderInvestBody("money"); }
+function finHomeSet(k, v){ FIN.home=FIN.home||{}; const n=parseFloat(String(v).replace(/[$,\s]/g,"")); if(isFinite(n)&&n>0) FIN.home[k]=n; else delete FIN.home[k]; persistFin(); const b=document.getElementById("invest-body"); if(b) b.innerHTML=renderInvestBody("money"); }
+function finFlowHTML(A){
+  const F=finFlow(), Hs=finHouse(A), S=finSignals(A,F,Hs);
+  const line=(l,v,c,sub)=>`<div style="display:flex;font-size:10.5px;padding:3px 0"><span style="flex:1;color:${sub?'var(--sub)':'var(--text)'}">${l}</span><b style="font-variant-numeric:tabular-nums;${c?'color:'+c:''}">${v}</b></div>`;
+  const col={high:"var(--rose)",mid:"var(--gold)",info:"var(--sky)",ok:"var(--mint)"}, ic={high:"🔴",mid:"🟡",info:"🔵",ok:"🟢"};
+  let h=`<div class="card" style="padding:13px;margin-bottom:10px;border-color:rgba(125,211,252,.4)">
+    <div style="font-size:12px;font-weight:800;color:var(--sky)">🔄 한 달 돈의 흐름 <span style="font-size:9px;color:var(--sub);font-weight:500">최근 명세서 기준 · 급여 ${F.per}회/년${F.guessed?" (추정)":""}</span></div>`;
+  if(F.netMo!=null){
+    h+=line("💵 실수령 (월 환산)",$m(F.netMo),"var(--mint)")+line("　세전 급여",$m(F.grossMo),null,1);
+    h+=`<div class="lbl" style="margin-top:7px">고정</div>`+Object.entries(F.items).filter(([k])=>/모기지|홈에퀴티|대출|보험/.test(k)).map(([k,v])=>line("　"+esc(k),$m(v),null,1)).join("")+line("고정 합계",$m(F.fixed));
+    h+=`<div class="lbl" style="margin-top:7px">생활·변동</div>`+Object.entries(F.items).filter(([k])=>!/모기지|홈에퀴티|대출|보험/.test(k)).map(([k,v])=>line("　"+esc(k),$m(v),null,1)).join("")+line("변동 합계",$m(F.variable));
+    h+=`<div class="lbl" style="margin-top:7px">저축·투자</div>`+line("　401k (내 몫, 급여에서 먼저)",$m(F.k401Mo),null,1)+line("　회사 매칭",$m(F.matchMo),null,1)+(F.brokerMo?line("　증권 계좌 넣은 돈",$m(F.brokerMo),null,1):"")+(F.movedMo?line("　저축·투자로 옮긴 송금·수표",$m(F.movedMo),null,1):"")+line("저축률 (세전+매칭 대비)",F.saveRate!=null?$p(F.saveRate):"–",F.saveRate>=0.15?"var(--mint)":"var(--gold)");
+    h+=`<div style="border-top:1px solid var(--border);margin-top:6px;padding-top:4px">${line("남는 돈 (실수령 − 지출 − 투자)",$m(F.left),F.left<0?"var(--rose)":"var(--mint)")}</div>
+      <div style="font-size:9px;color:var(--muted);line-height:1.6;margin-top:3px">장보기·공과금처럼 다른 계좌(배우자 등)에서 나가는 돈은 그 명세서를 올려야 잡혀요. 일회성 큰 수표·이체는 분류해 두면 따로 봐요.</div>`;
+  } else h+=`<div style="font-size:10px;color:var(--sub);margin-top:6px">급여명세서를 올리면 수입·저축률이 계산돼요.</div>`;
+  const open=(F.p2p||[]).filter(x=>!x.matched);
+  if(open.length) h+=`<div class="lbl" style="margin-top:9px">✍️ 송금·수표 — 무엇이었나요?</div>`+open.slice(0,14).map(x=>`<div style="display:flex;align-items:center;gap:6px;font-size:10px;padding:3px 0"><span style="color:var(--sub);width:62px">${esc((x.date||"").slice(5))}</span><span style="flex:1">${esc(x.channel||"")}</span><b style="font-variant-numeric:tabular-nums">${$m(x.amount)}</b>
+      <select style="width:auto;font-size:9.5px;padding:2px 4px" onchange="finTag('${x.key}',this.value)"><option value="">분류</option>${P2P_CATS.map(c=>`<option ${FIN.tags[x.key]===c?"selected":""}>${c}</option>`).join("")}</select></div>`).join("");
+  h+=`</div>`;
+  // 집
+  const inp=(k,ph,v)=>`<label style="flex:1;min-width:110px;font-size:8.5px;color:var(--sub)">${ph}<input inputmode="decimal" placeholder="${ph}" value="${v!=null&&v!==""?v:""}" onchange="finHomeSet('${k}',this.value)" style="font-size:10px;padding:5px 7px;margin:2px 0 0;width:100%"></label>`;
+  const H=FIN.home||{};
+  h+=`<div class="card" style="padding:13px;margin-bottom:10px;border-color:rgba(245,200,66,.35)">
+    <div style="font-size:12px;font-weight:800;color:var(--gold)">🏡 집 · 대지와 건물</div>
+    <div style="line-height:1.5;margin-top:6px">${Hs.value?line("집 가치",$m(Hs.value)):""}${Hs.land!=null?line("　대지",$m(Hs.land)+` (${(Hs.landShare*100).toFixed(0)}%)`,null,1)+line("　건물",$m(Hs.building),null,1):""}
+      ${Hs.mortBal?line("모기지 잔액",$m(Hs.mortBal)+(Hs.mortRate?` · ${Hs.mortRate}%`:""),"var(--rose)"):""}${Hs.heBal?line("홈에퀴티 잔액",$m(Hs.heBal)+(Hs.heRate?` · ${Hs.heRate}%`:""),"var(--rose)"):""}
+      ${Hs.equity!=null?line("집 순자산 (가치 − 대출)",$m(Hs.equity),"var(--mint)")+line("　대출 비율 (CLTV)",$p(Hs.cltv),null,1):""}
+      ${Hs.taxYr?line("재산세 / 년",$m(Hs.taxYr)+(Hs.effTax?` · 가치의 ${(Hs.effTax*100).toFixed(2)}%`:"")):""}${Hs.insYr?line("주택보험 / 년",$m(Hs.insYr)):""}
+      ${Hs.coverage&&Hs.building?line("보험 건물 보장 vs 건물 가치",`${$m(Hs.coverage)} / ${$m(Hs.building)}`,Hs.coverage<Hs.building*0.8?"var(--rose)":null):""}</div>
+    ${Hs.src?`<div style="font-size:9px;color:var(--sub);margin-top:3px">대지·건물 나눔: ${Hs.src}</div>`:""}
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">${inp("market","집 시장가 $",H.market)}${inp("land","대지 가치 $",H.land)}${inp("landPct","또는 대지 %",H.landPct)}${inp("coverage","보험 건물 보장 $",H.coverage)}</div>
+    <div style="font-size:9px;color:var(--muted);line-height:1.6;margin-top:6px">대지·건물 숫자는 재산세 고지서/평가서(assessment: land·total)나 보험 증권(Dwelling)을 올리면 자동으로 잡혀요. 본인이 사는 집은 감가상각이 없어요 — 대지/건물 나눔은 ① 보험(건물만 보장) ② 재산세 이의신청(평가액이 시장가보다 높을 때, 마을마다 기한 — 대부분 6월) ③ 나중에 임대·홈오피스·매도 기준에 써요.</div></div>`;
+  // 점검 신호
+  if(S.length) h+=`<div class="card" style="padding:13px;margin-bottom:10px"><div style="font-size:12px;font-weight:800">🚦 점검 신호 <span style="font-size:9px;color:var(--sub);font-weight:500">숫자로 바로 계산 · ${FIN_REF.year} 기준 한도</span></div>`+
+    S.map(x=>`<div style="display:flex;gap:6px;font-size:10.5px;line-height:1.55;padding:5px 0;border-top:1px solid var(--border)"><span>${ic[x.lvl]}</span><span style="flex:1">${x.t}</span>${x.v?`<b style="white-space:nowrap;color:${col[x.lvl]}">${x.v}</b>`:""}</div>`).join("")+
+    `<div style="font-size:9px;color:var(--warn);margin-top:6px">교육·정보용 추정 · 큰 결정은 CPA·fee-only 자문가와</div></div>`;
+  return {html:h, F, Hs, S};
 }
 function _bars(obj, color){ const ent=Object.entries(obj).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]); const tot=ent.reduce((t,[,v])=>t+v,0); if(!tot) return "";
   return ent.map(([k,v])=>`<div style="margin:4px 0"><div style="display:flex;font-size:10px"><span style="flex:1">${esc(k)}</span><b style="font-variant-numeric:tabular-nums">${$m(v)}</b><span style="width:46px;text-align:right;color:var(--sub)">${(v/tot*100).toFixed(0)}%</span></div>
@@ -2850,7 +3043,7 @@ function finPanel(){
   const P=A.pay, tax=P?["federal_tax","state_tax","local_tax","social_security","medicare"].reduce((t,k)=>t+(Number(P[k])||0),0):0;
   return `<div class="card" style="padding:13px;margin-bottom:10px;border-color:rgba(245,200,66,.4)">
     <div style="font-size:12px;font-weight:800;color:var(--gold)">📥 명세서 올리기 · Ledger</div>
-    <div style="font-size:10px;color:var(--sub);line-height:1.6;margin-top:4px">계좌·카드·급여명세서의 <b>CSV · PDF · 사진</b>을 올리면 숫자만 뽑아요. 원본은 저장하지 않고, 숫자는 <b>이 기기에만</b> (계좌번호 끝 4자리). 한 달에 한 번: 401k · Robinhood · 은행 · 카드 · 급여명세서.</div>
+    <div style="font-size:10px;color:var(--sub);line-height:1.6;margin-top:4px">계좌·카드·급여명세서·모기지·W-2·보험·재산세의 <b>CSV · PDF · 사진</b>을 올리면 숫자만 뽑아요. 원본은 저장하지 않고, 숫자는 <b>이 기기에만</b> (계좌번호 끝 4자리, 이름·주소 없음). 같은 파일은 자동으로 건너뛰어요. 한 달에 한 번: 은행 · 카드 · 급여명세서 / 분기: 401k / 1년: W-2 · 보험 · 재산세.</div>
     <input type="file" id="finFile" multiple accept=".csv,.pdf,.txt,.tsv,.ofx,.qfx,image/png,image/jpeg,image/webp,application/pdf,text/csv" style="display:none" onchange="finUpload(this.files);this.value=''">
     <button class="btn-gold" style="background:var(--gold);color:#10151f;margin-top:9px" onclick="document.getElementById('finFile').click()">📥 파일 고르기 (여러 개 가능)</button>
     <div style="font-size:8.5px;color:var(--muted);margin-top:6px">파일 하나에 약 $0.02~0.10 (API). 읽는 동안 내용은 Anthropic API로 보내져 처리돼요.</div>
@@ -2866,6 +3059,7 @@ function finPanel(){
     <div class="lbl" style="margin-top:11px">🗂 계좌별</div>
     ${A.accounts.map(a=>`<div style="display:flex;align-items:center;gap:6px;font-size:10.5px;padding:5px 0;border-top:1px solid var(--border)"><span>${(FIN_TYPES[a.d.doc_type]||FIN_TYPES.other)[0]}</span><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(a.d.institution||"")}${a.d.account_last4?" ··"+esc(a.d.account_last4):""} <span style="color:var(--muted)">${esc(a.d.period_end||a.d.as_of||"")}</span></span><b style="font-variant-numeric:tabular-nums;${a.isDebt?'color:var(--rose)':''}">${a.isDebt?"-":""}${$m(Math.abs(a.v))}</b></div>`).join("")}
   </div>
+  ${finFlowHTML(A).html}
   <div class="card" style="padding:13px;margin-bottom:10px;border-color:rgba(52,211,153,.4)">
     <div style="font-size:12px;font-weight:800;color:#34d399">🧾 재정·세금 점검 · Sterling · Grant</div>
     <div style="font-size:10px;color:var(--sub);line-height:1.6;margin-top:4px">모은 숫자(합계만 — 거래 내역·계좌번호는 안 보냄)로 자산 비중·현금·지출·빚·급여 공제·세금 절약 방법을 정리해요. 올해 한도(401k·IRA·HSA·NY 529 등)는 최신 자료를 검색해서 써요.</div>
@@ -2876,7 +3070,7 @@ function finPanel(){
   </div>
   <div class="lbl">📄 올린 명세서 (${n})</div>
   ${FIN.docs.slice(0,30).map(o=>`<div class="card" style="padding:9px 11px;margin-bottom:6px">${finDocSummary(o.d)}<div style="display:flex;margin-top:4px"><span style="font-size:8.5px;color:var(--muted)">올림 ${esc((o.added||"").slice(0,10))} · ${esc((o.file&&o.file.name)||"")}</span><span style="flex:1"></span><button class="pill" style="font-size:9px;color:var(--rose)" onclick="finDel(${o.id})">🗑</button></div></div>`).join("")}`
-  :`<div class="card" style="padding:14px;text-align:center;color:var(--sub);font-size:11px;margin-bottom:10px">아직 올린 명세서가 없어요. 위에서 파일을 골라 보세요.<br><span style="font-size:9.5px;color:var(--muted)">추천 순서: ① 401k(Empower) 분기 명세서 ② Robinhood 월 명세서 ③ 카드 명세서 ④ 급여명세서</span></div>`}
+  :`<div class="card" style="padding:14px;text-align:center;color:var(--sub);font-size:11px;margin-bottom:10px">아직 올린 명세서가 없어요. 위에서 파일을 골라 보세요.<br><span style="font-size:9.5px;color:var(--muted)">추천 순서: ① 급여명세서 2장 ② 은행(입출금·저축) ③ 카드 ④ 401k 분기 ⑤ 모기지·홈에퀴티 ⑥ W-2·보험·재산세</span></div>`}
   <div class="card" style="padding:11px 13px;margin-bottom:10px">
     <div style="font-size:11px;font-weight:700">🔐 암호 걸린 백업</div>
     <div style="font-size:9.5px;color:var(--sub);line-height:1.6;margin-top:3px">명세서 숫자·내 정보를 암호로 잠근 파일로 내보내 다른 기기에서 열 수 있어요. 암호를 잊으면 열 수 없어요.</div>
@@ -2900,13 +3094,19 @@ async function finAnalyze(){
       card_apr:a.d.doc_type==="card"?(a.d.balance||{}).apr:null, holdings:(a.d.holdings||[]).slice(0,15).map(h=>({symbol:h.symbol,class:h.asset_class,value:h.value,expense_ratio:h.expense_ratio}))})),
     spending_45d:Object.fromEntries(Object.entries(A.spend).map(([k,v])=>[k,Math.round(v)])),
     recurring:FIN.docs.flatMap(o=>o.d.recurring||[]).slice(0,15),
+    cashflow_monthly:(()=>{ const F=finFlow(); return {net_pay:Math.round(F.netMo||0), gross:Math.round(F.grossMo||0), fixed:Math.round(F.fixed), variable:Math.round(F.variable), items:Object.fromEntries(Object.entries(F.items).map(([k,v])=>[k,Math.round(v)])), k401:Math.round(F.k401Mo||0), match:Math.round(F.matchMo||0), brokerage_in:Math.round(F.brokerMo||0), left:F.left!=null?Math.round(F.left):null, save_rate:F.saveRate!=null?+(F.saveRate*100).toFixed(1):null, p2p_reimbursed:(F.p2p||[]).filter(x=>x.matched).length, p2p_open:Math.round(F.p2pOpen||0)}; })(),
+    house:(()=>{ const H=finHouse(A); return {value:Math.round(H.value||0)||null, land_share:H.landShare, building:H.building&&Math.round(H.building), insured_dwelling:H.coverage, mortgage:Math.round(H.mortBal||0), mortgage_rate:H.mortRate, home_equity:Math.round(H.heBal||0), home_equity_rate:H.heRate, property_tax_yr:Math.round(H.taxYr||0), home_ins_yr:Math.round(H.insYr||0), cltv:H.cltv}; })(),
+    signals:(()=>{ const F=finFlow(); return finSignals(A,F,finHouse(A)).map(x=>x.t.replace(/<[^>]+>/g,"")); })(),
+    w2:FIN.docs.filter(o=>o.d.doc_type==="w2").map(o=>o.d.w2).slice(0,2),
+    insurance:FIN.docs.filter(o=>o.d.doc_type==="insurance").map(o=>{ const i=o.d.insurance||{}; return {kind:i.kind,premium:i.premium,term_months:i.term_months}; }).slice(0,4),
     paystub:P.gross?{pay_date:P.pay_date,gross:P.gross,net:P.net,federal_tax:P.federal_tax,state_tax:P.state_tax,local_tax:P.local_tax,ss:P.social_security,medicare:P.medicare,pretax_401k:P.pretax_401k,roth_401k:P.roth_401k,employer_match:P.employer_match,health:P.health_dental_vision,hsa:P.hsa,fsa:P.fsa,ytd:P.ytd||null}:null};
   const sys=`You are Sterling (investment strategist) and Grant (US/New York tax planner) on Histara's finance team, reviewing the household finances of a long-term retirement investor.
 ${nowStamp()}
 CRITICAL: use web_search to confirm THIS YEAR's limits and rules (401k/403b deferral & catch-up, IRA/Roth IRA income limits, HSA, FSA, NY 529 deduction, standard deduction, SALT cap, child tax credit, NY state brackets). Cite them. Say when something depends on facts you don't have (e.g. filing status, spouse income). Educational, not licensed tax or investment advice — suggest a CPA/fee-only planner for big moves.
+The "signals" are already computed from the numbers — confirm, correct or deepen them; do not just repeat. Speculative single-stock positions, margin, and cash drag deserve a sentence. Unknowns (spouse income, accounts not uploaded) must be named, not guessed.
 Be concrete with numbers from the data (e.g., "401k 7% → 10%이면 연 약 $X 세전 저축, 연방세 약 $Y 절감 (추정)"). Respond in Korean; keep account/tax terms in English. Return ONLY JSON (start with {), keep each text short.`;
   const usr=`Household data (aggregated; no account numbers): ${JSON.stringify(facts)}
-JSON: {"summary":"한 줄 진단","net_worth":"순자산·추세 한마디","allocation":{"now":"지금 비중 요약","target":"나이·목표에 맞는 비중","gap":"차이와 조정 방법 (새 저축으로 맞추기 우선)"},"cash":"비상금·놀고 있는 현금 판단","debt":["빚 우선순위 (금리 높은 것부터) 1","2"],"spending":["지출에서 보이는 것 1","2"],"paycheck":"급여명세서로 본 공제·원천징수 판단","tax":[{"idea":"세금 아이디어","why":"이유","how":"어떻게","impact":"연 약 $ 효과 (추정)","deadline":"언제까지"}],"retirement":"은퇴 로드맵 대비 지금","actions":[{"do":"할 일","when":"이번 달/올해 안/연말 전"}],"risks":["주의할 점"],"needs":["더 정확하려면 필요한 자료"],"sources":[{"title":"","url":"https://..."}]}`;
+JSON: {"summary":"한 줄 진단","flow":"돈의 흐름 — 어디로 들어와 어디로 나가는지 한두 문장","split":{"spend":"소비 (월 $ 목표와 줄일 곳)","save":"저축 (비상금 몇 개월·어디에)","invest":"투자 (401k %·IRA·증권 — 월 $)"},"patterns":["지출·송금 패턴 1","2"],"house":"집 — 대지·건물·대출·재산세·보험 판단","net_worth":"순자산·추세 한마디","allocation":{"now":"지금 비중 요약","target":"나이·목표에 맞는 비중","gap":"차이와 조정 방법 (새 저축으로 맞추기 우선)"},"cash":"비상금·놀고 있는 현금 판단","debt":["빚 우선순위 (금리 높은 것부터) 1","2"],"spending":["지출에서 보이는 것 1","2"],"paycheck":"급여명세서로 본 공제·원천징수 판단","tax":[{"idea":"세금 아이디어","why":"이유","how":"어떻게","impact":"연 약 $ 효과 (추정)","deadline":"언제까지"}],"retirement":"은퇴 로드맵 대비 지금","actions":[{"do":"할 일","when":"이번 달/올해 안/연말 전"}],"risks":["주의할 점"],"needs":["더 정확하려면 필요한 자료"],"sources":[{"title":"","url":"https://..."}]}`;
   CUR_FEATURE="invest";
   let raw; try{ raw=await callClaude(sys,usr,Object.assign({},sx(5),{maxTokens:8000,timeoutMs:200000})); } finally{ CUR_FEATURE=null; }
   const g=keyGuard(raw); if(g){ box.innerHTML=g; return; }
@@ -2915,6 +3115,9 @@ JSON: {"summary":"한 줄 진단","net_worth":"순자산·추세 한마디","all
   const sec=(i,l,t)=>t?`<div style="margin-bottom:8px;padding:9px 11px;background:${col}10;border-left:2px solid ${col};border-radius:8px"><div style="font-size:9px;color:${col};font-weight:700;margin-bottom:2px">${i} ${l}</div><div style="font-size:11px;line-height:1.6">${esc(t)}</div></div>`:"";
   const list=(i,l,a)=>(a||[]).length?`<div class="lbl" style="color:${col};margin-top:6px">${i} ${l}</div>`+a.map(x=>`<div class="row-item"><div class="dot" style="background:${col}"></div><span style="font-size:11px">${esc(typeof x==="string"?x:(x.do?`${x.do}${x.when?` — ${x.when}`:""}`:JSON.stringify(x)))}</span></div>`).join(""):"";
   let h=r.summary?`<div style="font-size:12px;font-weight:700;color:${col};margin-bottom:9px;line-height:1.5">📌 ${esc(r.summary)}</div>`:"";
+  h+=sec("🔄","돈의 흐름",r.flow);
+  if(r.split) h+=sec("⚖️","소비 · 저축 · 투자",[r.split.spend&&("소비: "+r.split.spend),r.split.save&&("저축: "+r.split.save),r.split.invest&&("투자: "+r.split.invest)].filter(Boolean).join(" / "));
+  h+=list("🔍","패턴",r.patterns)+sec("🏡","집",r.house);
   h+=sec("💰","순자산",r.net_worth);
   if(r.allocation) h+=sec("📊","자산 비중",[r.allocation.now,r.allocation.target&&("목표: "+r.allocation.target),r.allocation.gap].filter(Boolean).join(" · "));
   h+=sec("🏦","현금",r.cash)+sec("🧾","급여 공제·원천징수",r.paycheck);
@@ -3392,7 +3595,7 @@ function dayContext(){
   const dow=["일","월","화","수","목","금","토"][now.getDay()];
   const isWeekend=(now.getDay()===0||now.getDay()===6);
   const part = h<4?"한밤":h<6?"새벽":h<9?"이른 아침":h<12?"오전":h<14?"점심·오후 초":h<18?"오후":h<20?"초저녁":"밤";
-  // Eun-Sang's real schedule:
+  // the owner's real schedule:
   // Weekday: 4:00 기상 → 4:30 출발 → 5:00 랩 도착·근무 → 12:00~12:30 점심 → 13:30 퇴근 → 14:10 귀가
   //          14:10~ 아이 스케줄(학원 라이드/집) → 20:30~21:00 취침
   // Weekend: 가족 계획에 따라 유동적, 취침은 평일과 비슷(~21:00)
@@ -4601,8 +4804,8 @@ async function requestRecruit(){
 // ═══════════════════════════════════
 //  INIT
 // ═══════════════════════════════════
-const BUILD_VERSION = "v15.0";
-const BUILD_TIME = "2026-10-23 06:00 EDT";
+const BUILD_VERSION = "v15.1";
+const BUILD_TIME = "2026-10-23 06:40 EDT";
 STATE.advisorTab="papers";
 STATE.studioTab="idea";
 STATE.investTab="money";
@@ -4743,7 +4946,7 @@ box(16.4,10.6,1.6,1,7,"white");box(19.0,8.4,0.7,0.6,19,"metal",{coffee:true});FU
 const TREES=[[1.5,15.1],[7.8,15.2],[13.2,15.1],[21.0,12.6],[21.0,4.8],[20.9,8.4]];
 
 const AGENTS=[
-  {id:"ceo",name:"Eun-Sang",role:"대표",color:"#d8a23c",hair:"short",home:{gx:7.6,gy:10.25},duties:["방향 결정","공개·게시 결재"]},
+  {id:"ceo",name:"대표님",role:"대표",color:"#d8a23c",hair:"short",home:{gx:7.6,gy:10.25},duties:["방향 결정","공개·게시 결재"]},
   {id:"atlas",name:"Atlas",role:"운영 · Mint 서버",color:"#3f6fb4",hair:"side",home:{gx:17.5,gy:4.4},duties:["Mint 매일 확인","YouTube 로그인 관리","문제 알림"]},
   {id:"nova",name:"NOVA",role:"사연 · 지혜 자료",color:"#df5f7f",hair:"long",home:{gx:3.0,gy:4.7},duties:["오늘의 사연 고르기","지혜 주제 자료","겹치지 않게"]},
   {id:"theo",name:"Theo",role:"나레이션 · 블로그 글 · 책",color:"#8a6bd0",hair:"bun",home:{gx:12.0,gy:10.3},duties:["나레이션(자막) 문장","같은 사연의 블로그 글","30편이면 책"]},
