@@ -1,0 +1,9 @@
+# Histara — 빌드 없이 index.html 한 파일을 그대로 배포
+[build]
+  publish = "."
+  command = ""
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache"
