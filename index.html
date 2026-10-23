@@ -343,7 +343,6 @@ const TABS_DEF=[
   {id:"studio",  icon:"🎬",label:"콘텐츠 스튜디오"},
   {id:"family",  icon:"🧺",label:"가족 여가"},
   {id:"english", icon:"📚",label:"영어 한 장"},
-  {id:"invest",  icon:"📈",label:"투자 · 은퇴"},
   {id:"advisor", icon:"🔬",label:"자문센터"},
   {id:"team",    icon:"👥",label:"팀"},
   {id:"security",icon:"🛡️",label:"보안/키/사용량"},
@@ -415,7 +414,7 @@ function switchSec(t){ STATE.secTab=t; const b=document.getElementById('sec-body
 function securityKeyPanel(){
   const hasKey = !!API_KEY;
   const sec = agentOf("SEC-15")||{personality:""};
-  return `${personalCard()}
+  return `${investMoveCard()}${personalCard()}
   <div style="background:linear-gradient(135deg,rgba(47,232,160,.08),rgba(47,232,160,.02));border:1px solid rgba(47,232,160,.3);border-radius:13px;padding:15px;margin-bottom:12px">
     <div style="display:flex;align-items:center;gap:11px;margin-bottom:11px">
       <div style="width:44px;height:44px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#2fe8a055,#2fe8a011);border:2px solid #2fe8a066;display:flex;align-items:center;justify-content:center;font-size:21px">🛡️</div>
@@ -1096,14 +1095,14 @@ async function syncPull(){
   const rows=await r.json();
   let needPush=false;
   if(rows && rows[0]){
-    const remoteStudio=rows[0].studio||[]; const remoteReports=rows[0].reports||[]; const remoteEnglish=rows[0].english||[];
+    const remoteStudio=rows[0].studio||[]; const remoteAll=rows[0].reports||[]; const remoteReports=remoteAll.filter(r=>!(r&&INVEST_TYPES.has(r.type))); const remoteEnglish=rows[0].english||[];
     const _ids=a=>new Set((a||[]).map(x=>x&&x.id));
     const rS=_ids(remoteStudio), rR=_ids(remoteReports), rE=_ids(remoteEnglish);
     STUDIO_ITEMS=mergeById(STUDIO_ITEMS, remoteStudio); persistStudio();
     REPORTS=mergeById(REPORTS, remoteReports).slice(0,120); persistReports();
     ENGLISH_ITEMS=mergeById(ENGLISH_ITEMS, remoteEnglish).slice(0,120); persistEnglish();
     // 이 기기에만 있는 항목이 있으면 올려야 함
-    needPush = STUDIO_ITEMS.some(x=>!rS.has(x.id)) || REPORTS.some(x=>!rR.has(x.id)) || (rows[0].english!==undefined && ENGLISH_ITEMS.some(x=>!rE.has(x.id)));
+    needPush = remoteAll.length!==remoteReports.length || STUDIO_ITEMS.some(x=>!rS.has(x.id)) || REPORTS.some(x=>!INVEST_TYPES.has(x.type)&&!rR.has(x.id)) || (rows[0].english!==undefined && ENGLISH_ITEMS.some(x=>!rE.has(x.id)));
   } else {
     needPush = (STUDIO_ITEMS.length+REPORTS.length+ENGLISH_ITEMS.length)>0;
   }
@@ -1111,7 +1110,8 @@ async function syncPull(){
 }
 async function syncPush(){
   if(!syncConfigured()) return {ok:false,msg:"동기화 설정이 필요해요"};
-  const full=[{ code:SYNC_CODE, studio:STUDIO_ITEMS, reports:REPORTS, english:ENGLISH_ITEMS, updated_at:new Date().toISOString() }];
+  const _rep=(REPORTS||[]).filter(r=>!(r&&INVEST_TYPES.has(r.type)));   // v15.2: 투자 보고서는 클라우드에 안 올림
+  const full=[{ code:SYNC_CODE, studio:STUDIO_ITEMS, reports:_rep, english:ENGLISH_ITEMS, updated_at:new Date().toISOString() }];
   let r=await fetch(`${SUPA_URL}/rest/v1/histara_sync`,{
     method:"POST",
     headers:Object.assign({}, _supaHeaders(), {"Prefer":"resolution=merge-duplicates"}),
@@ -1121,7 +1121,7 @@ async function syncPush(){
   // if the 'english' column doesn't exist yet, retry without it so studio/reports still sync
   const t=await r.text().catch(()=> "");
   if(/english|column|PGRST204|42703|schema cache/i.test(t)){
-    const base=[{ code:SYNC_CODE, studio:STUDIO_ITEMS, reports:REPORTS, updated_at:new Date().toISOString() }];
+    const base=[{ code:SYNC_CODE, studio:STUDIO_ITEMS, reports:_rep, updated_at:new Date().toISOString() }];
     const r2=await fetch(`${SUPA_URL}/rest/v1/histara_sync`,{
       method:"POST",
       headers:Object.assign({}, _supaHeaders(), {"Prefer":"resolution=merge-duplicates"}),
@@ -1164,7 +1164,7 @@ function handleSyncSave(){
 let _pushTimer=null, _noPush=false, _pulling=false, _lastPull=0;
 function syncPushDebounced(){ if(!syncConfigured()||_noPush)return; clearTimeout(_pushTimer); _pushTimer=setTimeout(()=>{ _pushTimer=null; syncPush().catch(()=>{}); }, 4000); }
 function flushPush(){ if(!syncConfigured()||!_pushTimer) return; clearTimeout(_pushTimer); _pushTimer=null; syncPush().catch(()=>{}); }
-function _syncSig(){ return [STUDIO_ITEMS,REPORTS,ENGLISH_ITEMS].map(a=>(a||[]).map(x=>x&&x.id).join(",")).join("|"); }
+function _syncSig(){ return [STUDIO_ITEMS,(REPORTS||[]).filter(r=>!(r&&INVEST_TYPES.has(r.type))),ENGLISH_ITEMS].map(a=>(a||[]).map(x=>x&&x.id).join(",")).join("|"); }
 function _syncStamp(){ LAST_SYNC=new Date().toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}); try{ localStorage.setItem('histara_last_sync',LAST_SYNC); }catch(e){} }
 function _refreshSyncedView(){
   const t=document.getElementById('syncToast'); if(t) t.remove();
@@ -2664,475 +2664,12 @@ async function analyzeStats(){
 }
 
 // ═══════════════════════════════════
-//  INVESTMENT CENTER (Sterling + team) — NOT licensed financial advice
+//  📈 투자·자산 → HaJuNa Money (v15.2): 공개 저장소·클라우드 동기화에서 빼고, Mint 로컬 비공개 앱으로 옮김.
+//  여기에는 '옮기기'만 남김: 암호 백업 만들기 → Mint의 http://127.0.0.1:8765 에서 열기 → 이 기기 숫자 지우기
 // ═══════════════════════════════════
-const PORTFOLIO_DEFAULT = {      // v14.4: 실제 숫자는 🔒 내 정보 파일에서 (코드에는 없음)
-  roth:{ broker:"", weekly:0, day:"", value:0, holdings:[] },
-  k401:{ provider:"", type:"Traditional", balance:0, wage:0, hours:40, pct:0, match:0, employer:"", role:"" },
-  stocks:{ broker:"", value:0, holdings:[] },
-  home:{ value:0, mortgage:0, rate:0, payment:0 },
-  debts:[]
-};
-let PORTFOLIO=(function(){ try{return Object.assign({},PORTFOLIO_DEFAULT,JSON.parse(localStorage.getItem('histara_portfolio')||'{}'))}catch(e){return PORTFOLIO_DEFAULT} })();
-function persistPortfolio(){ try{localStorage.setItem('histara_portfolio', JSON.stringify(PORTFOLIO))}catch(e){} }
-function k401Weekly(){ const k=PORTFOLIO.k401; const gross=k.wage*k.hours; return {gross, emp:gross*k.pct/100, match:gross*k.match/100}; }
-function netWorth(){
-  const p=PORTFOLIO;
-  const assets=(p.k401.balance||0)+(p.roth.value||0)+(p.stocks.value||0)+(p.home.value||0);
-  const homeEquity=(p.home.value||0)-(p.home.mortgage||0);
-  const liab=(p.debts||[]).reduce((s,d)=>s+(d.balance||0),0);
-  const investable=(p.k401.balance||0)+(p.roth.value||0)+(p.stocks.value||0);
-  const monthlyDebt=(p.debts||[]).reduce((s,d)=>s+(d.monthly||0),0);
-  return {assets, liab, net:assets-liab, homeEquity, investable, monthlyDebt};
-}
-
-// ── v12 투자 · 은퇴: 계좌 입력 없이 — 한 번 넣는 프로필 + 거시 + S&P 500 흐름 + 이달의 투자처 ──
-function retireDefaults(){
-  // 예전에 앱에 넣어 둔 값이 있으면 거기서 대략 계산 (한 번만 확인하면 됨)
-  let monthly=1400, current=156000, income=142000;
-  try{ const k=PORTFOLIO.k401, r=PORTFOLIO.roth, s=PORTFOLIO.stocks;
-    income=Math.round(k.wage*k.hours*52/1000)*1000;
-    monthly=Math.round((k.wage*k.hours*52*(k.pct+k.match)/100 + r.weekly*52)/12/50)*50;
-    current=Math.round(((k.balance||0)+(r.value||0)+(s.value||0))/1000)*1000; }catch(e){}
-  return {age:ageNow(), retireAge:PROFILE.retireAge||67, monthly, current, income, raise:1, set:false};
-}
-let RETIRE=(function(){ try{ return Object.assign(retireDefaults(), JSON.parse(localStorage.getItem('histara_retire')||'{}')); }catch(e){ return retireDefaults(); } })();
-function persistRetire(){ try{ localStorage.setItem('histara_retire', JSON.stringify(RETIRE)); }catch(e){} }
-const RET_SCEN=[["보수",0.03],["기본",0.05],["낙관",0.065]];   // 물가를 뺀 연 실질 수익률 가정
-function stockPctAt(age){ return Math.max(40, Math.min(90, 120-age)); }   // 나이에 따른 주식 비중 (흔히 쓰는 경험칙)
-function projectRetire(p, rate, extraMonthly){
-  const months=Math.max(0,(p.retireAge-p.age)*12), r=rate/12; let bal=p.current, m=p.monthly+(extraMonthly||0); const path=[];
-  for(let i=1;i<=months;i++){ bal=bal*(1+r)+m; if(i%12===0){ m*=1+(p.raise||0)/100; path.push({age:p.age+i/12, bal}); } }
-  return {bal, path};
-}
-const $k=(v)=>"$"+(v>=1e6?(v/1e6).toFixed(2)+"M":Math.round(v/1000).toLocaleString()+"K");
-
-// ══════════════════════════════════════════════════════════════════
-//  💰 내 자산 · 명세서 (v15.0) — 계좌·카드·급여명세서 CSV/PDF/사진을 올리면 Ledger가 숫자만 뽑고,
-//  Sterling·Grant가 재정·세금을 점검. 원본 파일은 저장하지 않고, 뽑은 숫자는 이 기기에만 (계좌번호는 끝 4자리)
-// ══════════════════════════════════════════════════════════════════
-const FIN=(function(){ try{ return Object.assign({docs:[],home:{},tags:{}}, JSON.parse(localStorage.getItem('histara_fin')||'{}')); }catch(e){ return {docs:[],home:{},tags:{}}; } })();
-function persistFin(){ try{ localStorage.setItem('histara_fin', JSON.stringify({docs:FIN.docs.slice(0,240), filing:FIN.filing||"", home:FIN.home||{}, tags:FIN.tags||{}})); }catch(e){ showErr("저장 공간이 부족해요 — 오래된 명세서를 몇 개 지워 주세요"); } }
-const FIN_TYPES={bank:["🏦","은행"],card:["💳","카드"],brokerage:["📊","증권"],retirement:["🧓","은퇴 계좌"],paystub:["🧾","급여명세서"],loan:["🏠","대출"],w2:["📑","W-2"],insurance:["🛡","보험"],property:["🏡","재산세·평가"],fee_notice:["🔎","수수료 안내"],other:["📄","기타"]};
-// v15.1 기준 숫자 (매년 바뀜 — Grant 점검은 검색으로 다시 확인). 출처: IRS Rev. Proc. 2025-32, OBBBA
-const FIN_REF={year:2026, std:{mfj:32200,single:16100,hoh:24150,mfs:16100}, salt:40400, saltMfs:20200, k401:24500, k401catch:8000, k401catch6063:11250, ira:7500, dcfsa:7500, hysa:4.0, ot:{mfj:25000,other:12500}};
-const P2P_CATS=["아이 돌봄","생활비·가족","집 수리·공사","저축·투자로 옮김","기부","빌려준 돈","기타"];
-const FIN_CATS=["장보기","외식","교통·차","주거·공과금","보험","의료","아이·교육","쇼핑","여가·여행","구독","기부","기타"];
-const $m=v=>typeof v==="number"&&isFinite(v)?(v<0?"-$":"$")+Math.abs(Math.round(v)).toLocaleString("en-US"):"–";
-const $p=v=>typeof v==="number"&&isFinite(v)?(v*100).toFixed(1)+"%":"–";
-const LEDGER_SYS=`You are Ledger, the statement reader on Histara's finance team. You read ONE financial document (bank / credit card / brokerage / retirement (401k, IRA) / pay stub / loan or mortgage or escrow analysis / W-2 / insurance bill / property tax or assessment notice / retirement plan fee or safe-harbor notice) and return ONLY the numbers as JSON.
-PRIVACY: never output full account numbers, SSN, street addresses, phone numbers, or names of other people. Account → last 4 digits only. Do not copy free-text notes.
-Rules: numbers are plain numbers in USD (no $ or commas; negatives for money out). Dates YYYY-MM-DD. If a section does not apply, omit it. Do not invent values — use null when unsure.
-Card/bank: do NOT list every transaction. Summarize spending into these Korean categories only: ${FIN_CATS.join(", ")}; plus top merchants and recurring charges.
-Bank "spending" EXCLUDES: credit-card payments, loan/mortgage payments, transfers between the owner's own accounts, and person-to-person money (those go elsewhere, so nothing is counted twice).
-Bank "p2p": every Venmo/Zelle/PayPal/Cash App payment, written check, mobile/check deposit and benefit reimbursement (FSA/HSA claim) — date, direction, amount, channel ONLY, never the other person's name or memo. Own-account transfers → "internal_transfers" totals. Savings interest rate → balance.apy (percent number, 0.04 means 0.04%).
-Loan / mortgage / home-equity statement or escrow analysis → doc_type "loan" + "loan" section (escrow analysis: yearly tax & insurance, surplus or shortage, payment change).
-W-2 → doc_type "w2". Insurance bill or declarations → "insurance" (term_months is 6 or 12 — read it, do not assume). Property tax bill / assessment notice → "property".
-401k plan fee disclosure (404a-5), safe-harbor or match notice, quarterly fee lines → "fee_notice" or "retirement" with the "retirement" section; fund expense ratios as percent numbers (0.47 means 0.47%).
-Pay stub: fill "paystub" carefully, current period AND year-to-date.
-Holdings: asset_class one of us_stock, intl_stock, bond, cash, real_estate, other (target-date or balanced funds → "other" with a note of their stock %).
-Respond with ONLY the JSON object (start with {).
-JSON: {"doc_type":"bank|card|brokerage|retirement|paystub|loan|w2|insurance|property|fee_notice|other","institution":"","account_name":"","account_last4":"","period_start":"","period_end":"","as_of":"",
-"balance":{"ending":null,"beginning":null,"cash":null,"credit_limit":null,"min_payment":null,"apr":null,"apy":null,"due_date":null,"interest_charged":null,"promo_ending":""},
-"flows":{"deposits":null,"withdrawals":null,"contributions":null,"employer_contributions":null,"dividends":null,"interest":null,"fees":null},
-"holdings":[{"symbol":"","name":"","qty":null,"price":null,"value":null,"cost_basis":null,"asset_class":"","expense_ratio":null}],
-"spending":[{"category":"","amount":null}],"top_merchants":[{"name":"","amount":null,"count":null}],"recurring":[{"name":"","amount":null,"cadence":"monthly"}],
-"paystub":{"pay_date":"","pay_frequency":"weekly|biweekly|semimonthly|monthly","period_start":"","period_end":"","hours":null,"rate":null,"gross":null,"overtime":null,"dependent_care_fsa":null,"net":null,"federal_tax":null,"state_tax":null,"local_tax":null,"social_security":null,"medicare":null,"pretax_401k":null,"roth_401k":null,"employer_match":null,"health_dental_vision":null,"hsa":null,"fsa":null,"other_pretax":null,"other_posttax":null,
- "ytd":{"gross":null,"overtime":null,"federal_tax":null,"state_tax":null,"local_tax":null,"social_security":null,"medicare":null,"pretax_401k":null,"roth_401k":null,"employer_match":null}},
-"p2p":[{"date":"","direction":"out|in","amount":null,"channel":"venmo|zelle|paypal|check|mobile_deposit|reimbursement|other"}],"internal_transfers":{"in":null,"out":null},
-"loan":{"kind":"mortgage|home_equity|auto|student|personal|other","principal_balance":null,"rate":null,"payment":null,"principal_part":null,"interest_part":null,"escrow_part":null,"escrow_tax_annual":null,"escrow_insurance_annual":null,"escrow_surplus":null,"escrow_shortage":null,"new_payment":null,"ytd_interest":null,"ytd_principal":null},
-"w2":{"tax_year":null,"wages":null,"federal_withheld":null,"ss_wages":null,"medicare_wages":null,"state_wages":null,"state_tax":null,"local_tax":null,"dependent_care":null,"box12":[{"code":"","amount":null}],"box14":[{"label":"","amount":null}]},
-"insurance":{"kind":"auto|home|umbrella|life|other","premium":null,"term_months":null,"dwelling_coverage":null,"deductible":null,"renewal":""},
-"property":{"tax_year":null,"market_value":null,"assessed_total":null,"assessed_land":null,"equalization_rate":null,"tax_annual":null,"exemptions":null},
-"retirement":{"deferral_pct":null,"match_formula":"","managed_fee":null,"admin_fee":null,"fee_period":"quarter|year"},
-"notes":["특이사항 한 줄 (한국어)"],"confidence":"high|medium|low"}`;
-function _b64(file){ return new Promise((ok,no)=>{ const r=new FileReader(); r.onload=()=>ok(String(r.result).split(",")[1]||""); r.onerror=()=>no(r.error); r.readAsDataURL(file); }); }
+const MONEY_URL="http://127.0.0.1:8765";
+const INVEST_TYPES=new Set(["invest","macro","sp500","kids"]);   // 투자 보고서 종류 (백업에 함께 담음)
 function _txt(file){ return new Promise((ok,no)=>{ const r=new FileReader(); r.onload=()=>ok(String(r.result||"")); r.onerror=()=>no(r.error); r.readAsText(file); }); }
-async function _finBlocks(file){
-  const n=(file.name||"").toLowerCase(), t=file.type||"";
-  if(file.size>25*1024*1024) throw new Error("파일이 25MB보다 커요");
-  if(t==="application/pdf"||n.endsWith(".pdf")) return [{type:"document",source:{type:"base64",media_type:"application/pdf",data:await _b64(file)}}];
-  if(/^image\/(png|jpeg|gif|webp)$/.test(t)||/\.(png|jpe?g|gif|webp)$/.test(n)){
-    const mt=/png/.test(t+n)?"image/png":/gif/.test(t+n)?"image/gif":/webp/.test(t+n)?"image/webp":"image/jpeg";
-    return [{type:"image",source:{type:"base64",media_type:mt,data:await _b64(file)}}]; }
-  if(/\.(csv|txt|tsv|ofx|qfx)$/.test(n)||/^text\//.test(t)){
-    let s=await _txt(file); if(s.length>90000) s=s.slice(0,90000)+"\n…(뒷부분 생략)";
-    return [{type:"text",text:`파일 이름: ${file.name}\n내용(CSV/텍스트):\n${s}`}]; }
-  if(/heic|heif/.test(t+n)) throw new Error("HEIC 사진은 못 읽어요 — 사진 앱에서 JPG로 공유하거나 화면 캡처로 올려 주세요");
-  throw new Error("CSV · PDF · 사진(JPG·PNG)만 올릴 수 있어요");
-}
-async function _finHash(file){ const buf=await crypto.subtle.digest("SHA-256", await file.arrayBuffer()); return [...new Uint8Array(buf)].slice(0,12).map(b=>b.toString(16).padStart(2,"0")).join(""); }
-async function _finCall(blocks, prompt){
-  if(!API_KEY) return "__NO_KEY__";
-  const content=blocks.concat([{type:"text",text:prompt||"이 문서를 읽고 JSON만 돌려줘."}]);
-  let out=await callClaudeOnce(LEDGER_SYS, content, null, {maxTokens:6000, timeoutMs:180000});
-  if(out==="__NET__"||out==="__TIMEOUT__"){ await new Promise(r=>setTimeout(r,1500)); out=await callClaudeOnce(LEDGER_SYS, content, null, {maxTokens:6000, timeoutMs:200000}); }
-  return out;
-}
-let FIN_PENDING=[];   // 확인 기다리는 추출 결과
-async function finUpload(files){
-  const box=document.getElementById("finUploadResult"); if(!box) return;
-  files=[...(files||[])]; if(!files.length) return;
-  if(!API_KEY){ box.innerHTML=keyGuard("__NO_KEY__"); return; }
-  CUR_FEATURE="invest";
-  for(let i=0;i<files.length;i++){
-    const f=files[i];
-    let hash="";
-    try{ hash=await _finHash(f); }catch(e){}
-    if(hash&&(FIN.docs.some(o=>o.hash===hash)||FIN_PENDING.some(p=>p.hash===hash))){ FIN_PENDING.push({err:"같은 파일이 이미 있어요 — 건너뜀 (API 비용 없음)", name:f.name}); continue; }
-    liveLog(box,`📄 ${i+1}/${files.length} 「${esc(f.name)}」 Ledger가 읽는 중... (20~60초)`);
-    try{
-      const raw=await _finCall(await _finBlocks(f));
-      const g=keyGuard(raw); if(g){ box.innerHTML=g; CUR_FEATURE=null; return; }
-      if(raw==="__ERR__"||raw==="__RATE__"){ FIN_PENDING.push({err:(LAST_ERR||"읽기 실패").slice(0,140), name:f.name}); continue; }
-      const d=pj(raw);
-      if(!d||!d.doc_type){ FIN_PENDING.push({err:LAST_TRUNC?"내용이 길어서 끝이 잘렸어요 — 기간을 나눠 올려 주세요":"숫자를 읽지 못했어요", name:f.name}); continue; }
-      FIN_PENDING.push({id:Date.now()+i, hash, file:{name:f.name,size:f.size}, d, partial:!!d._partial});
-    }catch(e){ FIN_PENDING.push({err:String(e.message||e).slice(0,140), name:f.name}); }
-  }
-  CUR_FEATURE=null;
-  box.innerHTML=finPendingHTML();
-}
-function _finWhen(d){ return d.period_end||d.as_of||(d.paystub&&d.paystub.pay_date)||(d.w2&&d.w2.tax_year&&String(d.w2.tax_year))||(d.insurance&&d.insurance.renewal)||(d.property&&d.property.tax_year&&String(d.property.tax_year))||""; }
-function _finKey(d){ return [d.doc_type, (d.institution||"").toLowerCase().replace(/\W/g,""), d.account_last4||"", (d.loan&&d.loan.kind)||(d.insurance&&d.insurance.kind)||"", _finWhen(d)].join("|"); }
-function finPendingHTML(){
-  if(!FIN_PENDING.length) return "";
-  return `<div style="font-size:10px;color:var(--sub);margin:4px 0 6px">읽은 숫자가 맞는지 보고 <b>저장</b>해 주세요. 원본 파일은 저장하지 않아요.</div>`+FIN_PENDING.map((x,i)=>x.err
-    ?`<div class="card" style="padding:10px;margin-bottom:7px;border-color:rgba(248,112,144,.4)"><div style="font-size:11px;color:var(--danger)">✗ ${esc(x.name)} — ${esc(x.err)}</div>
-       <button class="pill" style="font-size:9px;margin-top:6px" onclick="FIN_PENDING.splice(${i},1);document.getElementById('finUploadResult').innerHTML=finPendingHTML()">닫기</button></div>`
-    :`<div class="card" style="padding:10px;margin-bottom:7px;border-left:3px solid var(--gold)">${finDocSummary(x.d)}
-       ${x.partial?`<div style="font-size:9px;color:var(--gold);margin-top:4px">⚠ 끝부분이 잘려 일부만 읽었어요</div>`:""}
-       <div style="display:flex;gap:6px;margin-top:8px"><button class="btn-ok" style="width:auto;padding:6px 14px;font-size:11px" onclick="finSave(${i})">💾 저장</button>
-       <button class="pill" style="font-size:10px;color:var(--rose)" onclick="FIN_PENDING.splice(${i},1);document.getElementById('finUploadResult').innerHTML=finPendingHTML()">버리기</button>
-       <span style="flex:1"></span><span style="font-size:9px;color:var(--muted);align-self:center">${esc(x.file.name)}</span></div></div>`).join("");
-}
-function finSave(i){
-  const x=FIN_PENDING[i]; if(!x||x.err) return;
-  const d=x.d; d.account_last4=String(d.account_last4||"").replace(/\D/g,"").slice(-4);
-  const key=_finKey(d);
-  FIN.docs=FIN.docs.filter(o=>_finKey(o.d)!==key);       // 같은 계좌·같은 기간은 새것으로 바꿈
-  FIN.docs.unshift({id:x.id, hash:x.hash||"", added:new Date().toISOString(), file:x.file, d});
-  persistFin(); FIN_PENDING.splice(i,1);
-  const b=document.getElementById("invest-body"); if(b) b.innerHTML=renderInvestBody("money");
-  const r=document.getElementById("finUploadResult"); if(r) r.innerHTML=finPendingHTML();
-}
-function finDel(id){ if(!confirm("이 명세서 기록을 지울까요?")) return; FIN.docs=FIN.docs.filter(o=>o.id!==id); persistFin(); const b=document.getElementById("invest-body"); if(b) b.innerHTML=renderInvestBody("money"); }
-function finDocSummary(d){
-  const [ic,lb]=FIN_TYPES[d.doc_type]||FIN_TYPES.other; const b=d.balance||{}, ps=d.paystub||{};
-  const when=_finWhen(d);
-  let h=`<div style="font-size:12px;font-weight:700">${ic} ${esc(d.institution||lb)}${d.account_last4?` ··${esc(d.account_last4)}`:""} <span style="font-size:9px;color:var(--sub);font-weight:500">${lb}${when?" · "+esc(when):""}${d.confidence&&d.confidence!=="high"?` · 확신 ${esc(d.confidence)}`:""}</span></div>`;
-  const row=(l,v)=>`<span style="font-size:10px;color:var(--sub);margin-right:10px">${l} <b style="color:var(--text)">${v}</b></span>`;
-  let r="";
-  if(d.doc_type==="paystub"){ const tax=["federal_tax","state_tax","local_tax","social_security","medicare"].reduce((t,k)=>t+(Number(ps[k])||0),0);
-    r+=row("총급여",$m(ps.gross))+row("실수령",$m(ps.net))+row("세금",$m(tax))+row("401k",$m((Number(ps.pretax_401k)||0)+(Number(ps.roth_401k)||0)))+(ps.ytd&&ps.ytd.gross?row("올해 누계",$m(ps.ytd.gross)):""); }
-  else if(d.doc_type==="w2"&&d.w2){ const w=d.w2; r+=row("Box1 임금",$m(w.wages))+row("연방 원천",$m(w.federal_withheld))+row("주 세금",$m(w.state_tax))+(w.dependent_care?row("부양 보육",$m(w.dependent_care)):"")+(w.box14||[]).slice(0,3).map(x=>row(esc(x.label||"14"),$m(x.amount))).join(""); }
-  else if(d.doc_type==="insurance"&&d.insurance){ const i=d.insurance; r+=row(i.kind==="home"?"주택보험":i.kind==="auto"?"자동차보험":"보험료",$m(i.premium))+row("기간",i.term_months?i.term_months+"개월":"확인 필요")+(i.dwelling_coverage?row("건물 보장",$m(i.dwelling_coverage)):""); }
-  else if(d.doc_type==="property"&&d.property){ const q=d.property; r+=row("재산세",$m(q.tax_annual))+row("평가액",$m(q.assessed_total))+(q.assessed_land?row("대지 평가",$m(q.assessed_land)):"")+(q.equalization_rate?row("균등화율",q.equalization_rate+"%"):"")+(q.market_value?row("시장가",$m(q.market_value)):""); }
-  else{ if(b.ending!=null) r+=row(d.doc_type==="card"?"청구액":"잔고",$m(b.ending));
-    if(b.apy!=null) r+=row("이자",b.apy+"%");
-    const L=d.loan||{}; if(L.principal_balance!=null) r+=row("원금 잔액",$m(L.principal_balance)); if(L.payment) r+=row("월 납부",$m(L.payment)); if(L.escrow_part) r+=row("에스크로",$m(L.escrow_part)); if(L.escrow_surplus) r+=row("에스크로 남음",$m(L.escrow_surplus)); if(L.escrow_shortage) r+=row("에스크로 부족",$m(L.escrow_shortage));
-    const R=d.retirement||{}; if(R.match_formula) r+=row("매칭",esc(R.match_formula)); if(R.managed_fee) r+=row("관리 수수료",$m(R.managed_fee));
-    const hv=(d.holdings||[]).reduce((t,x)=>t+(Number(x.value)||0),0); if(hv) r+=row(`보유 ${(d.holdings||[]).length}종목`,$m(hv));
-    const sp=(d.spending||[]).reduce((t,x)=>t+Math.abs(Number(x.amount)||0),0); if(sp) r+=row("지출",$m(sp));
-    const fl=d.flows||{}; if(fl.contributions) r+=row("납입",$m(fl.contributions)); if(fl.employer_contributions) r+=row("회사 매칭",$m(fl.employer_contributions)); if(fl.fees) r+=row("수수료",$m(fl.fees)); }
-  h+=`<div style="margin-top:4px;line-height:1.7">${r||'<span style="font-size:10px;color:var(--muted)">숫자 없음</span>'}</div>`;
-  if((d.notes||[]).length) h+=`<div style="font-size:9.5px;color:var(--sub);margin-top:3px">${d.notes.slice(0,2).map(esc).join(" · ")}</div>`;
-  return h;
-}
-// ── 모아 보기 (가장 최근 명세서 기준) ──
-function finLatest(){
-  const by={}; FIN.docs.forEach(o=>{ const d=o.d; if(!["bank","card","brokerage","retirement","loan"].includes(d.doc_type)) return;
-    if(d.doc_type==="loan"&&!(d.balance&&d.balance.ending!=null)&&!(d.loan&&d.loan.principal_balance!=null)) return;   // 에스크로 분석서 등 잔액 없는 문서
-    const k=[d.doc_type,(d.institution||"").toLowerCase().replace(/\W/g,""),d.account_last4||"",(d.loan&&d.loan.kind)||""].join("|");
-    const t=d.period_end||d.as_of||""; if(!by[k]||t>(by[k].d.period_end||by[k].d.as_of||"")) by[k]=o; });
-  return Object.values(by);
-}
-function finAgg(){
-  const acc=finLatest(); let assets=0, debts=0; const cls={us_stock:0,intl_stock:0,bond:0,cash:0,other:0,real_estate:0};
-  let stmtMort=0;
-  const accounts=acc.map(o=>{ const d=o.d, b=d.balance||{}; let v=Number(b.ending)||0;
-    if(d.doc_type==="loan"&&d.loan&&d.loan.principal_balance!=null) v=Number(d.loan.principal_balance)||v;
-    if(d.doc_type==="loan"&&d.loan&&d.loan.kind==="mortgage") stmtMort+=Math.abs(v);
-    const hv=(d.holdings||[]).reduce((t,x)=>t+(Number(x.value)||0),0); if(!v&&hv) v=hv;
-    const isDebt=d.doc_type==="card"||d.doc_type==="loan";
-    if(isDebt) debts+=Math.abs(v); else assets+=v;
-    if(d.doc_type==="brokerage"||d.doc_type==="retirement"){ let hsum=0;
-      (d.holdings||[]).forEach(x=>{ const c=cls[x.asset_class]!=null?x.asset_class:"other"; cls[c]+=Number(x.value)||0; hsum+=Number(x.value)||0; });
-      if(v>hsum) cls.cash+=Math.max(0,(Number(b.cash)||0)||(v-hsum)); }
-    if(d.doc_type==="bank") cls.cash+=v;
-    return {id:o.id, d, v, isDebt}; });
-  const home=(PORTFOLIO.home||{}), H=FIN.home||{};
-  const mort=stmtMort?0:(Number(home.mortgage)||0);   // 모기지 명세서가 있으면 그 잔액(위 debts에 들어감)을 씀 — 두 번 세지 않게
-  const prop=FIN.docs.filter(o=>o.d.doc_type==="property"&&o.d.property).map(o=>o.d.property).sort((a,b)=>(b.tax_year||0)-(a.tax_year||0))[0]||{};
-  const hv=Number(H.market)||Number(home.value)||Number(prop.market_value)||(prop.assessed_total&&prop.equalization_rate?prop.assessed_total/(prop.equalization_rate/100):0);
-  // 최근 45일 안의 카드·은행 지출을 분류별로
-  const cut=new Date(Date.now()-45*864e5).toISOString().slice(0,10), spend={};
-  FIN.docs.forEach(o=>{ const d=o.d; if((d.doc_type==="card"||d.doc_type==="bank")&&(d.period_end||d.as_of||"")>=cut) (d.spending||[]).forEach(x=>{ const c=FIN_CATS.includes(x.category)?x.category:"기타"; spend[c]=(spend[c]||0)+Math.abs(Number(x.amount)||0); }); });
-  const pay=FIN.docs.filter(o=>o.d.doc_type==="paystub").sort((a,b)=>((b.d.paystub||{}).pay_date||"")>((a.d.paystub||{}).pay_date||"")?1:-1)[0];
-  return {accounts, assets, debts, cls, home:hv, mortgage:mort, net:assets+hv-debts-mort, spend, pay:pay&&pay.d.paystub, payInst:pay&&pay.d.institution};
-}
-// ── v15.1 돈의 흐름 · 집 · 점검 신호 (API 없이 숫자로) ──
-function _latestBy(type, keyf){ const by={}; FIN.docs.forEach(o=>{ const d=o.d; if(d.doc_type!==type) return; const k=keyf(d); const t=_finWhen(d); if(!by[k]||t>_finWhen(by[k].d)) by[k]=o; }); return Object.values(by); }
-function _payPer(){
-  const ps=FIN.docs.filter(o=>o.d.doc_type==="paystub"&&o.d.paystub&&o.d.paystub.gross).map(o=>o.d.paystub).sort((a,b)=>(b.pay_date||"")>(a.pay_date||"")?1:-1);
-  const f=(ps[0]||{}).pay_frequency; const tab={weekly:52,biweekly:26,semimonthly:24,monthly:12};
-  if(tab[f]) return {per:tab[f], ps};
-  if(ps.length>1){ const g=Math.abs((new Date(ps[0].pay_date)-new Date(ps[1].pay_date))/864e5); if(g>=6&&g<=8) return {per:52,ps}; if(g>=13&&g<=15) return {per:26,ps}; if(g>=14.5&&g<=17) return {per:24,ps}; if(g>=27&&g<=32) return {per:12,ps}; }
-  return {per:26, ps, guessed:true};
-}
-function _p2p(){   // 은행 명세서의 사람 간 송금·수표: 같은 금액이 다시 들어온 건 '대신 내고 돌려받음'으로 짝지음
-  const out=[];
-  _latestBy("bank",d=>(d.institution||"")+"|"+(d.account_last4||"")).forEach(o=>{
-    const L=(o.d.p2p||[]).map((x,i)=>Object.assign({i, key:o.id+"|"+i},x,{amount:Math.abs(Number(x.amount)||0)}));
-    const ins=L.filter(x=>x.direction==="in"), used=new Set();
-    L.filter(x=>x.direction==="out"&&x.amount).forEach(x=>{
-      const m=ins.find(y=>!used.has(y.i)&&Math.abs(y.amount-x.amount)<=1);
-      if(m){ used.add(m.i); out.push(Object.assign({matched:true, by:m.channel},x)); } else out.push(Object.assign({matched:false},x));
-    });
-  });
-  return out;
-}
-function finFlow(){
-  const {per, ps, guessed}=_payPer(); const P=ps[0]; const F={per, guessed, items:{}, fixed:0, variable:0, save:0};
-  if(P){ const avg=k=>{ const v=ps.slice(0,2).map(x=>Number(x[k])||0); return v.reduce((a,b)=>a+b,0)/v.length; };
-    F.grossMo=avg("gross")*per/12; F.netMo=avg("net")*per/12;
-    F.k401Mo=(avg("pretax_401k")+avg("roth_401k"))*per/12; F.matchMo=avg("employer_match")*per/12;
-    F.dcfsaYr=(Number(P.dependent_care_fsa)||0)*per; }
-  // 회사 매칭이 급여명세서에 없으면 은퇴 계좌 명세서(분기)에서
-  if(!F.matchMo){ const r=_latestBy("retirement",d=>(d.institution||"")+"|"+(d.account_last4||""))[0]; const e=r&&Number((r.d.flows||{}).employer_contributions);
-    if(e&&r.d.period_start&&r.d.period_end){ const mo=Math.max(1,Math.round((new Date(r.d.period_end)-new Date(r.d.period_start))/(30.4*864e5))); F.matchMo=e/mo; } }
-  const add=(grp,k,v)=>{ if(!v) return; F.items[k]=(F.items[k]||0)+v; F[grp]+=v; };
-  const loans=_latestBy("loan",d=>(d.institution||"")+"|"+((d.loan||{}).kind||"")+"|"+(d.account_last4||""));
-  loans.forEach(o=>{ const L=o.d.loan||{}; const pay=Number(L.new_payment)||Number(L.payment)||Math.abs(Number((o.d.balance||{}).min_payment)||0);
-    add("fixed", L.kind==="mortgage"?"모기지 (원리금+에스크로)":L.kind==="home_equity"?"홈에퀴티 대출":"기타 대출", pay); });
-  const escIns=loans.some(o=>(o.d.loan||{}).escrow_insurance_annual>0);
-  _latestBy("insurance",d=>(d.insurance||{}).kind||"").forEach(o=>{ const I=o.d.insurance||{}; if(I.kind==="home"&&escIns) return;
-    const yr=(Number(I.premium)||0)*(12/(Number(I.term_months)||12)); add("fixed", I.kind==="auto"?"자동차 보험":I.kind==="home"?"주택 보험":"보험", yr/12); });
-  _latestBy("card",d=>(d.institution||"")+"|"+(d.account_last4||"")).forEach(o=>{ const sp=(o.d.spending||[]).reduce((t,x)=>t+Math.abs(Number(x.amount)||0),0); add("variable","카드 사용", sp); });
-  _latestBy("bank",d=>(d.institution||"")+"|"+(d.account_last4||"")).forEach(o=>{ (o.d.spending||[]).forEach(x=>add("variable", "계좌 직접 지출", Math.abs(Number(x.amount)||0))); });
-  const pp=_p2p(); F.p2p=pp; F.p2pOpen=pp.filter(x=>!x.matched&&!FIN.tags[x.key]).reduce((t,x)=>t+x.amount,0);
-  F.movedMo=0; pp.filter(x=>!x.matched).forEach(x=>{ if(FIN.tags[x.key]==="저축·투자로 옮김"){ F.movedMo+=x.amount; return; } add("variable", FIN.tags[x.key]?"송금·수표: "+FIN.tags[x.key]:"송금·수표 (분류 전)", x.amount); });
-  _latestBy("brokerage",d=>(d.institution||"")+"|"+(d.account_last4||"")).forEach(o=>{ const c=Number((o.d.flows||{}).contributions)||0; if(c) F.brokerMo=(F.brokerMo||0)+c; });
-  F.save=(F.k401Mo||0)+(F.matchMo||0)+(F.brokerMo||0)+F.movedMo;
-  F.out=F.fixed+F.variable; F.left=F.netMo!=null?F.netMo-F.out-(F.brokerMo||0)-F.movedMo:null;
-  F.saveRate=F.grossMo?(F.save/(F.grossMo+(F.matchMo||0))):null;
-  return F;
-}
-function finHouse(A){
-  const H=FIN.home||{}; const loans=_latestBy("loan",d=>(d.institution||"")+"|"+((d.loan||{}).kind||"")+"|"+(d.account_last4||""));
-  const L=k=>loans.filter(o=>(o.d.loan||{}).kind===k).map(o=>o.d.loan);
-  const m=L("mortgage").sort((a,b)=>(b.principal_balance||0)-(a.principal_balance||0))[0]||{}, he=L("home_equity")[0]||{};
-  const esc_=loans.map(o=>o.d.loan||{}).find(l=>l.escrow_tax_annual)||{};
-  const prop=FIN.docs.filter(o=>o.d.doc_type==="property"&&o.d.property).map(o=>o.d.property).sort((a,b)=>(b.tax_year||0)-(a.tax_year||0))[0]||{};
-  const hi=_latestBy("insurance",d=>(d.insurance||{}).kind||"").map(o=>o.d.insurance).find(i=>i&&i.kind==="home")||{};
-  const value=A.home||0;
-  const taxYr=Number(prop.tax_annual)||Number(esc_.escrow_tax_annual)||0, insYr=Number(esc_.escrow_insurance_annual)||Number(hi.premium)||0;
-  let landShare=null, src="";
-  if(Number(H.land)&&value){ landShare=Number(H.land)/value; src="직접 넣은 대지 가치"; }
-  else if(Number(H.landPct)){ landShare=Number(H.landPct)/100; src="직접 넣은 대지 비율"; }
-  else if(prop.assessed_land&&prop.assessed_total){ landShare=prop.assessed_land/prop.assessed_total; src="재산 평가서의 대지/전체 비율"; }
-  else if(Number(H.assessedLand)&&Number(H.assessedTotal)){ landShare=Number(H.assessedLand)/Number(H.assessedTotal); src="평가서 숫자 (직접 입력)"; }
-  const mortBal=Number(m.principal_balance)||A.mortgage||0, heBal=Number(he.principal_balance)||0;
-  return {value, landShare, src, land:landShare!=null&&value?value*landShare:null, building:landShare!=null&&value?value*(1-landShare):null,
-    coverage:Number(H.coverage)||Number(hi.dwelling_coverage)||null, mortBal, mortRate:Number(m.rate)||null, heBal, heRate:Number(he.rate)||null,
-    pi:(Number(m.principal_part)||0)+(Number(m.interest_part)||0)||null, escrow:Number(m.escrow_part)||null, hePay:Number(he.payment)||null,
-    taxYr, insYr, surplus:Number(esc_.escrow_surplus)||Number(m.escrow_surplus)||0, shortage:Number(esc_.escrow_shortage)||0,
-    mortIntYtd:Number(m.ytd_interest)||null, mortWhen:(loans.find(o=>(o.d.loan||{})===m)||{d:{}}).d.period_end||"",
-    equity:value?value-mortBal-heBal:null, cltv:value?(mortBal+heBal)/value:null, effTax:value&&taxYr?taxYr/value:null};
-}
-function finSignals(A,F,Hs){
-  const S=[], add=(lvl,t,v)=>S.push({lvl,t,v:v||""});
-  // 1) 저축 이자
-  _latestBy("bank",d=>(d.institution||"")+"|"+(d.account_last4||"")).forEach(o=>{ const b=o.d.balance||{}; const bal=Number(b.ending)||0, apy=b.apy;
-    if(apy!=null&&apy<1&&bal>10000) add("high",`${esc(o.d.institution||"은행")} ··${esc(o.d.account_last4||"")} 이자 ${apy}% — ${$m(bal)}가 거의 놀고 있어요. 고금리 저축(약 ${FIN_REF.hysa}%+)이면 연 약 ${$m(bal*(FIN_REF.hysa-apy)/100)} 더`, "연 +"+$m(bal*(FIN_REF.hysa-apy)/100)); });
-  // 2) 401k 한도·매칭
-  const {per, ps}=_payPer(), P=ps[0];
-  if(P&&P.gross){ const k=(Number(P.pretax_401k)||0)+(Number(P.roth_401k)||0), pct=k/P.gross;
-    const ytd=P.ytd||{}, ytdK=(Number(ytd.pretax_401k)||0)+(Number(ytd.roth_401k)||0);
-    const d=P.pay_date?new Date(P.pay_date):new Date(); const end=new Date(d.getFullYear(),11,31); const left=Math.max(0,Math.floor((end-d)/(365/per*864e5)));
-    const age=ageNow(), lim=FIN_REF.k401+(age>=60&&age<=63?FIN_REF.k401catch6063:age>=50?FIN_REF.k401catch:0);
-    const proj=ytdK+left*k;
-    if(ytdK&&proj<lim-500) add("mid",`401k ${(pct*100).toFixed(1)}% — 올해 예상 ${$m(proj)}, 한도 ${$m(lim)}까지 ${$m(lim-proj)} 남음 (남은 급여 약 ${left}번). 세전이라 연방·주 세금이 그만큼 줄어요`);
-    const mf=FIN.docs.map(o=>(o.d.retirement||{}).match_formula).find(Boolean); const cap=mf&&(String(mf).match(/(\d+(?:\.\d+)?)\s*%\s*(?:of\s+)?(?:compensation|pay|salary|급여)/i)||String(mf).match(/up to\s*(\d+(?:\.\d+)?)\s*%/i));
-    if(cap&&pct*100+0.05<Number(cap[1])) add("high",`회사 매칭(${esc(mf)})을 다 못 받고 있어요 — 401k를 ${cap[1]}% 이상으로`);
-    else if(cap) add("ok",`회사 매칭(${esc(mf)}) 다 받는 중 ✓`);
-    if(F.dcfsaYr&&F.dcfsaYr<FIN_REF.dcfsa-100) add("info",`부양가족 보육 FSA 연 약 ${$m(F.dcfsaYr)} — ${FIN_REF.year} 한도 ${$m(FIN_REF.dcfsa)} (보육비가 더 있으면 다음 등록 때 올리기)`);
-  }
-  // 3) 은퇴 계좌 수수료·펀드 비용
-  _latestBy("retirement",d=>(d.institution||"")+"|"+(d.account_last4||"")).forEach(o=>{ const d=o.d, R=d.retirement||{}, bal=Number((d.balance||{}).ending)||(d.holdings||[]).reduce((t,x)=>t+(Number(x.value)||0),0);
-    const k=R.fee_period==="quarter"?4:1; const mg=(Number(R.managed_fee)||0)*k, ad=(Number(R.admin_fee)||0)*k;
-    const hv=(d.holdings||[]).filter(x=>x.expense_ratio!=null&&x.value), hs=hv.reduce((t,x)=>t+x.value,0); const er=hs?hv.reduce((t,x)=>t+x.value*x.expense_ratio,0)/hs:null;
-    if(mg&&bal) add("high",`관리형 계좌 수수료 연 약 ${$m(mg)} (잔고의 ${(mg/bal*100).toFixed(2)}%)${er!=null?` + 펀드 비용 평균 ${er.toFixed(2)}%`:""} — 저비용 target-date·인덱스(약 0.05~0.10%)로 직접 고르면 대부분 아낄 수 있어요`, "연 -"+$m(mg));
-    else if(er!=null&&er>0.3) add("mid",`펀드 비용 평균 ${er.toFixed(2)}% — 같은 계좌의 저비용 인덱스로 바꾸면 연 약 ${$m(bal*(er-0.08)/100)}`);
-    if(ad) add("info",`은퇴 계좌 관리비 연 약 ${$m(ad)} (플랜 공통 — 바꿀 수 없는 비용)`);
-    const hi=(d.holdings||[]).filter(x=>x.expense_ratio>=0.5); if(hi.length) add("info",`비싼 펀드 ${hi.length}개 (0.5%+): ${hi.slice(0,5).map(x=>esc(x.symbol||x.name||"")+" "+x.expense_ratio+"%").join(", ")}`);
-  });
-  // 4) 빚 금리 vs 현금 이자
-  const cash=A.accounts.filter(a=>a.d.doc_type==="bank").reduce((t,a)=>t+a.v,0);
-  if(Hs.heBal&&Hs.heRate&&Hs.heRate>FIN_REF.hysa+1){ const spare=Math.max(0,cash-(F.out||0)*6); if(spare>2000) add("mid",`홈에퀴티 ${Hs.heRate}% > 저축 이자 — 비상금(지출 6개월 ${$m((F.out||0)*6)})을 뺀 ${$m(spare)}로 일부 갚으면 연 약 ${$m(spare*Hs.heRate/100)} 이자 절약 (고정 금리·조기 상환 조건 확인)`); }
-  _latestBy("card",d=>(d.institution||"")+"|"+(d.account_last4||"")).forEach(o=>{ const b=o.d.balance||{}; if(Number(b.interest_charged)>0) add("high",`${esc(o.d.institution||"카드")} 이자 ${$m(b.interest_charged)} 붙었어요 — 전액 결제로`); if(b.promo_ending) add("info",`${esc(o.d.institution||"카드")} 프로모션 금리 끝남 (${esc(b.promo_ending)}) — 남은 잔액 확인`); });
-  // 5) 항목별 공제 vs 표준 공제
-  const filing=FIN.filing||"", std=FIN_REF.std[filing]||null;
-  if(std){ const _mo=x=>Math.max(1,Number(String(x||"").slice(5,7))||12); let mi=Hs.mortIntYtd&&Hs.mortWhen?Hs.mortIntYtd/_mo(Hs.mortWhen)*12:0;
-    const yt=(P&&P.ytd)||{}; const stYr=P&&yt.state_tax&&P.pay_date?Number(yt.state_tax)/(_mo(P.pay_date)/12)+(Number(yt.local_tax)||0):(FIN.docs.find(o=>o.d.doc_type==="w2")||{d:{w2:{}}}).d.w2.state_tax||0;
-    const salt=Math.min(filing==="mfs"?FIN_REF.saltMfs:FIN_REF.salt,(Hs.taxYr||0)+(Number(stYr)||0));
-    const give=(A.spend["기부"]||0)*12; const item=mi+salt+give;
-    if(item>std*0.8) add(item>std?"high":"mid",`항목별 공제 추정 ${$m(item)} (모기지 이자 ${$m(mi)} + SALT ${$m(salt)} + 기부 ${$m(give)}) vs 표준 ${$m(std)} — ${item>std?"항목별이 유리할 수 있어요 (배우자 주세금 포함 시 더 커짐)":"거의 비슷 — 배우자 숫자까지 넣으면 넘을 수 있어요"}. 홈에퀴티 이자는 집 구입·증축·수리에 썼을 때만 공제`, item>std?"공제 +"+$m(item-std):"");
-  }
-  // 6) W-2 초과근무 공제 (연방, 2025–2028)
-  FIN.docs.filter(o=>o.d.doc_type==="w2"&&o.d.w2).forEach(o=>{ const w=o.d.w2; const ot=(w.box14||[]).find(x=>/\bOT\b|overtime|TTOC/i.test(x.label||""));
-    if(ot&&ot.amount) add("mid",`${w.tax_year||""} W-2 초과근무(Box 14) ${$m(ot.amount)} — 연방 '초과근무 공제'(2025–2028, 1.5배 중 웃돈 부분만, MFJ 최대 ${$m(FIN_REF.ot.mfj)}). 신고에 넣었는지 확인 · NY 주세금엔 적용 안 됨`); });
-  // 7) 보험 기간 확인
-  _latestBy("insurance",d=>(d.insurance||{}).kind||"").forEach(o=>{ const I=o.d.insurance||{}; if(!I.term_months) add("info",`${I.kind==="auto"?"자동차":"보험"}료 ${$m(I.premium)} — 6개월 약관인지 12개월인지 확인 (연 비용이 두 배 차이)`); });
-  // 8) 송금·수표
-  if(F.p2pOpen>300) add("mid",`분류 안 된 송금·수표 ${$m(F.p2pOpen)} — 아래에서 무엇인지 골라 주세요 (돈 흐름 정확도)`);
-  const mt=(F.p2p||[]).filter(x=>x.matched); if(mt.length) add("ok",`대신 내고 돌려받은 송금 ${mt.length}건 ${$m(mt.reduce((t,x)=>t+x.amount,0))} — 지출에서 뺐어요 (같은 금액 입금·FSA 환급과 짝지음)`);
-  // 9) 주거비 비율
-  if(F.grossMo&&Hs){ const hp=F.items["모기지 (원리금+에스크로)"]||0, he=F.items["홈에퀴티 대출"]||0; if(hp){ const r=(hp+he)/F.grossMo; add(r>0.36?"high":r>0.28?"mid":"ok",`주거비(모기지+홈에퀴티) ${$m(hp+he)}/월 = 급여 세전의 ${(r*100).toFixed(0)}% (흔한 기준 28%, 빚 전체 36%) — 배우자 소득을 넣으면 가구 기준으로 다시 계산`); } }
-  if(Hs.surplus) add("info",`에스크로 남은 돈 ${$m(Hs.surplus)} 돌려받음/받을 예정 — 비상금이나 빚 상환으로`);
-  if(Hs.shortage) add("mid",`에스크로 부족 ${$m(Hs.shortage)} — 월 납부가 오를 수 있어요`);
-  const ord={high:0,mid:1,info:2,ok:3}; return S.sort((a,b)=>ord[a.lvl]-ord[b.lvl]);
-}
-function finTag(key, v){ if(v) FIN.tags[key]=v; else delete FIN.tags[key]; persistFin(); const b=document.getElementById("invest-body"); if(b) b.innerHTML=renderInvestBody("money"); }
-function finHomeSet(k, v){ FIN.home=FIN.home||{}; const n=parseFloat(String(v).replace(/[$,\s]/g,"")); if(isFinite(n)&&n>0) FIN.home[k]=n; else delete FIN.home[k]; persistFin(); const b=document.getElementById("invest-body"); if(b) b.innerHTML=renderInvestBody("money"); }
-function finFlowHTML(A){
-  const F=finFlow(), Hs=finHouse(A), S=finSignals(A,F,Hs);
-  const line=(l,v,c,sub)=>`<div style="display:flex;font-size:10.5px;padding:3px 0"><span style="flex:1;color:${sub?'var(--sub)':'var(--text)'}">${l}</span><b style="font-variant-numeric:tabular-nums;${c?'color:'+c:''}">${v}</b></div>`;
-  const col={high:"var(--rose)",mid:"var(--gold)",info:"var(--sky)",ok:"var(--mint)"}, ic={high:"🔴",mid:"🟡",info:"🔵",ok:"🟢"};
-  let h=`<div class="card" style="padding:13px;margin-bottom:10px;border-color:rgba(125,211,252,.4)">
-    <div style="font-size:12px;font-weight:800;color:var(--sky)">🔄 한 달 돈의 흐름 <span style="font-size:9px;color:var(--sub);font-weight:500">최근 명세서 기준 · 급여 ${F.per}회/년${F.guessed?" (추정)":""}</span></div>`;
-  if(F.netMo!=null){
-    h+=line("💵 실수령 (월 환산)",$m(F.netMo),"var(--mint)")+line("　세전 급여",$m(F.grossMo),null,1);
-    h+=`<div class="lbl" style="margin-top:7px">고정</div>`+Object.entries(F.items).filter(([k])=>/모기지|홈에퀴티|대출|보험/.test(k)).map(([k,v])=>line("　"+esc(k),$m(v),null,1)).join("")+line("고정 합계",$m(F.fixed));
-    h+=`<div class="lbl" style="margin-top:7px">생활·변동</div>`+Object.entries(F.items).filter(([k])=>!/모기지|홈에퀴티|대출|보험/.test(k)).map(([k,v])=>line("　"+esc(k),$m(v),null,1)).join("")+line("변동 합계",$m(F.variable));
-    h+=`<div class="lbl" style="margin-top:7px">저축·투자</div>`+line("　401k (내 몫, 급여에서 먼저)",$m(F.k401Mo),null,1)+line("　회사 매칭",$m(F.matchMo),null,1)+(F.brokerMo?line("　증권 계좌 넣은 돈",$m(F.brokerMo),null,1):"")+(F.movedMo?line("　저축·투자로 옮긴 송금·수표",$m(F.movedMo),null,1):"")+line("저축률 (세전+매칭 대비)",F.saveRate!=null?$p(F.saveRate):"–",F.saveRate>=0.15?"var(--mint)":"var(--gold)");
-    h+=`<div style="border-top:1px solid var(--border);margin-top:6px;padding-top:4px">${line("남는 돈 (실수령 − 지출 − 투자)",$m(F.left),F.left<0?"var(--rose)":"var(--mint)")}</div>
-      <div style="font-size:9px;color:var(--muted);line-height:1.6;margin-top:3px">장보기·공과금처럼 다른 계좌(배우자 등)에서 나가는 돈은 그 명세서를 올려야 잡혀요. 일회성 큰 수표·이체는 분류해 두면 따로 봐요.</div>`;
-  } else h+=`<div style="font-size:10px;color:var(--sub);margin-top:6px">급여명세서를 올리면 수입·저축률이 계산돼요.</div>`;
-  const open=(F.p2p||[]).filter(x=>!x.matched);
-  if(open.length) h+=`<div class="lbl" style="margin-top:9px">✍️ 송금·수표 — 무엇이었나요?</div>`+open.slice(0,14).map(x=>`<div style="display:flex;align-items:center;gap:6px;font-size:10px;padding:3px 0"><span style="color:var(--sub);width:62px">${esc((x.date||"").slice(5))}</span><span style="flex:1">${esc(x.channel||"")}</span><b style="font-variant-numeric:tabular-nums">${$m(x.amount)}</b>
-      <select style="width:auto;font-size:9.5px;padding:2px 4px" onchange="finTag('${x.key}',this.value)"><option value="">분류</option>${P2P_CATS.map(c=>`<option ${FIN.tags[x.key]===c?"selected":""}>${c}</option>`).join("")}</select></div>`).join("");
-  h+=`</div>`;
-  // 집
-  const inp=(k,ph,v)=>`<label style="flex:1;min-width:110px;font-size:8.5px;color:var(--sub)">${ph}<input inputmode="decimal" placeholder="${ph}" value="${v!=null&&v!==""?v:""}" onchange="finHomeSet('${k}',this.value)" style="font-size:10px;padding:5px 7px;margin:2px 0 0;width:100%"></label>`;
-  const H=FIN.home||{};
-  h+=`<div class="card" style="padding:13px;margin-bottom:10px;border-color:rgba(245,200,66,.35)">
-    <div style="font-size:12px;font-weight:800;color:var(--gold)">🏡 집 · 대지와 건물</div>
-    <div style="line-height:1.5;margin-top:6px">${Hs.value?line("집 가치",$m(Hs.value)):""}${Hs.land!=null?line("　대지",$m(Hs.land)+` (${(Hs.landShare*100).toFixed(0)}%)`,null,1)+line("　건물",$m(Hs.building),null,1):""}
-      ${Hs.mortBal?line("모기지 잔액",$m(Hs.mortBal)+(Hs.mortRate?` · ${Hs.mortRate}%`:""),"var(--rose)"):""}${Hs.heBal?line("홈에퀴티 잔액",$m(Hs.heBal)+(Hs.heRate?` · ${Hs.heRate}%`:""),"var(--rose)"):""}
-      ${Hs.equity!=null?line("집 순자산 (가치 − 대출)",$m(Hs.equity),"var(--mint)")+line("　대출 비율 (CLTV)",$p(Hs.cltv),null,1):""}
-      ${Hs.taxYr?line("재산세 / 년",$m(Hs.taxYr)+(Hs.effTax?` · 가치의 ${(Hs.effTax*100).toFixed(2)}%`:"")):""}${Hs.insYr?line("주택보험 / 년",$m(Hs.insYr)):""}
-      ${Hs.coverage&&Hs.building?line("보험 건물 보장 vs 건물 가치",`${$m(Hs.coverage)} / ${$m(Hs.building)}`,Hs.coverage<Hs.building*0.8?"var(--rose)":null):""}</div>
-    ${Hs.src?`<div style="font-size:9px;color:var(--sub);margin-top:3px">대지·건물 나눔: ${Hs.src}</div>`:""}
-    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">${inp("market","집 시장가 $",H.market)}${inp("land","대지 가치 $",H.land)}${inp("landPct","또는 대지 %",H.landPct)}${inp("coverage","보험 건물 보장 $",H.coverage)}</div>
-    <div style="font-size:9px;color:var(--muted);line-height:1.6;margin-top:6px">대지·건물 숫자는 재산세 고지서/평가서(assessment: land·total)나 보험 증권(Dwelling)을 올리면 자동으로 잡혀요. 본인이 사는 집은 감가상각이 없어요 — 대지/건물 나눔은 ① 보험(건물만 보장) ② 재산세 이의신청(평가액이 시장가보다 높을 때, 마을마다 기한 — 대부분 6월) ③ 나중에 임대·홈오피스·매도 기준에 써요.</div></div>`;
-  // 점검 신호
-  if(S.length) h+=`<div class="card" style="padding:13px;margin-bottom:10px"><div style="font-size:12px;font-weight:800">🚦 점검 신호 <span style="font-size:9px;color:var(--sub);font-weight:500">숫자로 바로 계산 · ${FIN_REF.year} 기준 한도</span></div>`+
-    S.map(x=>`<div style="display:flex;gap:6px;font-size:10.5px;line-height:1.55;padding:5px 0;border-top:1px solid var(--border)"><span>${ic[x.lvl]}</span><span style="flex:1">${x.t}</span>${x.v?`<b style="white-space:nowrap;color:${col[x.lvl]}">${x.v}</b>`:""}</div>`).join("")+
-    `<div style="font-size:9px;color:var(--warn);margin-top:6px">교육·정보용 추정 · 큰 결정은 CPA·fee-only 자문가와</div></div>`;
-  return {html:h, F, Hs, S};
-}
-function _bars(obj, color){ const ent=Object.entries(obj).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]); const tot=ent.reduce((t,[,v])=>t+v,0); if(!tot) return "";
-  return ent.map(([k,v])=>`<div style="margin:4px 0"><div style="display:flex;font-size:10px"><span style="flex:1">${esc(k)}</span><b style="font-variant-numeric:tabular-nums">${$m(v)}</b><span style="width:46px;text-align:right;color:var(--sub)">${(v/tot*100).toFixed(0)}%</span></div>
-    <div style="height:5px;background:var(--deep);border-radius:3px;margin-top:2px"><div style="height:5px;width:${(v/tot*100).toFixed(1)}%;background:${color};border-radius:3px"></div></div></div>`).join(""); }
-const CLS_KO={us_stock:"미국 주식",intl_stock:"해외 주식",bond:"채권",cash:"현금",real_estate:"부동산(리츠)",other:"기타·혼합"};
-function finPanel(){
-  const A=finAgg(), n=FIN.docs.length;
-  const chip=(l,v,c)=>`<div style="background:var(--deep);border:1px solid var(--border);border-radius:9px;padding:7px 10px;min-width:86px"><div style="font-size:8.5px;color:var(--sub)">${l}</div><div style="font-size:13px;font-weight:800;color:${c||'var(--text)'};font-variant-numeric:tabular-nums">${v}</div></div>`;
-  const cls={}; Object.entries(A.cls).forEach(([k,v])=>{ if(v>0) cls[CLS_KO[k]]=v; });
-  const P=A.pay, tax=P?["federal_tax","state_tax","local_tax","social_security","medicare"].reduce((t,k)=>t+(Number(P[k])||0),0):0;
-  return `<div class="card" style="padding:13px;margin-bottom:10px;border-color:rgba(245,200,66,.4)">
-    <div style="font-size:12px;font-weight:800;color:var(--gold)">📥 명세서 올리기 · Ledger</div>
-    <div style="font-size:10px;color:var(--sub);line-height:1.6;margin-top:4px">계좌·카드·급여명세서·모기지·W-2·보험·재산세의 <b>CSV · PDF · 사진</b>을 올리면 숫자만 뽑아요. 원본은 저장하지 않고, 숫자는 <b>이 기기에만</b> (계좌번호 끝 4자리, 이름·주소 없음). 같은 파일은 자동으로 건너뛰어요. 한 달에 한 번: 은행 · 카드 · 급여명세서 / 분기: 401k / 1년: W-2 · 보험 · 재산세.</div>
-    <input type="file" id="finFile" multiple accept=".csv,.pdf,.txt,.tsv,.ofx,.qfx,image/png,image/jpeg,image/webp,application/pdf,text/csv" style="display:none" onchange="finUpload(this.files);this.value=''">
-    <button class="btn-gold" style="background:var(--gold);color:#10151f;margin-top:9px" onclick="document.getElementById('finFile').click()">📥 파일 고르기 (여러 개 가능)</button>
-    <div style="font-size:8.5px;color:var(--muted);margin-top:6px">파일 하나에 약 $0.02~0.10 (API). 읽는 동안 내용은 Anthropic API로 보내져 처리돼요.</div>
-    <div id="finUploadResult" style="margin-top:9px">${finPendingHTML()}</div>
-  </div>
-  ${n?`<div class="card" style="padding:13px;margin-bottom:10px">
-    <div style="font-size:12px;font-weight:800">💰 한눈에 <span style="font-size:9px;color:var(--sub);font-weight:500">명세서 ${n}개 · 계좌마다 가장 최근 것</span></div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">${chip("순자산(집 포함)",$m(A.net),"var(--mint)")}${chip("금융 자산",$m(A.assets))}${chip("카드·대출",$m(A.debts),A.debts?"var(--rose)":"")}${A.home?chip("집 − 모기지",$m(A.home-A.mortgage)):""}</div>
-    ${Object.keys(cls).length?`<div class="lbl" style="margin-top:11px">📊 자산 비중 (지금)</div>${_bars(cls,"var(--sky)")}<div style="font-size:9px;color:var(--sub);margin-top:3px">나이 기준 경험칙: 주식 약 ${stockPctAt(ageNow())}% · 채권·현금 ${100-stockPctAt(ageNow())}%</div>`:""}
-    ${Object.keys(A.spend).length?`<div class="lbl" style="margin-top:11px">💳 최근 지출 (45일 안 카드·은행)</div>${_bars(A.spend,"var(--rose)")}`:""}
-    ${P?`<div class="lbl" style="margin-top:11px">🧾 최근 급여명세서 ${esc(P.pay_date||"")}</div>
-      <div style="font-size:10px;line-height:1.8">총급여 <b>${$m(P.gross)}</b> · 실수령 <b>${$m(P.net)}</b> · 세금 ${$m(tax)} (<b>${P.gross?$p(tax/P.gross):"–"}</b>) · 401k ${$m((Number(P.pretax_401k)||0)+(Number(P.roth_401k)||0))} (${P.gross?$p(((Number(P.pretax_401k)||0)+(Number(P.roth_401k)||0))/P.gross):"–"})${P.employer_match?` · 회사 매칭 ${$m(P.employer_match)}`:""}${P.ytd&&P.ytd.gross?`<br>올해 누계 총급여 ${$m(P.ytd.gross)} · 연방세 ${$m(P.ytd.federal_tax)} · 401k ${$m((Number(P.ytd.pretax_401k)||0)+(Number(P.ytd.roth_401k)||0))}`:""}</div>`:""}
-    <div class="lbl" style="margin-top:11px">🗂 계좌별</div>
-    ${A.accounts.map(a=>`<div style="display:flex;align-items:center;gap:6px;font-size:10.5px;padding:5px 0;border-top:1px solid var(--border)"><span>${(FIN_TYPES[a.d.doc_type]||FIN_TYPES.other)[0]}</span><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(a.d.institution||"")}${a.d.account_last4?" ··"+esc(a.d.account_last4):""} <span style="color:var(--muted)">${esc(a.d.period_end||a.d.as_of||"")}</span></span><b style="font-variant-numeric:tabular-nums;${a.isDebt?'color:var(--rose)':''}">${a.isDebt?"-":""}${$m(Math.abs(a.v))}</b></div>`).join("")}
-  </div>
-  ${finFlowHTML(A).html}
-  <div class="card" style="padding:13px;margin-bottom:10px;border-color:rgba(52,211,153,.4)">
-    <div style="font-size:12px;font-weight:800;color:#34d399">🧾 재정·세금 점검 · Sterling · Grant</div>
-    <div style="font-size:10px;color:var(--sub);line-height:1.6;margin-top:4px">모은 숫자(합계만 — 거래 내역·계좌번호는 안 보냄)로 자산 비중·현금·지출·빚·급여 공제·세금 절약 방법을 정리해요. 올해 한도(401k·IRA·HSA·NY 529 등)는 최신 자료를 검색해서 써요.</div>
-    <div style="display:flex;align-items:center;gap:6px;margin-top:8px;font-size:10px;color:var(--sub)">세금 신고 형태
-      <select id="finFiling" onchange="FIN.filing=this.value;persistFin()" style="width:auto;font-size:10px;padding:4px 6px">${[["","모름"],["mfj","부부 합산 (MFJ)"],["mfs","부부 개별 (MFS)"],["hoh","세대주 (HOH)"],["single","단독 (Single)"]].map(([v,l])=>`<option value="${v}" ${FIN.filing===v?"selected":""}>${l}</option>`).join("")}</select></div>
-    <button class="btn-gold" style="background:#34d399;color:#10151f;margin-top:9px" onclick="finAnalyze()">🧾 재정·세금 점검 받기 (1~3분)</button>
-    <div id="finAnalyzeResult" style="margin-top:10px"></div>
-  </div>
-  <div class="lbl">📄 올린 명세서 (${n})</div>
-  ${FIN.docs.slice(0,30).map(o=>`<div class="card" style="padding:9px 11px;margin-bottom:6px">${finDocSummary(o.d)}<div style="display:flex;margin-top:4px"><span style="font-size:8.5px;color:var(--muted)">올림 ${esc((o.added||"").slice(0,10))} · ${esc((o.file&&o.file.name)||"")}</span><span style="flex:1"></span><button class="pill" style="font-size:9px;color:var(--rose)" onclick="finDel(${o.id})">🗑</button></div></div>`).join("")}`
-  :`<div class="card" style="padding:14px;text-align:center;color:var(--sub);font-size:11px;margin-bottom:10px">아직 올린 명세서가 없어요. 위에서 파일을 골라 보세요.<br><span style="font-size:9.5px;color:var(--muted)">추천 순서: ① 급여명세서 2장 ② 은행(입출금·저축) ③ 카드 ④ 401k 분기 ⑤ 모기지·홈에퀴티 ⑥ W-2·보험·재산세</span></div>`}
-  <div class="card" style="padding:11px 13px;margin-bottom:10px">
-    <div style="font-size:11px;font-weight:700">🔐 암호 걸린 백업</div>
-    <div style="font-size:9.5px;color:var(--sub);line-height:1.6;margin-top:3px">명세서 숫자·내 정보를 암호로 잠근 파일로 내보내 다른 기기에서 열 수 있어요. 암호를 잊으면 열 수 없어요.</div>
-    <input type="file" id="vaultFile" accept=".json,.hvault,application/json" style="display:none" onchange="vaultImport(this.files[0]);this.value=''">
-    <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap"><button class="pill" style="font-size:10px" onclick="vaultExport()">📤 백업 만들기</button><button class="pill" style="font-size:10px" onclick="document.getElementById('vaultFile').click()">📥 백업 열기</button></div>
-    <div id="vaultMsg" style="font-size:10px;margin-top:6px"></div>
-  </div>`;
-}
-// ── 재정·세금 점검 (합계만 보냄) ──
-async function finAnalyze(){
-  const box=document.getElementById("finAnalyzeResult"); if(!box) return;
-  if(!FIN.docs.length){ box.innerHTML=`<div style="font-size:10px;color:var(--sub)">먼저 명세서를 하나 이상 올려 주세요.</div>`; return; }
-  liveLog(box,"🧾 Sterling·Grant가 숫자를 보고 올해 한도·세금 규칙을 찾아 정리 중... (1~3분)");
-  const A=finAgg(), P=A.pay||{};
-  const facts={age:ageNow(), state:"New York", filing:FIN.filing||"unknown", retire_age:PROFILE.retireAge, kids_ages:kidsNow().map(k=>k.age),
-    net_worth:Math.round(A.net), financial_assets:Math.round(A.assets), card_and_loan_debt:Math.round(A.debts), home_value:A.home, mortgage:A.mortgage,
-    mortgage_rate:(PORTFOLIO.home||{}).rate||null, other_debts:(PORTFOLIO.debts||[]).map(d=>({name:d.name,balance:d.balance,rate:d.rate,monthly:d.monthly})),
-    allocation:Object.fromEntries(Object.entries(A.cls).filter(([,v])=>v>0).map(([k,v])=>[k,Math.round(v)])),
-    accounts:A.accounts.map(a=>({type:a.d.doc_type, institution:a.d.institution, value:Math.round(a.v), as_of:a.d.period_end||a.d.as_of,
-      fees:(a.d.flows||{}).fees||null, contributions:(a.d.flows||{}).contributions||null, employer:(a.d.flows||{}).employer_contributions||null,
-      card_apr:a.d.doc_type==="card"?(a.d.balance||{}).apr:null, holdings:(a.d.holdings||[]).slice(0,15).map(h=>({symbol:h.symbol,class:h.asset_class,value:h.value,expense_ratio:h.expense_ratio}))})),
-    spending_45d:Object.fromEntries(Object.entries(A.spend).map(([k,v])=>[k,Math.round(v)])),
-    recurring:FIN.docs.flatMap(o=>o.d.recurring||[]).slice(0,15),
-    cashflow_monthly:(()=>{ const F=finFlow(); return {net_pay:Math.round(F.netMo||0), gross:Math.round(F.grossMo||0), fixed:Math.round(F.fixed), variable:Math.round(F.variable), items:Object.fromEntries(Object.entries(F.items).map(([k,v])=>[k,Math.round(v)])), k401:Math.round(F.k401Mo||0), match:Math.round(F.matchMo||0), brokerage_in:Math.round(F.brokerMo||0), left:F.left!=null?Math.round(F.left):null, save_rate:F.saveRate!=null?+(F.saveRate*100).toFixed(1):null, p2p_reimbursed:(F.p2p||[]).filter(x=>x.matched).length, p2p_open:Math.round(F.p2pOpen||0)}; })(),
-    house:(()=>{ const H=finHouse(A); return {value:Math.round(H.value||0)||null, land_share:H.landShare, building:H.building&&Math.round(H.building), insured_dwelling:H.coverage, mortgage:Math.round(H.mortBal||0), mortgage_rate:H.mortRate, home_equity:Math.round(H.heBal||0), home_equity_rate:H.heRate, property_tax_yr:Math.round(H.taxYr||0), home_ins_yr:Math.round(H.insYr||0), cltv:H.cltv}; })(),
-    signals:(()=>{ const F=finFlow(); return finSignals(A,F,finHouse(A)).map(x=>x.t.replace(/<[^>]+>/g,"")); })(),
-    w2:FIN.docs.filter(o=>o.d.doc_type==="w2").map(o=>o.d.w2).slice(0,2),
-    insurance:FIN.docs.filter(o=>o.d.doc_type==="insurance").map(o=>{ const i=o.d.insurance||{}; return {kind:i.kind,premium:i.premium,term_months:i.term_months}; }).slice(0,4),
-    paystub:P.gross?{pay_date:P.pay_date,gross:P.gross,net:P.net,federal_tax:P.federal_tax,state_tax:P.state_tax,local_tax:P.local_tax,ss:P.social_security,medicare:P.medicare,pretax_401k:P.pretax_401k,roth_401k:P.roth_401k,employer_match:P.employer_match,health:P.health_dental_vision,hsa:P.hsa,fsa:P.fsa,ytd:P.ytd||null}:null};
-  const sys=`You are Sterling (investment strategist) and Grant (US/New York tax planner) on Histara's finance team, reviewing the household finances of a long-term retirement investor.
-${nowStamp()}
-CRITICAL: use web_search to confirm THIS YEAR's limits and rules (401k/403b deferral & catch-up, IRA/Roth IRA income limits, HSA, FSA, NY 529 deduction, standard deduction, SALT cap, child tax credit, NY state brackets). Cite them. Say when something depends on facts you don't have (e.g. filing status, spouse income). Educational, not licensed tax or investment advice — suggest a CPA/fee-only planner for big moves.
-The "signals" are already computed from the numbers — confirm, correct or deepen them; do not just repeat. Speculative single-stock positions, margin, and cash drag deserve a sentence. Unknowns (spouse income, accounts not uploaded) must be named, not guessed.
-Be concrete with numbers from the data (e.g., "401k 7% → 10%이면 연 약 $X 세전 저축, 연방세 약 $Y 절감 (추정)"). Respond in Korean; keep account/tax terms in English. Return ONLY JSON (start with {), keep each text short.`;
-  const usr=`Household data (aggregated; no account numbers): ${JSON.stringify(facts)}
-JSON: {"summary":"한 줄 진단","flow":"돈의 흐름 — 어디로 들어와 어디로 나가는지 한두 문장","split":{"spend":"소비 (월 $ 목표와 줄일 곳)","save":"저축 (비상금 몇 개월·어디에)","invest":"투자 (401k %·IRA·증권 — 월 $)"},"patterns":["지출·송금 패턴 1","2"],"house":"집 — 대지·건물·대출·재산세·보험 판단","net_worth":"순자산·추세 한마디","allocation":{"now":"지금 비중 요약","target":"나이·목표에 맞는 비중","gap":"차이와 조정 방법 (새 저축으로 맞추기 우선)"},"cash":"비상금·놀고 있는 현금 판단","debt":["빚 우선순위 (금리 높은 것부터) 1","2"],"spending":["지출에서 보이는 것 1","2"],"paycheck":"급여명세서로 본 공제·원천징수 판단","tax":[{"idea":"세금 아이디어","why":"이유","how":"어떻게","impact":"연 약 $ 효과 (추정)","deadline":"언제까지"}],"retirement":"은퇴 로드맵 대비 지금","actions":[{"do":"할 일","when":"이번 달/올해 안/연말 전"}],"risks":["주의할 점"],"needs":["더 정확하려면 필요한 자료"],"sources":[{"title":"","url":"https://..."}]}`;
-  CUR_FEATURE="invest";
-  let raw; try{ raw=await callClaude(sys,usr,Object.assign({},sx(5),{maxTokens:8000,timeoutMs:200000})); } finally{ CUR_FEATURE=null; }
-  const g=keyGuard(raw); if(g){ box.innerHTML=g; return; }
-  const r=pj(raw); if(!r){ box.innerHTML=rawFailBox("재정·세금 점검"); return; }
-  const col="#34d399";
-  const sec=(i,l,t)=>t?`<div style="margin-bottom:8px;padding:9px 11px;background:${col}10;border-left:2px solid ${col};border-radius:8px"><div style="font-size:9px;color:${col};font-weight:700;margin-bottom:2px">${i} ${l}</div><div style="font-size:11px;line-height:1.6">${esc(t)}</div></div>`:"";
-  const list=(i,l,a)=>(a||[]).length?`<div class="lbl" style="color:${col};margin-top:6px">${i} ${l}</div>`+a.map(x=>`<div class="row-item"><div class="dot" style="background:${col}"></div><span style="font-size:11px">${esc(typeof x==="string"?x:(x.do?`${x.do}${x.when?` — ${x.when}`:""}`:JSON.stringify(x)))}</span></div>`).join(""):"";
-  let h=r.summary?`<div style="font-size:12px;font-weight:700;color:${col};margin-bottom:9px;line-height:1.5">📌 ${esc(r.summary)}</div>`:"";
-  h+=sec("🔄","돈의 흐름",r.flow);
-  if(r.split) h+=sec("⚖️","소비 · 저축 · 투자",[r.split.spend&&("소비: "+r.split.spend),r.split.save&&("저축: "+r.split.save),r.split.invest&&("투자: "+r.split.invest)].filter(Boolean).join(" / "));
-  h+=list("🔍","패턴",r.patterns)+sec("🏡","집",r.house);
-  h+=sec("💰","순자산",r.net_worth);
-  if(r.allocation) h+=sec("📊","자산 비중",[r.allocation.now,r.allocation.target&&("목표: "+r.allocation.target),r.allocation.gap].filter(Boolean).join(" · "));
-  h+=sec("🏦","현금",r.cash)+sec("🧾","급여 공제·원천징수",r.paycheck);
-  (r.tax||[]).forEach(t=>h+=`<div class="card" style="padding:10px;margin-bottom:7px;border-left:3px solid var(--gold)"><div style="font-size:12px;font-weight:700;color:var(--gold)">💡 ${esc(t.idea||"")}</div>
-    <div style="font-size:10px;line-height:1.6;margin-top:3px">${esc(t.why||"")}</div><div style="font-size:10px;color:var(--mint);margin-top:2px">→ ${esc(t.how||"")}</div>
-    <div style="font-size:9.5px;color:var(--sub);margin-top:2px">${t.impact?"효과 "+esc(t.impact):""}${t.deadline?" · 기한 "+esc(t.deadline):""}</div></div>`);
-  h+=list("⛓","빚 우선순위",r.debt)+list("💳","지출",r.spending)+sec("🗓","은퇴 로드맵",r.retirement)+list("✅","할 일",r.actions)+list("⚠️","주의",r.risks)+list("📎","더 정확하려면",r.needs);
-  const src=(r.sources||[]).filter(s=>s&&/^https?:\/\//.test(s.url||""));
-  if(src.length) h+=`<div style="font-size:9px;color:var(--sub);margin-top:8px;line-height:1.7">출처: ${src.slice(0,8).map(s=>`<a href="${esc(s.url)}" target="_blank" rel="noopener" style="color:var(--sky)">${esc(s.title||s.url)}</a>`).join(" · ")}</div>`;
-  if(r._partial) h+=`<div style="font-size:9px;color:var(--gold);margin-top:6px">⚠ 응답 끝이 잘려 앞부분만 보여 드려요 — 다시 누르면 새로 받아요.</div>`;
-  h+=`<div style="font-size:9px;color:var(--warn);margin-top:6px">교육·정보용 · 세무·투자 자문 아님 — 큰 결정은 CPA·fee-only 자문가와</div>`;
-  box.innerHTML=h;
-  try{ addReport({type:"invest", agent:"Sterling · Grant", title:`🧾 재정·세금 점검 (${new Date().toLocaleDateString("ko-KR",{month:"numeric",day:"numeric"})})`, html:h, summary:r.summary||"", plain:(r.summary||"")+" "+((r.tax||[]).map(t=>t.idea).join(", "))}); renderTabs(); }catch(e){}
-}
-// ── 암호 백업 (AES-GCM, PBKDF2 25만 회) ──
 async function _vaultKey(pass, salt){ const base=await crypto.subtle.importKey("raw", new TextEncoder().encode(pass), "PBKDF2", false, ["deriveKey"]);
   return crypto.subtle.deriveKey({name:"PBKDF2", salt, iterations:250000, hash:"SHA-256"}, base, {name:"AES-GCM", length:256}, false, ["encrypt","decrypt"]); }
 const _b64e=u=>btoa(String.fromCharCode(...new Uint8Array(u))), _b64d=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
@@ -3142,256 +2679,42 @@ async function vaultExport(){
   if(pass.length<8){ if(msg) msg.innerHTML='<span style="color:var(--danger)">8자 이상으로 해 주세요</span>'; return; }
   if(prompt("한 번 더 입력")!==pass){ if(msg) msg.innerHTML='<span style="color:var(--danger)">암호가 서로 달라요</span>'; return; }
   const g=k=>{ try{ return JSON.parse(localStorage.getItem(k)||'null'); }catch(e){ return null; } };
-  const plain=JSON.stringify({fin:g('histara_fin'), personal:g('histara_personal'), portfolio:g('histara_portfolio'), kids:g('histara_kids'), retire:g('histara_retire')});
+  const plain=JSON.stringify({fin:g('histara_fin'), personal:g('histara_personal'), portfolio:g('histara_portfolio'), kids:g('histara_kids'), retire:g('histara_retire'), reports:(REPORTS||[]).filter(r=>r&&INVEST_TYPES.has(r.type))});
   const salt=crypto.getRandomValues(new Uint8Array(16)), iv=crypto.getRandomValues(new Uint8Array(12));
   const ct=await crypto.subtle.encrypt({name:"AES-GCM", iv}, await _vaultKey(pass, salt), new TextEncoder().encode(plain));
   const o={format:"histara-vault/1", created:new Date().toISOString(), salt:_b64e(salt), iv:_b64e(iv), data:_b64e(ct)};
   const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(o)],{type:'application/json'}));
   a.download=`histara_백업_${new Date().toISOString().slice(0,10)}.hvault.json`; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1500);
-  if(msg) msg.innerHTML='<span style="color:var(--mint)">✓ 백업 파일을 만들었어요 (암호 없이는 열 수 없어요)</span>';
+  if(msg) msg.innerHTML='<span style="color:var(--mint)">✓ 백업 파일을 만들었어요 — Mint로 옮겨 HaJuNa Money에서 📥 백업 열기 (암호 없이는 열 수 없어요)</span>';
 }
-async function vaultImport(file){
-  const msg=document.getElementById("vaultMsg"); if(!file) return;
-  try{ const o=JSON.parse(await _txt(file)); if(!o||o.format!=="histara-vault/1") throw new Error("Histara 백업 파일이 아니에요");
-    const pass=prompt("백업 암호"); if(!pass) return;
-    let plain; try{ plain=await crypto.subtle.decrypt({name:"AES-GCM", iv:_b64d(o.iv)}, await _vaultKey(pass,_b64d(o.salt)), _b64d(o.data)); }catch(e){ throw new Error("암호가 맞지 않아요"); }
-    const v=JSON.parse(new TextDecoder().decode(plain));
-    if(!confirm("이 기기의 명세서·내 정보를 백업 내용으로 바꿀까요?")) return;
-    [["fin","histara_fin"],["personal","histara_personal"],["portfolio","histara_portfolio"],["kids","histara_kids"],["retire","histara_retire"]].forEach(([k,ls])=>{ if(v[k]) localStorage.setItem(ls, JSON.stringify(v[k])); });
-    if(msg) msg.innerHTML='<span style="color:var(--mint)">✓ 열었어요 — 다시 불러옵니다</span>'; setTimeout(()=>location.reload(),900);
-  }catch(e){ if(msg) msg.innerHTML=`<span style="color:var(--danger)">✗ ${esc(String(e.message||e))}</span>`; }
+function _investLeft(){
+  const has=k=>{ try{ const v=localStorage.getItem(k); return !!(v&&v!=="{}"&&v!=="null"); }catch(e){ return false; } };
+  return {fin:has('histara_fin'), portfolio:has('histara_portfolio'), retire:has('histara_retire'), reports:(REPORTS||[]).filter(r=>r&&INVEST_TYPES.has(r.type)).length};
 }
-
-function renderInvest(){
-  const tab=STATE.investTab||"money";
-  const sub=[["money","💰 내 자산·명세서"],["plan","🗓️ 은퇴 로드맵"],["macro","🌐 세계·미국 거시"],["sp","🏢 S&P 500 흐름"],["pick","💡 이달의 투자처"]];
-  return `<div style="padding:14px 14px 8px">
-    <h2>📈 투자 · 은퇴</h2>
-    <div class="pg-sub">Sterling·Keynes·Morgan·Harbor · 운이 아니라 시간과 꾸준함으로</div>
-  </div>
-  <div style="padding:0 14px 6px">
-    <div style="font-size:9px;color:var(--warn);background:rgba(232,190,106,.08);border:1px solid rgba(232,190,106,.25);border-radius:8px;padding:8px 10px;line-height:1.5">
-      ⚠️ <b>교육·정보 정리용</b>이에요. 면허 있는 재무 자문이 아니고, 수익률은 가정일 뿐 보장되지 않아요. 결정과 책임은 본인에게 있고, 큰 결정은 전문가(fee-only 자문가 등)와 상의하세요.
-    </div>
-  </div>
-  <div style="padding:0 14px 8px;display:flex;gap:6px;flex-wrap:wrap">
-    ${sub.map(([id,lbl])=>`<button class="pill ${tab===id?'pill-on':''}" onclick="switchInvest('${id}')">${lbl}</button>`).join("")}
-  </div>
-  ${tab==="plan"||tab==="money"?"":`<div style="padding:0 14px">${searchToggleBar()}</div>`}
-  <div id="invest-body" style="padding:0 14px">${renderInvestBody(tab)}</div>
-  <div id="invest-saved" style="padding:0 14px 20px">${savedListHTML("invest")}</div>`;
+function investPurge(){
+  if(!confirm("이 기기의 투자·자산 숫자(명세서·포트폴리오·은퇴 설정)와 투자 보고서를 지울까요?\n먼저 백업을 만들어 HaJuNa Money에서 열었는지 확인하세요.")) return;
+  ['histara_fin','histara_portfolio','histara_retire'].forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} });
+  REPORTS=(REPORTS||[]).filter(r=>!(r&&INVEST_TYPES.has(r.type))); persistReports();
+  const b=document.getElementById('sec-body'); if(b) b.innerHTML=securityKeyPanel();
 }
-function switchInvest(t){ STATE.investTab=t; renderAll(); }
-function renderInvestBody(tab){
-  if(tab==="macro") return investAIPanel("macro");
-  if(tab==="sp")    return investAIPanel("sp");
-  if(tab==="pick")  return investAIPanel("pick");
-  if(tab==="money") return finPanel();
-  return investPlanPanel();
-}
-
-function investPlanPanel(){
-  const p=RETIRE, G="#34d399", yrs=p.retireAge-p.age;
-  const scen=RET_SCEN.map(([n,r])=>({n,r,...projectRetire(p,r)}));
-  const base=scen[1];
-  const plus=projectRetire(p,0.05,Math.round(p.income*0.01/12)).bal-base.bal;   // 저축 1%p 더 하면
-  const rate=p.income?Math.round(p.monthly*12/p.income*100):0;
-  let h="";
-  if(!p.set) h+=`<div style="font-size:10px;color:var(--gold);background:rgba(245,200,66,.08);border:1px solid rgba(245,200,66,.3);border-radius:8px;padding:8px 10px;margin-bottom:9px;line-height:1.6">
-    처음 한 번만 확인해 주세요 — 예전에 앱에 넣어 둔 401k·Roth 값으로 대략 채워 뒀어요. 1년에 한 번만 고치면 돼요.</div>`;
-  h+=`<div class="card" style="padding:13px;margin-bottom:10px;border-left:3px solid ${G}">
-    <div style="display:flex;align-items:center"><div style="font-size:12px;font-weight:800;color:${G};flex:1">🗓️ 내 프로필</div>
-      <button class="pill" style="font-size:10px" onclick="editRetire()">✏️ 고치기</button></div>
-    <div style="font-size:11px;line-height:1.8;margin-top:5px">
-      지금 <b>${p.age}세</b> → 은퇴 <b>${p.retireAge}세</b> (${yrs}년) · 매달 저축·투자 <b>$${Number(p.monthly).toLocaleString()}</b> (401k 본인+매칭 포함, 소득의 약 ${rate}%)<br>
-      지금 투자 자산 약 <b>${$k(p.current)}</b> · 연 소득 약 ${$k(p.income)} · 저축액 매년 ${p.raise}% 늘림
-    </div>
-  </div>`;
-  h+=`<div class="card" style="padding:13px;margin-bottom:10px">
-    <div style="font-size:12px;font-weight:800;color:${G}">${p.retireAge}세에 모일 돈 <span style="font-size:9px;color:var(--sub);font-weight:600">— 오늘 돈 가치(물가 반영)</span></div>
-    <div style="display:flex;gap:7px;margin-top:8px;text-align:center">
-      ${scen.map(s=>`<div style="flex:1;background:var(--deep);border-radius:9px;padding:9px 4px;${s.n==="기본"?"border:1px solid "+G:""}">
-        <div style="font-size:9px;color:var(--sub)">${s.n} (연 ${(s.r*100).toFixed(1)}%)</div>
-        <div style="font-size:16px;font-weight:800;color:${s.n==="기본"?G:"var(--text)"}">${$k(s.bal)}</div>
-        <div style="font-size:8px;color:var(--sub)">월 ${$k(s.bal*0.04/12)} 인출</div></div>`).join("")}
-    </div>
-    <div style="font-size:9px;color:var(--muted);margin-top:6px;line-height:1.5">월 인출 = '4% 규칙'(매년 자산의 4%)을 단순 적용한 참고값. 사회보장연금(Social Security)은 따로예요.</div>
-    <div style="font-size:11px;margin-top:8px;padding:8px 10px;background:rgba(52,211,153,.08);border-radius:8px;line-height:1.6">
-      💡 저축을 소득의 <b>1%p만 더</b> (월 약 $${Math.round(p.income*0.01/12)}) 하면 기본 시나리오로 <b style="color:${G}">+${$k(plus)}</b>. 운보다 이 숫자가 커요.</div>
-  </div>`;
-  // 5년 단위 로드맵
-  const rows=[]; base.path.forEach(x=>{ if((x.age-p.age)%5===0 || x.age===p.retireAge) rows.push(x); });
-  h+=`<div class="card" style="padding:13px;margin-bottom:10px">
-    <div style="font-size:12px;font-weight:800;color:${G}">🧭 5년마다 점검표 (기본 시나리오)</div>
-    <table style="width:100%;font-size:10px;margin-top:6px;border-collapse:collapse">
-      <tr style="color:var(--sub)"><td>나이</td><td>예상 자산</td><td>주식:채권</td></tr>
-      <tr><td>${p.age}세 (지금)</td><td>${$k(p.current)}</td><td>${stockPctAt(p.age)}:${100-stockPctAt(p.age)}</td></tr>
-      ${rows.map(x=>`<tr style="border-top:1px solid var(--border)"><td>${x.age}세</td><td><b>${$k(x.bal)}</b></td><td>${stockPctAt(x.age)}:${100-stockPctAt(x.age)}</td></tr>`).join("")}
-    </table>
-    <div style="font-size:9px;color:var(--muted);margin-top:5px">주식 비중 = 120 − 나이 (40~90% 사이)로 흔히 쓰는 경험칙. 401k의 target-date fund를 고르면 이 조정을 자동으로 해 줘요.</div>
-  </div>`;
-  h+=`<div class="card" style="padding:13px;margin-bottom:10px">
-    <div style="font-size:12px;font-weight:800;color:${G}">✅ 순서대로 할 일 (해마다 한 번 점검)</div>
-    <div style="font-size:11px;line-height:1.8;margin-top:5px">
-      1. 401k <b>회사 매칭은 끝까지</b> 받기 (매칭 = 즉시 수익)<br>
-      2. <b>이자 높은 빚</b>(예: 10% 넘는 할부)부터 갚기 — 갚는 것이 확실한 수익<br>
-      3. 비상금 3~6개월 생활비<br>
-      4. Roth IRA — 저비용 지수 펀드(전체 시장·S&P 500·해외) 자동 적립<br>
-      5. 저축률 <b>매년 1%p</b> 올리기 (월급 오를 때 같이)<br>
-      6. 1년에 한 번 비중 맞추기 (rebalance) · 개별 종목은 전체의 10% 이내<br>
-      7. 아이 교육비는 은퇴 저축 다음 순서 (학자금은 대출이 있지만 은퇴는 없음)
-    </div>
-    <button class="btn-gold" style="background:${G};color:#10151f;margin-top:9px" onclick="genKidsInvest()">🎓 아이 교육비(529 등) 올해 기준 보기</button>
-    <div id="kidsInvestResult" style="margin-top:10px"></div>
-  </div>`;
-  return h;
-}
-function editRetire(){
-  const ask=(q,v)=>{ const a=prompt(q, v); if(a===null) return null; const n=parseFloat(String(a).replace(/[^0-9.]/g,'')); return isNaN(n)?v:n; };
-  const p=RETIRE;
-  const v1=ask("은퇴 나이", p.retireAge); if(v1===null) return; p.retireAge=v1;
-  const v2=ask("매달 저축·투자 합계 ($) — 401k 본인+회사 매칭+IRA 등", p.monthly); if(v2===null) return; p.monthly=v2;
-  const v3=ask("지금 투자 자산 합계 대략 ($) — 401k+IRA+주식", p.current); if(v3===null) return; p.current=v3;
-  const v4=ask("연 소득 대략 ($, 세전)", p.income); if(v4===null) return; p.income=v4;
-  const v5=ask("저축액을 매년 몇 % 늘릴지 (보통 1~3)", p.raise); if(v5===null) return; p.raise=v5;
-  p.age=ageNow(); p.set=true; persistRetire(); renderAll();
-}
-
-const INVEST_AI={
-  macro:{icon:"🌐",title:"세계·미국 거시",agent:"Dr. Keynes",color:"#22d3ee",btn:"🌐 이번 달 거시 흐름 받기",
-    desc:"세계 경제 흐름과 미국의 큰 방향(금리·물가·고용·재정·산업정책)을 장기 투자자 눈으로 정리해요. 최신 자료를 검색해서 써요.",
-    sys:`You are Dr. Keynes, macro economist on Histara's investment team for ${myName()} (NY, ${'${AGE}'} years old, long-term retirement investor; no trading).`,
-    usr:`Web_search the LATEST data (this month) and write a monthly macro brief for a long-horizon retirement investor. Cover the world economy and the macro direction of the United States (Fed policy & rates, inflation, labor market, fiscal deficit & debt, industrial policy such as AI/semiconductors/energy, trade & tariffs, the dollar). For each claim mention its date/recency. Separate what is known from what is uncertain. JSON: {"summary":"이번 달 한 줄","world":"세계 경제 흐름 3문장","us_direction":"미국의 거시적 방향 3~4문장","rates_inflation":"금리·물가 현재와 전망 2문장","long_term":"10~20년 투자자에게 의미 2~3문장 (단기 예측 말고)","risks":["위험1","위험2","위험3"],"watch_next":["다음 달 볼 지표·일정1","2"],"sources":[{"title":"출처","url":"https://..."}]}`,
-    fields:[["🌍","세계 경제","world"],["🇺🇸","미국의 큰 방향","us_direction"],["📉","금리·물가","rates_inflation"],["⏳","장기 투자자에게 의미","long_term"]],
-    lists:[["⚠️","위험 요인","risks"],["👀","다음 달 볼 것","watch_next"]]},
-  sp:{icon:"🏢",title:"S&P 500 기업·섹터 흐름",agent:"Morgan",color:"#a78bfa",btn:"🏢 이번 분기 S&P 500 흐름 받기",
-    desc:"S&P 500 기업들이 어디에 돈을 쓰고(설비투자·R&D) 무엇을 만들려 하는지, 섹터별 발전 양상과 미래 계획을 정리해요.",
-    sys:`You are Morgan, S&P 500 sector & company research analyst on Histara's investment team for a long-term retirement investor.`,
-    usr:`Web_search the LATEST earnings season, capex/R&D guidance and company plans. Summarize how S&P 500 companies are investing and developing, sector by sector, and what their stated future plans imply over 5-10 years. Name specific large companies as examples with what they announced (with dates). Do not give price targets or short-term calls. JSON: {"summary":"이번 분기 한 줄","themes":[{"theme":"큰 흐름 (예: AI 데이터센터 투자)","evidence":"근거: 어느 기업이 무엇을 발표했는지 (날짜)","beneficiaries":"수혜 섹터/기업 유형","risk":"과열·리스크"}],"sectors":[{"sector":"섹터","trend":"투자·발전 양상 1~2문장","outlook":"밝음/중립/주의"}],"long_term_watch":["5~10년 관심 분야1","2","3"],"etf_ideas":[{"name":"관련 저비용 ETF 유형 (예: 전체 시장, 섹터 ETF)","why":"이유","weight_hint":"전체에서 둘 만한 비중 (예: 핵심 / 10% 이내 위성)"}],"sources":[{"title":"출처","url":"https://..."}]}`,
-    fields:[], lists:[["🔭","5~10년 관심 분야","long_term_watch"]]},
-  pick:{icon:"💡",title:"이달의 투자처",agent:"Sterling",color:"#34d399",btn:"💡 이달의 투자처 받기",
-    desc:"은퇴 로드맵 + 최근 거시·S&P 500 분석을 묶어, 이번 달 저축을 어디에 어떻게 나눌지 한 장으로 정리해요.",
-    sys:`You are Sterling, chief investment strategist on Histara's team. You synthesize the team's work into one practical monthly plan for a long-term retirement investor. Philosophy: low-cost broad index funds as the core, employer match first, pay off high-interest debt, small satellite positions only, never chase luck or hype.`,
-    usr:null, fields:[["🧱","핵심 (대부분)","core"],["🛰️","위성 (10% 이내)","satellite"],["🗓️","이달 할 일","this_month"]], lists:[["🚫","하지 말 것","avoid"]]},
-};
-function investAIPanel(kind){
-  const c=INVEST_AI[kind];
-  return `<div class="card" style="margin-bottom:10px;padding:13px">
-    <div style="font-size:12px;font-weight:700;color:${c.color}">${c.icon} ${c.title} · ${c.agent}</div>
-    <div style="font-size:10px;color:var(--sub);line-height:1.6;margin-top:4px">${c.desc}</div>
-    <button class="btn-gold" style="background:${c.color};color:#10151f;margin-top:9px" onclick="runInvestAI('${kind}')">${c.btn}</button>
-    <div id="investAIResult" style="margin-top:10px"></div>
+function investMoveCard(){
+  const L=_investLeft(), any=L.fin||L.portfolio||L.retire||L.reports;
+  return `<div class="card" style="padding:12px 13px;margin-bottom:10px;border-color:rgba(52,211,153,.4)">
+    <div style="font-size:12px;font-weight:800;color:#34d399">📈 투자·자산은 HaJuNa Money로 옮겼어요</div>
+    <div style="font-size:10px;color:var(--sub);line-height:1.6;margin-top:4px">명세서·세금 점검·은퇴 로드맵·거시·S&P 500·이달의 투자처는 이제 <b>Mint 컴퓨터 안의 비공개 앱</b>에서만 (인터넷·동기화 없음). Mint 브라우저에서 <b>${MONEY_URL}</b></div>
+    ${any?`<div style="font-size:10px;color:var(--gold);line-height:1.6;margin-top:6px">이 기기에 남은 것: ${[L.fin&&"명세서 숫자",L.portfolio&&"포트폴리오",L.retire&&"은퇴 설정",L.reports&&`투자 보고서 ${L.reports}개`].filter(Boolean).join(" · ")}</div>
+    <div style="font-size:9.5px;color:var(--sub);line-height:1.6;margin-top:3px">① 백업 만들기 (암호) → ② 파일을 Mint로 → HaJuNa Money의 📥 백업 열기 → ③ 여기서 지우기</div>
+    <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap"><button class="pill" style="font-size:10px" onclick="vaultExport()">📤 ① 백업 만들기</button><button class="pill" style="font-size:10px;color:var(--rose)" onclick="investPurge()">🗑 ③ 이 기기에서 지우기</button></div>
+    <div id="vaultMsg" style="font-size:10px;margin-top:6px"></div>`:`<div style="font-size:10px;color:var(--mint);margin-top:6px">✓ 이 기기에는 투자 숫자가 남아 있지 않아요</div>`}
   </div>`;
 }
-function _latestInvest(type){ const r=REPORTS.find(x=>x.type===type); return r?(r.summary||"")+" "+(r.plain||""):""; }
-async function runInvestAI(kind){
-  const c=INVEST_AI[kind], box=document.getElementById("investAIResult"); if(!box) return;
-  liveLog(box,`${c.icon} ${c.agent}가 최신 자료를 찾아 정리 중... (30~60초)`);
-  const p=RETIRE, base=projectRetire(p,0.05).bal;
-  const prof=`나이 ${p.age}, 은퇴 ${p.retireAge}세(${p.retireAge-p.age}년 남음), 월 저축·투자 $${p.monthly} (401k 매칭 포함), 투자 자산 약 $${p.current}, 연 소득 약 $${p.income}. 지금 주식:채권 권장 ${stockPctAt(p.age)}:${100-stockPctAt(p.age)}. 기본 시나리오 은퇴 자산 약 $${Math.round(base)}(오늘 가치).`;
-  const sys=c.sys.replace("${AGE}",String(p.age))+`\n${nowStamp()}\nCRITICAL: use web_search for current facts; never rely on stale memory; say when something is uncertain. Educational, not licensed advice. Respond in Korean; keep tickers, finance terms and company names in English. Return ONLY JSON.`;
-  let usr=c.usr;
-  if(kind==="pick"){
-    const mac=_latestInvest("macro"), spr=_latestInvest("sp500");
-    const FA=FIN.docs.length?finAgg():null;
-    const real=FA?` Actual statements (latest per account): financial assets $${Math.round(FA.assets)}, allocation ${JSON.stringify(Object.fromEntries(Object.entries(FA.cls).filter(([,v])=>v>0).map(([k,v])=>[k,Math.round(v)])))}, card/loan debt $${Math.round(FA.debts)}${FA.pay&&FA.pay.gross?`, latest paycheck gross $${FA.pay.gross} with 401k ${(Number(FA.pay.pretax_401k)||0)+(Number(FA.pay.roth_401k)||0)}`:""}. Prefer these over the profile estimate.`:"";
-    usr=`Investor profile: ${prof}${real}
-Latest team notes — macro: ${mac||"(아직 없음: 직접 최신 거시를 짧게 검색)"}; S&P 500: ${spr||"(아직 없음: 직접 최신 흐름을 짧게 검색)"}.
-Web_search briefly for anything time-sensitive. Make this month's plan for the monthly saving ($${p.monthly}): how to split across 401k (target-date or index), Roth IRA core index funds, international, bonds by age, and at most a small satellite tied to long-term S&P 500 themes. Concrete but generic fund types (e.g., total US market index, S&P 500 index, total international, aggregate bond); tickers only as examples. JSON: {"summary":"이달 한 줄","split":[{"bucket":"어디에 (예: 401k target-date)","pct":숫자,"why":"이유"}],"core":"핵심 설명 2문장","satellite":"위성(테마) 설명 1~2문장 + 상한","this_month":"이번 달 할 일 2~3개 문장","avoid":["하지 말 것1","2","3"],"on_track":"은퇴 로드맵 대비 지금 상태 한 줄","sources":[{"title":"출처","url":"https://..."}]}`;
-  } else usr=`Investor profile: ${prof}\n${domainDirective("invest")}\n`+usr;
-  try{
-    // v14.2: 검색 결과가 길어 4,000토큰에서 잘리던 문제 → 여유 8,000토큰 · 시간 3분, 실패하면 한 번 더 (짧게, JSON만)
-    const io=Object.assign({}, sx(kind==="pick"?2:4), {maxTokens:8000, timeoutMs:180000});
-    const sysJ=sys+`\nOUTPUT: start your reply with { and end with } — no preface, no closing remarks, no code fences. Keep every text value short (1~2 sentences); at most 4 themes, 8 sectors, 3 etf_ideas, 6 sources.`;
-    let raw=await callClaude(sysJ, usr, io);
-    const g=keyGuard(raw); if(g){ box.innerHTML=g; return; }
-    let r=pj(raw);
-    if(!r || r._partial){
-      try{ if(LAST_CK) _cache.delete(LAST_CK); }catch(e){}
-      liveLog(box,`${c.icon} 응답이 잘려서 한 번 더 짧게 받는 중...`);
-      const raw2=await callClaude(sysJ+"\nThe previous reply was too long and got cut. Be brief.", usr, io);
-      const r2=pj(raw2);
-      if(r2 && (!r2._partial || !r)) { r=r2; raw=raw2; }
-    }
-    if(!r){ box.innerHTML=rawFailBox(c.title); return; }
-    const col=c.color;
-    const sec=(icon,lbl,txt)=>txt?`<div style="margin-bottom:8px;padding:9px 11px;background:${col}10;border-left:2px solid ${col};border-radius:8px"><div style="font-size:9px;color:${col};font-weight:700;margin-bottom:2px">${icon} ${lbl}</div><div style="font-size:11px;line-height:1.6">${esc(txt)}</div></div>`:"";
-    let h=r.summary?`<div style="font-size:12px;font-weight:700;color:${col};margin-bottom:9px;line-height:1.5">📌 ${esc(r.summary)}</div>`:"";
-    if(r.on_track) h+=`<div style="font-size:11px;margin-bottom:8px">🗓️ ${esc(r.on_track)}</div>`;
-    if((r.split||[]).length){
-      h+=`<div style="margin-bottom:9px">${r.split.map(x=>`<div style="margin:5px 0"><div style="display:flex;font-size:11px"><b style="flex:1">${esc(x.bucket)}</b><span style="color:${col};font-weight:800">${Number(x.pct)||0}%</span></div>
-        <div style="height:6px;background:var(--deep);border-radius:3px;margin-top:2px"><div style="height:6px;width:${Math.min(100,Number(x.pct)||0)}%;background:${col};border-radius:3px"></div></div>
-        <div style="font-size:9px;color:var(--sub);margin-top:2px">${esc(x.why||"")} · 월 약 $${Math.round(p.monthly*(Number(x.pct)||0)/100)}</div></div>`).join("")}</div>`;
-    }
-    c.fields.forEach(([i,l,k])=>h+=sec(i,l,r[k]));
-    (r.themes||[]).forEach(t=>h+=`<div class="card" style="padding:10px;margin-bottom:7px;border-left:3px solid ${col}">
-      <div style="font-size:12px;font-weight:700;color:${col}">${esc(t.theme)}</div>
-      <div style="font-size:10px;line-height:1.6;margin-top:3px">📎 ${esc(t.evidence||"")}</div>
-      <div style="font-size:10px;color:var(--mint);margin-top:2px">✓ ${esc(t.beneficiaries||"")}</div>
-      <div style="font-size:10px;color:var(--rose);margin-top:2px">△ ${esc(t.risk||"")}</div></div>`);
-    if((r.sectors||[]).length) h+=`<table style="width:100%;font-size:10px;border-collapse:collapse;margin:6px 0 9px">${r.sectors.map(s=>`<tr style="border-top:1px solid var(--border)"><td style="padding:4px 4px 4px 0;font-weight:700;white-space:nowrap">${esc(s.sector)}</td><td style="padding:4px">${esc(s.trend)}</td><td style="padding:4px;white-space:nowrap;color:${/밝/.test(s.outlook)?'var(--mint)':/주의/.test(s.outlook)?'var(--rose)':'var(--sub)'}">${esc(s.outlook||"")}</td></tr>`).join("")}</table>`;
-    (r.etf_ideas||[]).forEach(e=>h+=`<div class="row-item"><div class="dot" style="background:${col}"></div><span style="font-size:11px"><b>${esc(e.name)}</b> — ${esc(e.why||"")} <span style="color:var(--gold)">(${esc(e.weight_hint||"")})</span></span></div>`);
-    c.lists.forEach(([i,l,k])=>{ if((r[k]||[]).length){ h+=`<div class="lbl" style="color:${col};margin-top:6px">${i} ${l}</div>`; r[k].forEach(x=>h+=`<div class="row-item"><div class="dot" style="background:${col}"></div><span style="font-size:11px">${esc(x)}</span></div>`); } });
-    const src=(r.sources||[]).filter(s=>s&&/^https?:\/\//.test(s.url||""));
-    if(src.length) h+=`<div style="font-size:9px;color:var(--sub);margin-top:8px;line-height:1.7">출처: ${src.slice(0,6).map(s=>`<a href="${esc(s.url)}" target="_blank" style="color:var(--sky)">${esc(s.title||s.url)}</a>`).join(" · ")}</div>`;
-    if(r._partial) h+=`<div style="font-size:9px;color:var(--gold);margin-top:6px">⚠ 응답 끝이 잘려 앞부분만 보여 드려요 — 다시 누르면 새로 받아요.</div>`;
-    h+=`<div style="font-size:9px;color:var(--warn);margin-top:6px">교육·정보용 · 투자 권유 아님</div>`;
-    const type=kind==="macro"?"macro":kind==="sp"?"sp500":"invest";
-    const plain=[r.summary,r.us_direction,r.long_term,(r.themes||[]).map(t=>t.theme).join(", "),(r.long_term_watch||[]).join(", ")].filter(Boolean).join(" ").slice(0,600);
-    recordHealth("invest",true);
-    addReport({type, agent:c.agent, title:`${c.icon} ${c.title} (${new Date().toLocaleDateString('ko-KR',{month:'2-digit',day:'2-digit'})})`, html:h, summary:r.summary||"", plain});
-    rerenderSection("invest");
-    box.innerHTML=h;
-    renderTabs();
-  }catch(err){ showErr("runInvestAI: "+(err&&err.message?err.message:err)); box.innerHTML=`<div class="card" style="color:var(--danger);font-size:11px;padding:14px">처리 중 오류: ${esc(String(err&&err.message?err.message:err))}</div>`; }
-}
-
-function investKidsPanel(){ return `
-  <div class="card" style="margin-bottom:10px;padding:13px">
-    <div style="font-size:12px;font-weight:700;color:#34d399">🎓 자녀 미래 투자 · Sage-F</div>
-    <div style="font-size:10px;color:var(--sub);line-height:1.6;margin-top:4px">11살·7살 자녀의 미래를 위한 소액 장기 투자 옵션(529·custodial 등)을 주기적으로 찾아 제안해요.</div>
-    <button class="btn-gold" style="background:#34d399;color:#10151f;margin-top:9px" onclick="genKidsInvest()">🎓 자녀 투자 옵션 받기</button>
-    <div id="kidsInvestResult" style="margin-top:10px"></div>
-  </div>`;
-}
-async function genKidsInvest(){
-  const box=document.getElementById("kidsInvestResult"); if(!box)return;
-  liveLog(box,"🎓 Harbor가 올해 기준 아이 교육비 옵션을 정리 중...");
-  const sys=`You are Harbor, retirement & education planning specialist for ${myName()} (NY, USA), parent of ${kidsNow().length?kidsNow().map(k=>k.age+'-year-old').join(' and '):'children'}, small-dollar investor (a few dollars at a time). Focus on realistic, low-cost, long-horizon options for kids in the US (529 plans incl. NY 529, custodial UTMA brokerage, custodial Roth if they have earned income later).
-${nowStamp()}
-CRITICAL: Use web_search to confirm CURRENT-year figures (contribution limits, NY 529 state tax deduction amounts, gift-tax exclusion) — these change annually, so don't use stale numbers. Educational, not licensed advice. Respond in Korean; keep account/term names in English. Return ONLY JSON.`;
-  try{
-    const raw=await callClaude(sys,
-      `Web_search for this year's current rules/limits, ${domainDirective("invest")} then suggest kid-future investing options for an 11yo and 7yo with small monthly amounts. JSON: {"intro":"한 줄 소개 (올해 기준 명시)","options":[{"name":"옵션 (예: NY 529, Custodial UTMA)","what":"무엇인지 1문장","pros":"장점 1문장","cons":"단점/주의 1문장","good_for":"이 가족에 맞는 이유 1문장"}],"small_start":"몇 달러로 시작하는 현실적 방법 1-2문장","tip":"세금·복리 관련 팁 1개 (올해 한도 반영)","caution":"주의할 점 1문장"}`, sx(3));
-    const _g=keyGuard(raw); if(_g){box.innerHTML=_g; return;}
-    const p=pj(raw);
-    if(p){
-      let h=p.intro?`<div style="font-size:11px;color:var(--text);line-height:1.6;margin-bottom:8px">${esc(p.intro)}</div>`:"";
-      (p.options||[]).forEach(o=>{ h+=`<div class="card" style="padding:11px;margin-bottom:8px;border-left:3px solid #34d399">
-        <div style="font-size:12px;font-weight:700;color:#34d399">${esc(o.name)}</div>
-        <div style="font-size:11px;line-height:1.6;margin-top:3px">${esc(o.what)}</div>
-        <div style="font-size:10px;color:var(--mint);margin-top:4px">✓ ${esc(o.pros)}</div>
-        <div style="font-size:10px;color:var(--rose);margin-top:2px">△ ${esc(o.cons)}</div>
-        <div style="font-size:10px;color:var(--sub);margin-top:4px">💚 ${esc(o.good_for)}</div>
-      </div>`; });
-      if(p.small_start) h+=`<div style="padding:9px 11px;background:rgba(52,211,153,.08);border-left:2px solid #34d399;border-radius:8px;font-size:11px;line-height:1.6;margin-bottom:6px"><b style="color:#34d399">🪙 소액 시작:</b> ${esc(p.small_start)}</div>`;
-      if(p.tip) h+=`<div style="font-size:10px;color:var(--gold);margin-top:4px">💡 ${esc(p.tip)}</div>`;
-      if(p.caution) h+=`<div style="font-size:10px;color:var(--rose);margin-top:3px">⚠️ ${esc(p.caution)}</div>`;
-      recordHealth("invest",true);
-      addReport({type:"kids", agent:"Harbor", title:"🎓 자녀 투자 옵션 ("+new Date().toLocaleDateString('ko-KR',{month:'2-digit',day:'2-digit'})+")", html:h, summary:p.intro||""}); rerenderSection("invest");
-      stageReport("invest","Harbor","자녀 투자 옵션",h,p.intro||"");
-      box.innerHTML=h+saveBar("자녀 투자 옵션 보고함에 저장");
-      renderTabs();
-    } else { box.innerHTML=rawFailBox("자녀 투자"); }
-  }catch(err){ showErr("genKidsInvest: "+(err&&err.message?err.message:err)); box.innerHTML=`<div class="card" style="color:var(--danger);font-size:11px;padding:14px">처리 중 오류: ${esc(String(err&&err.message?err.message:err))}</div>`; }
-}
+function renderInvest(){ return `<div style="padding:14px">${investMoveCard()}</div>`; }
 
 // ═══════════════════════════════════
 //  FAMILY (Maple / FAM-00) — weekend events near home
 // ═══════════════════════════════════
 // HOME — 🔒 내 정보에서 (코드에는 없음)
 const HOME_ADDR = MY.home_addr||"";
-const HOME_PT = {lat:41.327, lon:-73.846};
 // ── v12 가족 여가 (Maple): 날씨·계절·아이 나이/관심사 → 집 안 + 밖(차로 3시간 이내) ──
 function mapsUrl(addr){ return "https://www.google.com/maps/dir/?api=1&origin="+encodeURIComponent(HOME_ADDR)+"&destination="+encodeURIComponent(addr); }
 function mapsEmbed(addr){ return "https://maps.google.com/maps?q="+encodeURIComponent(addr)+"&z=11&output=embed"; }
@@ -4067,7 +3390,6 @@ function renderHome(){
     {id:"studio",  ic:"🎬", c:"--rose",  name:"콘텐츠 스튜디오", desc:"버튼 하나로 오늘의 쇼츠"},
     {id:"family",  ic:"🧺", c:"--ok",    name:"가족 여가", desc:"날씨·계절·아이 나이 맞춤"},
     {id:"english", ic:"📚", c:"--gold",  name:"영어 한 장", desc:"오늘 쓸 표현 + 고급 단어"},
-    {id:"invest",  ic:"📈", c:"--mint",  name:"투자 · 은퇴", desc:"거시·S&P 500·로드맵"},
     {id:"advisor", ic:"🔬", c:"--hla",   name:"자문센터", desc:"질문·논문·표준·저장 글"},
     {id:"team",    ic:"👥", c:"--violet",name:"팀", desc:`${AGENTS.length}명 · 회의 · 개편`},
     {id:"security",ic:"🛡️", c:"--mint",  name:"보안·키·사용량",  desc:"키 관리 · 기능별 비용"},
@@ -4804,8 +4126,8 @@ async function requestRecruit(){
 // ═══════════════════════════════════
 //  INIT
 // ═══════════════════════════════════
-const BUILD_VERSION = "v15.1";
-const BUILD_TIME = "2026-10-23 06:40 EDT";
+const BUILD_VERSION = "v15.2";
+const BUILD_TIME = "2026-10-23 12:30 EDT";
 STATE.advisorTab="papers";
 STATE.studioTab="idea";
 STATE.investTab="money";
