@@ -714,7 +714,18 @@ function nowStamp(){ const n=new Date(); const dow=["일","월","화","수","목
 const TYPE_SECTION = { briefing:"brief", auto:"brief", paper:"advisor", standard:"advisor", consult:"advisor", digest:"advisor", invest:"invest", macro:"invest", kids:"invest", sp500:"invest", family:"family", meeting:"meetings", stats:"studio", idea:"studio", content:"studio", draft:"studio", ebook:"studio", shorts:"studio" };
 function sectionOf(obj){ return obj.section || TYPE_SECTION[obj.type] || "brief"; }
 function sectionItems(sec){ return REPORTS.filter(r=>(r.section||TYPE_SECTION[r.type]||"brief")===sec); }
-function unreadCount(sec){ if(sec==="studio") return STUDIO_ITEMS.filter(x=>x&&!x.read&&x.type!=="status"&&!x.done).length; return sectionItems(sec).filter(r=>!r.read).length; }
+// v15.3 NEW 규칙: ① 진짜 새로 올라온 것(14일 안) ② 아직 안 본 것 ③ 화면에 실제로 보이는 것만 센다
+const NEW_DAYS=14;
+function _created(x){ const id=Number(x&&x.id); return id>1.5e12&&id<5e12?id:0; }
+function isNew(x){ return !!(x&&!x.read&&!x.done&&_created(x)&&(Date.now()-_created(x))<NEW_DAYS*864e5); }
+function studioVisible(){ return STUDIO_ITEMS.filter(x=>x&&(x.type==="shorts"||(x.type==="notice"&&!x.done))); }
+function unreadCount(sec){ if(sec==="studio") return studioVisible().filter(isNew).length; return sectionItems(sec).filter(isNew).length; }
+// 14일이 지난 '안 읽음'은 새 글이 아님 → 읽음으로 정리 (동기화로 다른 기기에도)
+function expireOldNew(){ const now=Date.now(); let a=0,b=0;
+  const old=x=>x&&!x.read&&_created(x)&&(now-_created(x))>=NEW_DAYS*864e5;
+  STUDIO_ITEMS.forEach(x=>{ if(old(x)||(x&&!x.read&&x.type!=="shorts"&&x.type!=="notice"&&x.type!=="status")){ x.read=true; x.read_at=now; a++; } });   // 화면에 안 보이는 종류(옛 아이디어·초안 등)도 정리
+  REPORTS.forEach(x=>{ if(old(x)){ x.read=true; x.read_at=now; b++; } });
+  if(a) persistStudio(); if(b) persistReports(); return a+b; }
 // 화면에 보인 항목은 잠시 뒤 '읽음' (이번 화면에서는 NEW 표시를 그대로 두고, 홈 타일 숫자만 줄임)
 let _seenQ={reports:new Set(),studio:new Set()}, _seenT=null;
 function markSeenLater(kind, ids){ (ids||[]).forEach(id=>_seenQ[kind].add(id)); clearTimeout(_seenT);
@@ -795,7 +806,7 @@ function migrateReports(){
   try{localStorage.setItem('histara_migrated_v71','1');}catch(e){}
 }
 migrateReports();
-function markReportRead(id){ const r=REPORTS.find(x=>x.id===id); if(r&&!r.read){ r.read=true; persistReports(); } }
+function markReportRead(id){ const r=REPORTS.find(x=>x.id===id); if(r&&!r.read){ r.read=true; r.read_at=Date.now(); persistReports(); } }
 function toggleSecItem(sec,id){ STATE.openSec=(STATE.openSec===id?null:id); if(STATE.openSec===id) markReportRead(id); rerenderSection(sec); renderTabs(); }
 function delSecItem(sec,id){ REPORTS=REPORTS.filter(x=>x.id!==id); persistReports(); rerenderSection(sec); renderTabs(); }
 function confirmDelSec(sec,id){ const r=REPORTS.find(x=>x.id===id); const t=r?r.title:""; if(confirm(`이 기록을 삭제할까요?\n\n"${t}"\n\n삭제하면 되돌릴 수 없어요.`)){ delSecItem(sec,id); } }
@@ -1097,12 +1108,14 @@ async function syncPull(){
   if(rows && rows[0]){
     const remoteStudio=rows[0].studio||[]; const remoteAll=rows[0].reports||[]; const remoteReports=remoteAll.filter(r=>!(r&&INVEST_TYPES.has(r.type))); const remoteEnglish=rows[0].english||[];
     const _ids=a=>new Set((a||[]).map(x=>x&&x.id));
+    const _unreadRemote=new Set([].concat(remoteStudio,remoteReports,remoteEnglish).filter(x=>x&&!x.read).map(x=>x.id));
     const rS=_ids(remoteStudio), rR=_ids(remoteReports), rE=_ids(remoteEnglish);
     STUDIO_ITEMS=mergeById(STUDIO_ITEMS, remoteStudio); persistStudio();
     REPORTS=mergeById(REPORTS, remoteReports).slice(0,120); persistReports();
     ENGLISH_ITEMS=mergeById(ENGLISH_ITEMS, remoteEnglish).slice(0,120); persistEnglish();
     // 이 기기에만 있는 항목이 있으면 올려야 함
-    needPush = remoteAll.length!==remoteReports.length || STUDIO_ITEMS.some(x=>!rS.has(x.id)) || REPORTS.some(x=>!INVEST_TYPES.has(x.type)&&!rR.has(x.id)) || (rows[0].english!==undefined && ENGLISH_ITEMS.some(x=>!rE.has(x.id)));
+    expireOldNew();
+    needPush = remoteAll.length!==remoteReports.length || [].concat(STUDIO_ITEMS,REPORTS,ENGLISH_ITEMS).some(x=>x&&x.read&&_unreadRemote.has(x.id)) || STUDIO_ITEMS.some(x=>!rS.has(x.id)) || REPORTS.some(x=>!INVEST_TYPES.has(x.type)&&!rR.has(x.id)) || (rows[0].english!==undefined && ENGLISH_ITEMS.some(x=>!rE.has(x.id)));
   } else {
     needPush = (STUDIO_ITEMS.length+REPORTS.length+ENGLISH_ITEMS.length)>0;
   }
@@ -1359,7 +1372,7 @@ function saveStaged(btn){
   if(!studioType) rerenderSection(sec);
   renderTabs();
 }
-function markRead(id){ const r=REPORTS.find(x=>x.id===id); if(r&&!r.read){r.read=true;persistReports();} }
+function markRead(id){ const r=REPORTS.find(x=>x.id===id); if(r&&!r.read){r.read=true;r.read_at=Date.now();persistReports();} }
 function toggleReport(id){
   const r=REPORTS.find(x=>x.id===id); if(!r) return;
   markRead(id);
@@ -2188,7 +2201,7 @@ function noticeCard(r){
       <button class="pill" style="font-size:9px;color:var(--mint);margin-left:auto" onclick="noticeDone(${r.id})">✅ 했어요</button>
     </div></div>`;
 }
-function noticeDone(id){ const it=STUDIO_ITEMS.find(x=>x.id===id); if(!it) return; it.done=true; it.read=true; it.upd=Date.now(); it.done_at=new Date().toISOString(); persistStudio(); switchStudio(); }
+function noticeDone(id){ const it=STUDIO_ITEMS.find(x=>x.id===id); if(!it) return; it.done=true; it.read=true; it.read_at=Date.now(); it.upd=Date.now(); it.done_at=new Date().toISOString(); persistStudio(); switchStudio(); }
 // 📝 글 한 줄 (v13.8) — Mint가 같은 사연으로 쓴 블로그 글. 본문은 Mint·Blogger에만 있음
 function _essayLine(r){ const e=r.essay; if(!e) return "";
   if(e.ok===false) return `<div style="font-size:9.5px;color:var(--gold);margin-top:5px;line-height:1.5">📝 글은 이번에 못 만들었어요: ${esc(e.msg||"")}</div>`;
@@ -2265,8 +2278,8 @@ function shortsCard(r){
 function _kstLocal(h){ try{ const now=new Date(); const k=new Date(now.toLocaleString('en-US',{timeZone:'Asia/Seoul'}));
   const d=new Date(now.getTime()+((h-k.getHours())*60-k.getMinutes())*60000);
   return '이 기기 시각 '+d.toLocaleTimeString('ko-KR',{hour:'numeric',minute:'2-digit'}); }catch(e){ return ''; } }
-function shortsGet(id,btn){ const it=STUDIO_ITEMS.find(x=>x.id===id); if(!it||!it.pkg) return; LAST_SHORTS=it.pkg; downloadMintStory(btn); it.got=true; it.read=true; it.upd=Date.now(); persistStudio(); setTimeout(switchStudio,1600); }
-function shortsMark(id,k){ const it=STUDIO_ITEMS.find(x=>x.id===id); if(!it) return; it[k]=!it[k]; it.upd=Date.now(); if(k==="up"&&it.up) it.got=true; it.read=true; persistStudio(); switchStudio(); }
+function shortsGet(id,btn){ const it=STUDIO_ITEMS.find(x=>x.id===id); if(!it||!it.pkg) return; LAST_SHORTS=it.pkg; downloadMintStory(btn); it.got=true; it.read=true; it.read_at=Date.now(); it.upd=Date.now(); persistStudio(); setTimeout(switchStudio,1600); }
+function shortsMark(id,k){ const it=STUDIO_ITEMS.find(x=>x.id===id); if(!it) return; it[k]=!it[k]; it.upd=Date.now(); if(k==="up"&&it.up) it.got=true; if(!it.read){ it.read=true; it.read_at=Date.now(); } persistStudio(); switchStudio(); }
 
 // 📝 v13.8 글 초안 — 쇼츠와 같은 사연을 블로그 글로 더 깊게. Mint 자동 제작이 부르고, 본문은 Mint(~/hajuna/글)에만 저장 (Histara에는 제목·링크만)
 const ESSAY_TAGS=["제목","요약","본문","질문","출처","태그"];
@@ -3150,7 +3163,7 @@ function renderTabs(){
   </div>`;
 }
 function go(tab){STATE.tab=tab;STATE.selectedAgent=null;renderAll();document.getElementById("content").scrollTop=0;
-  if(tab==="advisor"){ setTimeout(()=>switchAdvisor(STATE.advisorTab||"ask"),30); }
+  if(tab==="advisor"){ if(unreadCount("advisor")>0) STATE.advisorTab="saved"; setTimeout(()=>switchAdvisor(STATE.advisorTab||"ask"),30); }
   if(tab==="family"){ setTimeout(()=>{ try{fillFamilyWeather();}catch(e){} },50); }
 }
 function goBrief(){ go('brief'); setTimeout(()=>{ const b=document.getElementById('briefResult'); if(b){ b.scrollIntoView({behavior:'smooth',block:'center'}); genBriefing(); } }, 80); }
@@ -3634,7 +3647,7 @@ function renderAdvisor(){
   </div>
   <div style="padding:0 14px">
   <div style="display:flex;gap:4px;background:var(--panel);border-radius:10px;padding:4px;margin-bottom:12px">
-    ${ADV_MENUS.map(([id,lbl])=>`<button onclick="switchAdvisor('${id}')" id="atab-${id}" style="flex:1;padding:8px 2px;border-radius:7px;border:none;cursor:pointer;font-size:10px;font-weight:700;font-family:inherit;background:${t===id?'var(--gold)':'none'};color:${t===id?'#000':'var(--sub)'}">${lbl}</button>`).join("")}
+    ${ADV_MENUS.map(([id,lbl])=>{ if(id==="saved"){ const n=unreadCount("advisor"); if(n) lbl+=" · NEW "+n; } return [id,lbl]; }).map(([id,lbl])=>`<button onclick="switchAdvisor('${id}')" id="atab-${id}" style="flex:1;padding:8px 2px;border-radius:7px;border:none;cursor:pointer;font-size:10px;font-weight:700;font-family:inherit;background:${t===id?'var(--gold)':'none'};color:${t===id?'#000':'var(--sub)'}">${lbl}</button>`).join("")}
   </div>
   <div id="advisor-body"></div>
   </div>`;
@@ -3644,6 +3657,7 @@ function switchAdvisor(tab){
   document.querySelectorAll("[id^='atab-']").forEach(el=>{ const on=el.id===`atab-${tab}`; el.style.background=on?'var(--gold)':'none'; el.style.color=on?'#000':'var(--sub)'; });
   const body=document.getElementById("advisor-body"); if(!body) return;
   body.innerHTML = tab==="saved" ? advSavedPanel() : advAskPanel(tab);
+  const sb=document.getElementById("atab-saved"); if(sb){ const n=unreadCount("advisor"); sb.textContent="📚 저장 글"+(n?" · NEW "+n:""); }
 }
 function advAskPanel(kind){
   const k=ADV_KIND[kind]||ADV_KIND.ask;
@@ -3736,8 +3750,8 @@ function advSavedPanel(){
   items.forEach(r=>{ const open=STATE.openAdv===r.id;
     h+=`<div class="card" style="padding:11px;margin-bottom:8px;border-left:3px solid var(--hla)">
       <div style="display:flex;gap:7px;align-items:flex-start">
-        <div onclick="STATE.openAdv=${open?'null':r.id};switchAdvisor('saved')" style="flex:1;min-width:0;cursor:pointer">
-          <div style="font-size:11px;font-weight:700;line-height:1.35">${esc(r.title||"")}</div>
+        <div onclick="STATE.openAdv=${open?'null':r.id};${open?'':`markReportRead(${r.id});`}switchAdvisor('saved')" style="flex:1;min-width:0;cursor:pointer">
+          <div style="font-size:11px;font-weight:700;line-height:1.35">${isNew(r)?'<span style="background:var(--mint);color:#10151f;font-size:8px;font-weight:800;border-radius:9px;padding:1px 6px;margin-right:5px">● NEW</span>':''}${esc(r.title||"")}</div>
           <div style="font-size:9px;color:var(--sub);margin-top:2px">${esc(r.ts||"")} · ${esc(r.agent||"")}${(r.tags||[]).length?" · "+r.tags.slice(0,4).map(t=>"#"+esc(t)).join(" "):""}</div>
           ${!open&&r.summary?`<div style="font-size:10px;color:var(--text);margin-top:3px;line-height:1.5">${esc(r.summary)}</div>`:""}
         </div>
@@ -4126,12 +4140,13 @@ async function requestRecruit(){
 // ═══════════════════════════════════
 //  INIT
 // ═══════════════════════════════════
-const BUILD_VERSION = "v15.2";
-const BUILD_TIME = "2026-10-23 12:30 EDT";
+const BUILD_VERSION = "v15.3";
+const BUILD_TIME = "2026-10-24 18:20 EDT";
 STATE.advisorTab="papers";
 STATE.studioTab="idea";
 STATE.investTab="money";
 STATE.secTab="key";
+try{ expireOldNew(); }catch(e){}
 renderAll();
 try{ autoSyncOnOpen(); }catch(e){}
 // Stamp: show build time + the moment THIS load happened (helps detect stale cache)
