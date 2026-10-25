@@ -2141,15 +2141,15 @@ function perfBoard(){
     </div>
     ${open?`${groups.length>1?`<div style="font-size:10px;color:var(--sub);margin-top:9px;line-height:1.6">${groups.map(g=>`<b style="color:var(--text)">${g.t}</b> ${g.r.length}편 · 평균 👁 ${f(_avg(g.r.map(r=>r.views)))} · 시청 ${pc(_avg(g.r.map(r=>r.avp)))}`).join("<br>")}</div>`:""}
     <div style="overflow-x:auto;margin-top:9px"><table style="width:100%;border-collapse:collapse;font-size:10px;font-variant-numeric:tabular-nums">
-      <tr style="color:var(--sub);text-align:left"><th style="padding:4px 3px;font-weight:600">날짜</th><th style="padding:4px 3px;font-weight:600">제목</th><th style="padding:4px 3px;font-weight:600;text-align:right">👁</th><th style="padding:4px 3px;font-weight:600;text-align:right">시청</th><th style="padding:4px 3px;font-weight:600;text-align:right">👍율</th><th style="padding:4px 3px;font-weight:600;text-align:right">💬</th><th style="padding:4px 3px;font-weight:600">추이</th></tr>
-      ${rows.map(r=>`<tr style="border-top:1px solid var(--border)${r.privacy!=="public"?";opacity:.55":""}"><td style="padding:5px 3px;white-space:nowrap">${esc((r.pub||"").slice(5).replace("-","/"))}</td><td style="padding:5px 3px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.no?`#${esc(String(r.no))} `:""}${esc(r.title)}${r.topic==="지혜"?' <span style="color:var(--gold)">·지혜</span>':""}</td><td style="padding:5px 3px;text-align:right">${f(r.views)}</td><td style="padding:5px 3px;text-align:right">${pc(r.avp)}</td><td style="padding:5px 3px;text-align:right">${pc(r.lr)}</td><td style="padding:5px 3px;text-align:right">${f(r.comments)}</td><td style="padding:5px 3px">${_spark(r.h)}</td></tr>`).join("")}
+      <tr style="color:var(--sub);text-align:left"><th style="padding:4px 3px;font-weight:600">날짜</th><th style="padding:4px 3px;font-weight:600">제목</th><th style="padding:4px 3px;font-weight:600;text-align:right">👁</th><th style="padding:4px 3px;font-weight:600;text-align:right">시청</th><th style="padding:4px 3px;font-weight:600;text-align:right">👍율</th><th style="padding:4px 3px;font-weight:600;text-align:right">💬</th><th style="padding:4px 3px;font-weight:600;text-align:right" title="첫 3초 뒤 남은 비율">훅</th><th style="padding:4px 3px;font-weight:600">추이</th></tr>
+      ${rows.map(r=>`<tr style="border-top:1px solid var(--border)${r.privacy!=="public"?";opacity:.55":""}"><td style="padding:5px 3px;white-space:nowrap">${esc((r.pub||"").slice(5).replace("-","/"))}</td><td style="padding:5px 3px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.no?`#${esc(String(r.no))} `:""}${esc(r.title)}${r.topic==="지혜"?' <span style="color:var(--gold)">·지혜</span>':""}</td><td style="padding:5px 3px;text-align:right">${f(r.views)}</td><td style="padding:5px 3px;text-align:right">${pc(r.avp)}</td><td style="padding:5px 3px;text-align:right">${pc(r.lr)}</td><td style="padding:5px 3px;text-align:right">${f(r.comments)}</td><td style="padding:5px 3px;text-align:right" title="${r.ret?`가장 큰 이탈 ${r.ret.drop_s}초`:""}">${r.ret?Math.round(r.ret.hook*100)+"%":"–"}</td><td style="padding:5px 3px">${_spark(r.h)}</td></tr>`).join("")}
     </table></div>
     <div style="display:flex;gap:6px;align-items:center;margin-top:9px"><button class="pill" style="font-size:9px" onclick="perfCopy(this)">📋 회의용 표 복사</button><span style="font-size:8.5px;color:var(--muted)">흐린 줄 = 아직 비공개 · 시청 %는 공개 1~2일 뒤부터</span></div>`:""}
   </div>`;
 }
 function perfCopy(btn){ const {st,rows}=_perfRows(); const f=n=>typeof n==="number"?String(Math.round(n)):"-", pc=n=>typeof n==="number"?n.toFixed(1)+"%":"-";
-  const t=[`HaJuNa 채널 성과 (${(st&&st.stats_day)||""} 기준, 최근 60일)`,"| 날짜 | # | 제목 | 주제 | 분위기 | 공개 | 조회 | 시청% | 좋아요 | 좋아요율 | 댓글 | 조회 추이 |","|---|---|---|---|---|---|---|---|---|---|---|---|"]
-    .concat(rows.map(r=>`| ${r.pub||""} | ${r.no||""} | ${String(r.title||"").replace(/\|/g,"/")} | ${r.topic} | ${r.mood||""} | ${r.privacy==="public"?"공개":"비공개"} | ${f(r.views)} | ${pc(r.avp)} | ${f(r.likes)} | ${pc(r.lr)} | ${f(r.comments)} | ${(r.h||[]).join("→")} |`)).join("\n");
+  const t=[`HaJuNa 채널 성과 (${(st&&st.stats_day)||""} 기준, 최근 60일)`,"| 날짜 | # | 제목 | 주제 | 분위기 | 공개 | 조회 | 시청% | 좋아요 | 좋아요율 | 댓글 | 훅 유지 | 큰 이탈(초) | 조회 추이 |","|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
+    .concat(rows.map(r=>`| ${r.pub||""} | ${r.no||""} | ${String(r.title||"").replace(/\|/g,"/")} | ${r.topic} | ${r.mood||""} | ${r.privacy==="public"?"공개":"비공개"} | ${f(r.views)} | ${pc(r.avp)} | ${f(r.likes)} | ${pc(r.lr)} | ${f(r.comments)} | ${r.ret?Math.round(r.ret.hook*100)+"%":"-"} | ${r.ret?r.ret.drop_s:"-"} | ${(r.h||[]).join("→")} |`)).join("\n");
   const done=()=>{ if(btn){ btn.textContent="✅ 복사했어요 — Claude 대화에 붙여 넣기"; setTimeout(()=>{btn.textContent="📋 회의용 표 복사";},2500);} };
   try{ navigator.clipboard.writeText(t).then(done,()=>{ prompt("아래를 길게 눌러 복사하세요",t); }); }catch(e){ prompt("아래를 길게 눌러 복사하세요",t); } }
 // 🔑 해야 할 일 — Mint 자동 제작이 올리는 알림 (예: YouTube 로그인 만료 전)
@@ -2213,7 +2213,10 @@ function _statsLine(r){ const s=r.stats; if(!s) return "";
   const d=s.at?new Date(s.at):null; const when=d&&!isNaN(d)?`${d.getMonth()+1}/${d.getDate()} 기준`:"";
   return `<div style="font-size:10px;color:var(--sub);margin-top:5px;line-height:1.5">📊 👁 <b style="color:var(--text)">${f(s.views)}</b> · 👍 ${f(s.likes)} · 💬 ${f(s.comments)}${typeof s.avp==="number"?` · 시청 <b style="color:var(--text)">${Math.round(s.avp)}%</b>`:""}${s.privacy&&s.privacy!=="public"?" · 아직 비공개":""}${when?` <span style="color:var(--muted)">· ${when}</span>`:""}</div>`; }
 // 최근 성과를 다음 사연 고를 때 참고만 (공개 4편 이상, 올린 지 2일 넘은 것만 — 숫자가 자리 잡은 뒤)
-function recentPerformanceHint(){
+function recentPerformanceHint(){ const base=_recentPerfBase(); const R=(typeof window!=="undefined"&&window.MINT_RULES)||"";
+  return base+(R?`
+LEARNED RULES (Mint's monthly channel audit of real numbers — soft guidance, never copy past stories): ${R}`:""); }
+function _recentPerfBase(){
   const now=Date.now();
   const rows=shortsItems().filter(r=>r.pkg&&r.stats&&r.stats.privacy==="public"&&typeof r.stats.views==="number")
     .filter(r=>{ const t=new Date((r.yt&&r.yt.at)||0).getTime(); return !t||isNaN(t)||now-t>=2*864e5; }).slice(0,12);
@@ -2237,7 +2240,8 @@ function shortsCard(r){
   const p=r.pkg||{}; const open=STATE.openStudio===r.id;
   const cuts=(p.mint&&p.mint.cuts)||[]; const sec=cuts.reduce((s,c)=>s+(Number(c.sec)||0),0);
   const mood=(p.music&&p.music.mood)||"";
-  const ttl=p.title||String(r.title||"").replace(/^\d+\w*\s*Shorts\s*·\s*/,"");
+  const ttl=(r.polish&&r.polish.title)||p.title||String(r.title||"").replace(/^\d+\w*\s*Shorts\s*·\s*/,"");
+  const pol=r.polish;
   const fail=r.auto&&r.auto.ok===false;
   const pa=_pubAt(r);
   const state=fail?["⚠️ 자동 제작 실패","var(--danger)"]:r.up?["✅ 올림","var(--mint)"]:(r.yt?(pa?[`⏰ 공개 예약 · ${_pubTxt(pa)}`,"var(--gold)"]:["👀 비공개로 올라감 · 확인 후 공개","var(--gold)"]):(r.got?["⬆️ 올릴 차례","var(--gold)"]:["🎬 만들 차례","var(--rose)"]));
@@ -2255,7 +2259,10 @@ function shortsCard(r){
           ${cuts.length?`<span style="font-size:8px;color:var(--sub);background:var(--deep);border-radius:6px;padding:2px 7px">컷 ${cuts.length} · ${sec}초</span>`:""}
           ${mood?`<span style="font-size:8px;color:#c878ff;background:rgba(200,120,255,.1);border-radius:6px;padding:2px 7px">🎵 ${esc(mood)}</span>`:""}
           ${r.auto?`<span style="font-size:8px;color:var(--cyan);background:rgba(80,200,255,.1);border-radius:6px;padding:2px 7px">🤖 Mint 자동</span>`:""}
+          ${pol?`<span title="첫 자막(훅) 점수 · 다듬기 전→후" style="font-size:8px;color:${pol.weak?'var(--gold)':'var(--mint)'};background:var(--deep);border-radius:6px;padding:2px 7px">🎣 훅 ${pol.hook_before!=null&&pol.hook_before!==pol.hook_score?pol.hook_before+"→":""}${pol.hook_score}</span>`:""}
+          ${r.stats&&r.stats.ret?`<span title="첫 3초 뒤 남은 비율 · 가장 큰 이탈 지점" style="font-size:8px;color:var(--sub);background:var(--deep);border-radius:6px;padding:2px 7px">⏱ 훅 유지 ${Math.round(r.stats.ret.hook*100)}% · 이탈 ${r.stats.ret.drop_s}초</span>`:""}
         </div>
+        ${pol&&open?`<div style="font-size:9.5px;color:var(--sub);margin-top:5px;line-height:1.55">🎣 첫 자막: “${esc(pol.hook||"")}”${pol.formula?` (${esc(pol.formula)})`:""}${pol.weak?` · <span style="color:var(--gold)">약함 — ${esc(pol.fix||"")}</span>`:""}<br>🔎 노릴 검색어: ${esc((pol.queries||[]).join(" · "))}</div>`:""}
         ${fail?`<div style="font-size:10px;color:var(--danger);margin-top:5px;line-height:1.5">${esc(r.auto.step||"")} 단계에서 멈춤: ${esc(r.auto.msg||"")}</div>${_todoList((r.auto.todo&&r.auto.todo.length)?r.auto.todo:["Mint에서 터미널 열기 (Ctrl+Alt+T)","python3 ~/hajuna/auto/run.py --now 로 다시"])}`:""}
         ${_statsLine(r)}
         ${_essayLine(r)}
@@ -4140,8 +4147,8 @@ async function requestRecruit(){
 // ═══════════════════════════════════
 //  INIT
 // ═══════════════════════════════════
-const BUILD_VERSION = "v15.3";
-const BUILD_TIME = "2026-10-24 18:20 EDT";
+const BUILD_VERSION = "v15.4";
+const BUILD_TIME = "2026-10-25 08:40 EDT";
 STATE.advisorTab="papers";
 STATE.studioTab="idea";
 STATE.investTab="money";
