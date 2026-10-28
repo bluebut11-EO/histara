@@ -2102,6 +2102,7 @@ function renderStudioBody(){
     <div id="shortsResult" style="margin-top:10px"></div>
   </div>
   ${perfBoard()}
+  ${blogBoard()}
   <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:9px">
     <span style="font-size:11px;font-weight:800;color:var(--text);margin-right:4px">🎞️ 만든 쇼츠</span>
     ${[["all","전체"],["new","만들 차례"],["got","올릴 차례"],["up","올림"]].map(([k,l])=>`<span class="pill ${f===k?'pill-on':''}" onclick="STATE.shortsFilter='${k}';switchStudio()">${l} ${cnt[k]}</span>`).join("")}
@@ -2148,10 +2149,64 @@ function perfBoard(){
   </div>`;
 }
 function perfCopy(btn){ const {st,rows}=_perfRows(); const f=n=>typeof n==="number"?String(Math.round(n)):"-", pc=n=>typeof n==="number"?n.toFixed(1)+"%":"-";
-  const t=[`HaJuNa 채널 성과 (${(st&&st.stats_day)||""} 기준, 최근 60일)`,"| 날짜 | # | 제목 | 주제 | 분위기 | 공개 | 조회 | 시청% | 좋아요 | 좋아요율 | 댓글 | 훅 유지 | 큰 이탈(초) | 조회 추이 |","|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
+  let t=[`HaJuNa 채널 성과 (${(st&&st.stats_day)||""} 기준, 최근 60일)`,"| 날짜 | # | 제목 | 주제 | 분위기 | 공개 | 조회 | 시청% | 좋아요 | 좋아요율 | 댓글 | 훅 유지 | 큰 이탈(초) | 조회 추이 |","|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
     .concat(rows.map(r=>`| ${r.pub||""} | ${r.no||""} | ${String(r.title||"").replace(/\|/g,"/")} | ${r.topic} | ${r.mood||""} | ${r.privacy==="public"?"공개":"비공개"} | ${f(r.views)} | ${pc(r.avp)} | ${f(r.likes)} | ${pc(r.lr)} | ${f(r.comments)} | ${r.ret?Math.round(r.ret.hook*100)+"%":"-"} | ${r.ret?r.ret.drop_s:"-"} | ${(r.h||[]).join("→")} |`)).join("\n");
+  const B=_blogData(); if(B&&(B.posts||[]).length){ const fv=n=>typeof n==="number"?String(n):"-";
+    t+=`\n\nHaJuNa 블로그 (${(B.at||"").slice(0,16)} 기준) — 조회 7일 ${fv((B.views||{}).d7)} · 30일 ${fv((B.views||{}).d30)} · 전체 ${fv((B.views||{}).all)}\n| 날짜 | # | 글 | 상태 | 그날 블로그 조회 | 댓글 |\n|---|---|---|---|---|---|\n`+
+      B.posts.slice(0,30).map(r=>`| ${(r.at||"").slice(0,10)} | ${r.no||""} | ${String(r.title||"").replace(/\|/g,"/")} | ${r.status} | ${fv(r.day_views)} | ${fv(r.comments)} |`).join("\n"); }
   const done=()=>{ if(btn){ btn.textContent="✅ 복사했어요 — Claude 대화에 붙여 넣기"; setTimeout(()=>{btn.textContent="📋 회의용 표 복사";},2500);} };
   try{ navigator.clipboard.writeText(t).then(done,()=>{ prompt("아래를 길게 눌러 복사하세요",t); }); }catch(e){ prompt("아래를 길게 눌러 복사하세요",t); } }
+// 📝 블로그 성과 (v15.5) — Mint가 6시간마다 Blogger 숫자(전체 조회 7·30일·전체, 글마다 상태·댓글)를 상태 줄에 실어 보냄
+// Blogger는 글마다 조회수를 주지 않아서, 날마다 '블로그 전체 조회 증가'를 기록해 그날 공개된 글과 함께 본다
+function _blogData(){ const st=STUDIO_ITEMS.find(x=>x&&x.type==="status"); return (st&&st.blog_stats)||null; }
+function blogAnalysis(b){
+  const P=b.posts||[], live=P.filter(r=>r.status==="공개"), sch=P.filter(r=>r.status==="예약"), dr=P.filter(r=>r.status==="임시저장");
+  const out=[], now=Date.now(), f=n=>Number(n||0).toLocaleString("ko-KR");
+  const ytV={}; (_perfRows().rows||[]).forEach(r=>{ ytV[r.id]=r.views; });
+  const next=sch.map(r=>new Date(r.at)).filter(d=>!isNaN(d)&&d>now).sort((a,c)=>a-c)[0];
+  if(!next) out.push(["warn","예약된 글이 없어요 — 다음 쇼츠가 만들어지면 다음 날 밤에 자동 예약돼요"+(dr.length?` · 임시저장 ${dr.length}편은 Blogger에서 읽고 게시하거나 예약`:"")]);
+  else if((next-now)/36e5<30) out.push(["info",`다음 글 ${_mdh(next.toISOString())} 공개 — 그 전에 한 번 읽고 내 말투로 한두 문장 고치면 좋아요`]);
+  if(live.length<5) out.push(["info",`공개 글 ${live.length}편 — 아직 판단하기 일러요. 글이 10편쯤 쌓이고 2~4주 지나야 검색·재방문 흐름이 보이기 시작해요 (숫자로 확인할 것)`]);
+  const days=(b.daily||[]).filter(x=>typeof x[1]==="number");
+  if(days.length>=3){ const best=days.slice().sort((a,c)=>c[1]-a[1])[0]; const on=live.filter(r=>(r.at||"").slice(0,10)===best[0]);
+    out.push(["good",`조회가 가장 많았던 날 ${best[0].slice(5).replace("-","/")} (+${f(best[1])})${on.length?` — 그날 공개: 「${cut2(on[0].title,18)}」`:""}`]); }
+  const ytSum=live.reduce((t,r)=>t+(r.yt&&typeof ytV[r.yt]==="number"?ytV[r.yt]:0),0);
+  if(ytSum>0&&b.views) out.push(["info",`이 글들과 짝인 쇼츠 조회 ${f(ytSum)} vs 블로그 30일 조회 ${f(b.views.d30)} (${(b.views.d30/ytSum*100).toFixed(1)}%) — 쇼츠 설명란·고정 댓글에 블로그 글 링크를 넣으면 이 비율이 오르는지 볼 수 있어요`]);
+  const cm=live.reduce((t,r)=>t+(r.comments||0),0);
+  if(live.length>=3&&!cm) out.push(["warn","블로그 댓글이 아직 없어요 — 글 끝 질문을 더 구체적으로(예: '당신 부모님의 그 물건은?'), 첫 댓글은 직접 남겨 대화를 열어 보세요"]);
+  else if(cm) out.push(["good",`블로그 댓글 ${cm}개 — 댓글 단 글의 공통점을 다음 글에 반영`]);
+  return out;
+}
+function cut2(s,n){ s=String(s||""); return s.length>n?s.slice(0,n-1)+"…":s; }
+function blogBoard(){
+  const b=_blogData(); if(!b) return "";
+  const P=b.posts||[], live=P.filter(r=>r.status==="공개"), sch=P.filter(r=>r.status==="예약").sort((a,c)=>(a.at||"")>(c.at||"")?1:-1), dr=P.filter(r=>r.status==="임시저장");
+  const open=!!STATE.blogOpen, f=n=>typeof n==="number"?n.toLocaleString("ko-KR"):"–", v=b.views||{};
+  const chip=(l,x,c)=>`<div style="background:var(--deep);border:1px solid var(--border);border-radius:9px;padding:6px 9px;min-width:64px"><div style="font-size:8.5px;color:var(--sub)">${l}</div><div style="font-size:13px;font-weight:800;font-variant-numeric:tabular-nums${c?';color:'+c:''}">${x}</div></div>`;
+  const days=(b.daily||[]).slice(-21), mx=Math.max(1,...days.map(x=>typeof x[1]==="number"?x[1]:0));
+  const pubDays=new Set(live.map(r=>(r.at||"").slice(0,10)));
+  const W=300,H=60,bw=W/Math.max(1,days.length);
+  const bars=days.length>=2?`<svg viewBox="0 0 ${W} ${H+14}" width="100%" style="max-width:520px;display:block;margin-top:8px" role="img" aria-label="날마다 블로그 조회 증가">${days.map((x,i)=>{ const val=typeof x[1]==="number"?x[1]:0, h=Math.max(val?2:0,val/mx*H), on=pubDays.has(x[0]);
+      return `<g><title>${x[0]} · +${val}${on?" · 글 공개":""}</title><rect x="${(i*bw+1).toFixed(1)}" y="${(H-h).toFixed(1)}" width="${Math.max(2,bw-2).toFixed(1)}" height="${h.toFixed(1)}" rx="2" fill="${on?'var(--lime)':'var(--sky)'}" opacity="${typeof x[1]==="number"?1:.25}"/>${on?`<circle cx="${(i*bw+bw/2).toFixed(1)}" cy="${H+6}" r="2.5" fill="var(--lime)"/>`:""}</g>`; }).join("")}
+      <text x="0" y="${H+13}" font-size="8" fill="var(--muted)">${esc((days[0]||[""])[0].slice(5).replace("-","/"))}</text><text x="${W}" y="${H+13}" font-size="8" fill="var(--muted)" text-anchor="end">${esc((days[days.length-1]||[""])[0].slice(5).replace("-","/"))}</text></svg>
+      <div style="font-size:8.5px;color:var(--muted)">막대 = 그날 블로그 전체 조회 증가 · <span style="color:var(--lime)">●</span> 글 공개한 날 (Blogger는 글마다 조회수를 주지 않아요)</div>`:`<div style="font-size:9px;color:var(--muted);margin-top:6px">날마다 조회 그래프는 기록이 이틀 넘게 쌓이면 보여요</div>`;
+  const A=blogAnalysis(b), ic={good:"🟢",info:"🔵",warn:"🟡"};
+  const row=r=>`<tr style="border-top:1px solid var(--border)"><td style="padding:5px 3px;white-space:nowrap">${r.at?_md(r.at):"–"}</td><td style="padding:5px 3px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.no?`#${esc(String(r.no))} `:""}${r.url&&r.status==="공개"?`<a href="${esc(r.url)}" target="_blank" rel="noopener" style="color:var(--text)">${esc(r.title)}</a>`:esc(r.title)}</td><td style="padding:5px 3px;white-space:nowrap;color:${r.status==="공개"?'var(--mint)':r.status==="예약"?'var(--sky)':'var(--gold)'}">${esc(r.status)}${r.status==="예약"&&r.at?` ${new Date(r.at).toLocaleTimeString("ko-KR",{hour:"numeric",minute:"2-digit"})}`:""}</td><td style="padding:5px 3px;text-align:right">${typeof r.day_views==="number"?"+"+f(r.day_views):"–"}</td><td style="padding:5px 3px;text-align:right">${f(r.comments)}</td></tr>`;
+  return `<div class="card" style="padding:11px 12px;margin-bottom:12px">
+    <div onclick="STATE.blogOpen=!STATE.blogOpen;switchStudio()" style="display:flex;align-items:center;gap:6px;cursor:pointer">
+      <span style="font-size:12px;font-weight:800">📝 블로그 성과</span>
+      <span style="font-size:9px;color:var(--sub)">${esc(b.name||"")} · 공개 ${live.length} · 예약 ${sch.length}${b.at?` · ${_mdh(b.at)} 기준`:""}</span>
+      <span style="margin-left:auto;color:var(--muted);font-size:10px">${open?'▲':'▼'}</span></div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">${chip("7일 조회",f(v.d7))}${chip("30일 조회",f(v.d30))}${chip("전체 조회",f(v.all))}${chip("공개 글",f(live.length),"var(--mint)")}${chip("예약",f(sch.length),"var(--sky)")}${dr.length?chip("임시저장",f(dr.length),"var(--gold)"):""}${chip("댓글",f(live.reduce((t,r)=>t+(r.comments||0),0)))}</div>
+    ${sch.length?`<div style="font-size:10px;color:var(--sub);margin-top:8px;line-height:1.7">⏰ 공개 예정: ${sch.slice(0,4).map(r=>`<b style="color:var(--text)">${_mdh(r.at)}</b> 「${esc(cut2(r.title,16))}」`).join(" · ")}</div>`:""}
+    ${open?`${bars}
+    <div style="margin-top:9px">${A.map(([l,t])=>`<div style="font-size:10px;line-height:1.55;padding:3px 0">${ic[l]} ${esc(t)}</div>`).join("")}</div>
+    <div style="overflow-x:auto;margin-top:8px"><table style="width:100%;border-collapse:collapse;font-size:10px;font-variant-numeric:tabular-nums">
+      <tr style="color:var(--sub);text-align:left"><th style="padding:4px 3px;font-weight:600">날짜</th><th style="padding:4px 3px;font-weight:600">글</th><th style="padding:4px 3px;font-weight:600">상태</th><th style="padding:4px 3px;font-weight:600;text-align:right" title="공개한 날 블로그 전체 조회 증가">그날 조회</th><th style="padding:4px 3px;font-weight:600;text-align:right">💬</th></tr>
+      ${P.slice(0,30).map(row).join("")}</table></div>
+    <div style="display:flex;gap:6px;align-items:center;margin-top:9px;flex-wrap:wrap">${b.url?`<a class="pill" style="font-size:9px;text-decoration:none" href="${esc(b.url)}" target="_blank" rel="noopener">🌐 블로그 열기</a>`:""}<a class="pill" style="font-size:9px;text-decoration:none" href="https://www.blogger.com/" target="_blank" rel="noopener">✏️ Blogger</a><span style="font-size:8.5px;color:var(--muted)">공개 시각 매일 ${b.schedule===false?"(예약 꺼짐)":(b.hour||21)+"시 (뉴욕)"} · 📋 회의용 표 복사에 블로그도 함께</span></div>`:""}
+  </div>`;
+}
 // 🔑 해야 할 일 — Mint 자동 제작이 올리는 알림 (예: YouTube 로그인 만료 전)
 function _todoList(t){ if(!t||!t.length) return "";
   return `<div style="margin-top:7px;padding:8px 10px;background:var(--deep);border:1px solid var(--border);border-radius:8px">
@@ -2185,7 +2240,7 @@ function mintStatusCard(){
       <span style="font-size:15px">${st[0]}</span>
       <div style="flex:1;min-width:0">
         <div style="font-size:11.5px;font-weight:800;color:${st[2]}">${st[1]}</div>
-        <div style="font-size:9.5px;color:var(--sub);margin-top:2px;line-height:1.5">마지막 확인 ${_mdh(m.checked_at)}${next?' · '+next:''}${login}${m.pending?' · <span style="color:var(--gold)">못 올린 영상 1편 대기</span>':''}${m.book?' · 📚 '+esc(m.book):''}</div>
+        <div style="font-size:9.5px;color:var(--sub);margin-top:2px;line-height:1.5">마지막 확인 ${_mdh(m.checked_at)}${next?' · '+next:''}${login}${m.pending?' · <span style="color:var(--gold)">못 올린 영상 1편 대기</span>':''}${m.book?' · 📚 '+esc(m.book):''}${(()=>{ const b=m.blog_stats; if(!b) return ''; const n=(b.posts||[]).filter(r=>r.status==="예약"&&r.at&&new Date(r.at)>Date.now()).sort((x,y)=>x.at>y.at?1:-1)[0]; return n?` · 📝 다음 글 <b>${_mdh(n.at)}</b>`:''; })()}</div>
         ${m.result?`<div style="font-size:9.5px;color:${fail?'var(--gold)':'var(--muted)'};margin-top:2px;line-height:1.45">${fail?'⚠️ ':'· '}${esc(m.result)}</div>`:""}
       </div>
     </div>${todo}</div>`;
@@ -2203,9 +2258,13 @@ function noticeCard(r){
 }
 function noticeDone(id){ const it=STUDIO_ITEMS.find(x=>x.id===id); if(!it) return; it.done=true; it.read=true; it.read_at=Date.now(); it.upd=Date.now(); it.done_at=new Date().toISOString(); persistStudio(); switchStudio(); }
 // 📝 글 한 줄 (v13.8) — Mint가 같은 사연으로 쓴 블로그 글. 본문은 Mint·Blogger에만 있음
+function _essSched(e){ if(!e) return null; const iso=e.status==="예약"?(e.at||e.scheduled):(!e.status&&!e.posted?e.scheduled:null); const d=iso?new Date(iso):null; return d&&!isNaN(d)?d:null; }
 function _essayLine(r){ const e=r.essay; if(!e) return "";
   if(e.ok===false) return `<div style="font-size:9.5px;color:var(--gold);margin-top:5px;line-height:1.5">📝 글은 이번에 못 만들었어요: ${esc(e.msg||"")}</div>`;
-  if(e.posted) return `<div style="font-size:10px;color:var(--sub);margin-top:5px;line-height:1.5">📝 글 「${esc(e.title||"")}」 · <b style="color:var(--mint)">Blogger에 게시됨</b>${e.url?` · <a href="${esc(e.url)}" target="_blank" rel="noopener" style="color:var(--sky)">보기</a>`:""}${e.book?` · 📚 ${esc(e.book)}`:""}</div>`;
+  const cm=typeof e.comments==="number"?` · 💬 ${e.comments}`:"";
+  if(e.posted||e.status==="공개") return `<div style="font-size:10px;color:var(--sub);margin-top:5px;line-height:1.5">📝 글 「${esc(e.title||"")}」 · <b style="color:var(--mint)">블로그에 공개됨</b>${e.at?` ${_mdh(e.at)}`:""}${cm}${e.url?` · <a href="${esc(e.url)}" target="_blank" rel="noopener" style="color:var(--sky)">보기</a>`:""}${e.book?` · 📚 ${esc(e.book)}`:""}</div>`;
+  const sd=_essSched(e);
+  if(sd) return `<div style="font-size:10px;color:var(--sub);margin-top:5px;line-height:1.5">📝 글 「${esc(e.title||"")}」${e.chars?` ${esc(String(e.chars))}자`:""} · ⏰ <b style="color:var(--sky)">${_mdh(sd.toISOString())} 공개 예약</b> — 그 전에 Blogger에서 읽고 고칠 수 있어요</div>`;
   return `<div style="font-size:10px;color:var(--sub);margin-top:5px;line-height:1.5">📝 글 「${esc(e.title||"")}」${e.chars?` ${esc(String(e.chars))}자`:""} · ${e.edit?'Blogger에 <b>임시저장</b> — 읽어 보고 게시해 주세요':'Mint에 저장됨 (Blogger 연결 전)'}${e.book?` · 📚 ${esc(e.book)}`:""}</div>`; }
 // 📊 조회 한 줄 (v14.0) — Mint가 하루 한 번 YouTube에서 읽어 붙임 (시청 %는 YouTube 분석 권한이 있을 때만)
 function _statsLine(r){ const s=r.stats; if(!s) return "";
@@ -2274,7 +2333,7 @@ function shortsCard(r){
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:9px">
       ${r.yt?`<a class="pill" style="font-size:9px;color:var(--gold);text-decoration:none" href="${esc(r.yt.studio||'')}" target="_blank" rel="noopener">▶️ YouTube Studio에서 보기·공개</a>`
            :(r.pkg?`<button class="pill" style="font-size:9px;color:var(--cyan)" onclick="shortsGet(${r.id},this)">⬇️ Mint 파일</button>`:"")}
-      ${r.essay&&r.essay.edit&&!r.essay.posted?`<a class="pill" style="font-size:9px;color:var(--lime);text-decoration:none" href="${esc(r.essay.edit)}" target="_blank" rel="noopener">📝 Blogger에서 읽고 게시</a>`:""}
+      ${r.essay&&r.essay.edit&&!(r.essay.posted||r.essay.status==="공개")?`<a class="pill" style="font-size:9px;color:var(--lime);text-decoration:none" href="${esc(r.essay.edit)}" target="_blank" rel="noopener">${_essSched(r.essay)?'📝 예약된 글 읽고 고치기':'📝 Blogger에서 읽고 게시'}</a>`:""}
       <button class="pill" style="font-size:9px;${r.up?'color:var(--mint)':''}" onclick="shortsMark(${r.id},'up')">${r.up?'✅ 올림 취소':(r.yt?'✅ 공개했어요':'✅ 올렸어요')}</button>
       <button class="pill" style="font-size:9px;color:var(--rose);margin-left:auto" onclick="confirmDelStudio(${r.id})">🗑</button>
     </div>
@@ -4147,8 +4206,8 @@ async function requestRecruit(){
 // ═══════════════════════════════════
 //  INIT
 // ═══════════════════════════════════
-const BUILD_VERSION = "v15.4";
-const BUILD_TIME = "2026-10-25 08:40 EDT";
+const BUILD_VERSION = "v15.5";
+const BUILD_TIME = "2026-10-28 17:30 EDT";
 STATE.advisorTab="papers";
 STATE.studioTab="idea";
 STATE.investTab="money";
@@ -4344,7 +4403,9 @@ function derive(items,now){
     if(pa&&!isNaN(pa)&&pa<=now)return;                       // 예약 시각이 지남 → 공개됨 (Mint가 다음 확인 때 '올림'으로)
     if(pa&&!isNaN(pa))A.push({p:45,sev:"info",agent:"choi",to:"ceo",text:`#${no(r)} 「${cut(r.pkg&&(r.pkg.title||r.pkg.title_ko),12)}」 ${md(pa)} ${hm(pa)} 공개 예약`,detail:"그 전에 한 번 보고, 아니다 싶으면 Studio에서 비공개로",act:{kind:"link",label:"YouTube Studio 열기",url:r.yt.studio||"https://studio.youtube.com/"}});
     else A.push({p:60,sev:"warn",agent:"choi",to:"ceo",text:`#${no(r)} 「${cut(r.pkg&&(r.pkg.title||r.pkg.title_ko),14)}」 공개를 기다려요`,detail:"한국 오후 6시로 예약 공개 권장",act:{kind:"link",label:"YouTube Studio 열기",url:r.yt.studio||"https://studio.youtube.com/"}});});
-  shorts.filter(r=>r.essay&&r.essay.edit&&!r.essay.posted).slice(0,2).forEach(r=>A.push({p:55,sev:"warn",agent:"theo",to:"ceo",text:`글 「${cut(r.essay.title,14)}」 게시를 기다려요`,detail:r.up?"Blogger에서 읽고 게시":"영상을 먼저 공개한 뒤 게시",act:{kind:"link",label:"Blogger에서 읽고 게시",url:r.essay.edit}}));
+  shorts.filter(r=>r.essay&&r.essay.edit&&!(r.essay.posted||r.essay.status==="공개")&&_essSched(r.essay)&&_essSched(r.essay)>now).sort((a,b)=>_essSched(a.essay)-_essSched(b.essay)).slice(0,1).forEach(r=>{const d=_essSched(r.essay);
+    A.push({p:44,sev:"info",agent:"theo",to:"ceo",text:`글 「${cut(r.essay.title,12)}」 ${md(d)} ${hm(d)} 공개 예약`,detail:"그 전에 Blogger에서 읽고 고칠 수 있어요",act:{kind:"link",label:"Blogger에서 읽기",url:r.essay.edit}});});
+  shorts.filter(r=>r.essay&&r.essay.edit&&!(r.essay.posted||r.essay.status==="공개")&&!_essSched(r.essay)).slice(0,2).forEach(r=>A.push({p:55,sev:"warn",agent:"theo",to:"ceo",text:`글 「${cut(r.essay.title,14)}」 게시를 기다려요`,detail:r.up?"Blogger에서 읽고 게시":"영상을 먼저 공개한 뒤 게시",act:{kind:"link",label:"Blogger에서 읽고 게시",url:r.essay.edit}}));
   // 📊 조회 피드백 (v6.8) — Mint가 하루 한 번 붙이는 숫자. 최근 평균보다 1.5배 넘게 잘된 편이 있으면 MAX가 알림
   const seen=shorts.filter(r=>r.stats&&r.stats.privacy==="public"&&typeof r.stats.views==="number"&&r.yt);
   const vf=n=>Number(n).toLocaleString("ko-KR"); const pct=s=>typeof s.avp==="number"?` · 시청 ${Math.round(s.avp)}%`:"";
