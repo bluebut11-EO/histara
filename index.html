@@ -1570,7 +1570,7 @@ async function approveAndProduce(payload){
     : (hook?`\n\nThe approved premise/hook to build from: "${hook}". Stay on this exact situation.\n`:"");
   const W=payload&&payload.wisdom||null;            // 🌿 지혜 편 씨앗 (있으면)
   const wisdomCtx=W?wisdomBlock(W):"";
-  const sys=`You are the Histara Shorts team for the YouTube channel @HaJuNa (Korean parent/keepsake twist stories, viewers aged 40–70).
+  const sys=`You are the Histara Shorts team for the YouTube channel @HaJunNa (Korean parent/keepsake twist stories, viewers aged 40–70).
 Team: Theo (story), Rio (narration), Choi (Mint auto-video).
 The video is made AUTOMATICALLY on Linux Mint: there is NO voice — the narration sentences appear one by one as big on-screen captions over photo scenes, with soft background music only, and a 4-second HaJuNa subscribe end card is always added at the end. No manual editing happens, so everything you write is final.
 
@@ -1851,7 +1851,7 @@ function renderMintBlock(p){
   return `<div style="margin-top:11px;padding:12px;border-radius:11px;background:rgba(80,200,255,.07);border:1px solid rgba(80,200,255,.35)">
     <div style="font-size:12px;font-weight:800;color:var(--cyan)">🎞️ Mint 자동 영상 <span style="font-size:9px;font-weight:600;color:var(--sub)">— 손대지 않고 바로 영상으로</span></div>
     ${m.fallback?`<div style="font-size:9px;color:var(--gold);margin-top:5px">⚠️ 이 패키지에는 AI 장면표가 없어 기본 장면(안방)으로 채웠어요. "다시 생성"하면 이야기에 맞는 장면으로 바뀝니다.</div>`:""}
-    <div style="font-size:9px;color:var(--sub);margin-top:4px">컷 ${m.cuts.length}개 · 이야기 ${total}초 + HaJuNa 구독 엔드카드 4초 · 💬 나레이션이 자막으로 한 장씩 · 🎵 배경음악 (목소리 없음)</div>
+    <div style="font-size:9px;color:var(--sub);margin-top:4px">컷 ${m.cuts.length}개 · 이야기 ${total}초 + HaJunNa 구독 엔드카드 4초 · 💬 나레이션이 자막으로 한 장씩 · 🎵 배경음악 (목소리 없음)</div>
     <div style="margin-top:6px">${rows}</div>
     <button class="btn-gold" style="margin-top:9px;background:var(--cyan);color:#06131a" onclick="downloadMintStory(this)">⬇️ Mint 영상 파일 받기 (story.json)</button>
     <div style="font-size:9px;color:var(--sub);margin-top:6px;line-height:1.6">Mint에서: 이 파일이 <b>다운로드</b> 폴더에 저장되면 터미널에 <code>bash ~/hajuna/make.sh</code> 한 줄 → <b>완성영상</b> 폴더에 mp4(나레이션 자막·배경음악·구독 엔드카드) + 업로드정보.txt. 배경음악은 <code>~/hajuna/음악/</code> 폴더에 받아 둔 곡에서 자동으로 골라요.</div>
@@ -2149,10 +2149,10 @@ function perfBoard(){
   </div>`;
 }
 function perfCopy(btn){ const {st,rows}=_perfRows(); const f=n=>typeof n==="number"?String(Math.round(n)):"-", pc=n=>typeof n==="number"?n.toFixed(1)+"%":"-";
-  let t=[`HaJuNa 채널 성과 (${(st&&st.stats_day)||""} 기준, 최근 60일)`,"| 날짜 | # | 제목 | 주제 | 분위기 | 공개 | 조회 | 시청% | 좋아요 | 좋아요율 | 댓글 | 훅 유지 | 큰 이탈(초) | 조회 추이 |","|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
+  let t=[`HaJunNa 채널 성과 (${(st&&st.stats_day)||""} 기준, 최근 60일)`,"| 날짜 | # | 제목 | 주제 | 분위기 | 공개 | 조회 | 시청% | 좋아요 | 좋아요율 | 댓글 | 훅 유지 | 큰 이탈(초) | 조회 추이 |","|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
     .concat(rows.map(r=>`| ${r.pub||""} | ${r.no||""} | ${String(r.title||"").replace(/\|/g,"/")} | ${r.topic} | ${r.mood||""} | ${r.privacy==="public"?"공개":"비공개"} | ${f(r.views)} | ${pc(r.avp)} | ${f(r.likes)} | ${pc(r.lr)} | ${f(r.comments)} | ${r.ret?Math.round(r.ret.hook*100)+"%":"-"} | ${r.ret?r.ret.drop_s:"-"} | ${(r.h||[]).join("→")} |`)).join("\n");
   const B=_blogData(); if(B&&(B.posts||[]).length){ const fv=n=>typeof n==="number"?String(n):"-";
-    t+=`\n\nHaJuNa 블로그 (${(B.at||"").slice(0,16)} 기준) — 조회 7일 ${fv((B.views||{}).d7)} · 30일 ${fv((B.views||{}).d30)} · 전체 ${fv((B.views||{}).all)}\n| 날짜 | # | 글 | 상태 | 그날 블로그 조회 | 댓글 |\n|---|---|---|---|---|---|\n`+
+    t+=`\n\nHaJunNa 블로그 (${(B.at||"").slice(0,16)} 기준) — 조회 7일 ${fv((B.views||{}).d7)} · 30일 ${fv((B.views||{}).d30)} · 전체 ${fv((B.views||{}).all)}\n| 날짜 | # | 글 | 상태 | 그날 블로그 조회 | 댓글 |\n|---|---|---|---|---|---|\n`+
       B.posts.slice(0,30).map(r=>`| ${(r.at||"").slice(0,10)} | ${r.no||""} | ${String(r.title||"").replace(/\|/g,"/")} | ${r.status} | ${fv(r.day_views)} | ${fv(r.comments)} |`).join("\n"); }
   const done=()=>{ if(btn){ btn.textContent="✅ 복사했어요 — Claude 대화에 붙여 넣기"; setTimeout(()=>{btn.textContent="📋 회의용 표 복사";},2500);} };
   try{ navigator.clipboard.writeText(t).then(done,()=>{ prompt("아래를 길게 눌러 복사하세요",t); }); }catch(e){ prompt("아래를 길게 눌러 복사하세요",t); } }
@@ -2370,7 +2370,7 @@ async function autoEssay(pkg){
   pkg=pkg||LAST_SHORTS; if(!pkg) return {ok:false,msg:"쇼츠 패키지가 없어요"};
   const seed=pkg._seed||{};
   const narr=((pkg.mint&&pkg.mint.cuts)||[]).map(c=>c.narration).filter(Boolean).join(" ");
-  const sys=`You are SOL, essay editor for the HaJuNa blog — the written companion of the YouTube channel @HaJuNa (Korean stories about parents, keepsakes and the small wisdom of life, for readers aged 30–70 who may feel tired or alone).
+  const sys=`You are SOL, essay editor for the HaJunNa blog — the written companion of the YouTube channel @HaJunNa (Korean stories about parents, keepsakes and the small wisdom of life, for readers aged 30–70 who may feel tired or alone).
 ${nowStamp()}
 Write in Korean. Warm, quiet, plain words. No clickbait, no preaching, no invented facts or quotes.`;
   const body=`[#${pkg.no||""}] ${pkg.title||seed.title||""} — 이 사연으로 블로그 글 한 편을 쓴다.
@@ -2432,7 +2432,7 @@ async function autoShorts(opts){
   const topic=(document.getElementById("shortsTopic")?.value||"").trim();
   const W=opts.wisdom?pickWisdomSeed():null;            // 🌿 지혜 편 (Mint가 3편에 1편 정함 / 화면 체크)
   liveLog(box,W?`⓪ 🌿 지혜 편 「${W.title}」 사연 쓰는 중... (NOVA)`:"⓪ 오늘의 사연 고르는 중... (NOVA)");
-  const sys=`You are NOVA, story editor for the YouTube channel @HaJuNa (Korean parent/keepsake twist stories for viewers aged 40–70, often listening late at night).
+  const sys=`You are NOVA, story editor for the YouTube channel @HaJunNa (Korean parent/keepsake twist stories for viewers aged 40–70, often listening late at night).
 ${nowStamp()}
 ${RESONANCE_2026}
 ${recentPerformanceHint()}
@@ -4206,8 +4206,8 @@ async function requestRecruit(){
 // ═══════════════════════════════════
 //  INIT
 // ═══════════════════════════════════
-const BUILD_VERSION = "v15.5";
-const BUILD_TIME = "2026-10-28 17:30 EDT";
+const BUILD_VERSION = "v15.6";
+const BUILD_TIME = "2026-10-29 08:40 EDT";
 STATE.advisorTab="papers";
 STATE.studioTab="idea";
 STATE.investTab="money";
@@ -4229,7 +4229,7 @@ setTimeout(()=>{if(STATE.tab==="advisor")switchAdvisor("papers");},100);
 </script>
 <script>
 // ═══════════════════════════════════════════════════════════════
-//  HOffice v1 — HaJuNa 사무실 (Histara v13.9)
+//  HOffice v1 — HaJunNa 사무실 (Histara v13.9)
 //  Histara 목록(STUDIO_ITEMS)의 Mint 상태 줄·쇼츠 카드·🔑📚 카드만 읽어서
 //  직원 캐릭터가 움직이고 말풍선으로 할 일을 알려 주는 아이소메트릭 사무실. 아무것도 저장하지 않는다.
 //  HOffice.mount(el) · HOffice.refresh() · HOffice.setSource(fn)
@@ -4432,7 +4432,7 @@ const BUB=new Map(); let chatIdx=0,chatEl=null,chatUntil=0;
 const isNight=()=>modePref==="night"||(modePref==="auto"&&(()=>{const h=new Date().getHours();return h<6||h>=18;})());
 function build(){
   if(!document.getElementById("hof-css")){const s=document.createElement("style");s.id="hof-css";s.textContent=CSS;document.head.appendChild(s);}
-  root=document.createElement("section"); root.className="hof"; root.setAttribute("aria-label","HaJuNa 사무실");
+  root=document.createElement("section"); root.className="hof"; root.setAttribute("aria-label","HaJunNa 사무실");
   root.innerHTML=`<div class="hof-bar"><div class="hof-status" role="status"></div><div class="hof-ctrls">
       <div class="hof-seg" role="group" aria-label="낮·밤"><button type="button" data-m="auto">자동</button><button type="button" data-m="day">낮</button><button type="button" data-m="night">밤</button></div>
       <button class="hof-zoom" type="button" aria-pressed="false">크게</button></div></div>
