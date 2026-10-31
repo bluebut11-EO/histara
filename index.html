@@ -2138,19 +2138,25 @@ function perfBoard(){
       <span style="font-size:9px;color:var(--sub)">최근 60일 · 공개 ${pub.length}편${day?` · ${day} 기준`:""}</span>
       <span style="margin-left:auto;color:var(--muted);font-size:10px">${open?'▲':'▼'}</span></div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
-      ${chip("총 조회",f(total))}${chip("편당 평균",f(_avg(pub.map(r=>r.views))))}${chip("평균 시청",pc(_avg(pub.map(r=>r.avp))))}${chip("좋아요율",pc(_avg(pub.map(r=>r.lr))))}${chip("댓글",f(pub.reduce((t,r)=>t+(r.comments||0),0)))}
+      ${chip("총 조회",f(total))}${chip("편당 평균",f(_avg(pub.map(r=>r.views))))}${chip("평균 시청",pc(_avg(pub.map(r=>r.avp))))}${chip("좋아요율",pc(_avg(pub.map(r=>r.lr))))}${chip("댓글",f(pub.reduce((t,r)=>t+(r.comments||0),0)))}${pub.some(r=>typeof r.subs==="number")?chip("구독+",f(pub.reduce((t,r)=>t+(r.subs||0),0))):""}
     </div>
     ${open?`${groups.length>1?`<div style="font-size:10px;color:var(--sub);margin-top:9px;line-height:1.6">${groups.map(g=>`<b style="color:var(--text)">${g.t}</b> ${g.r.length}편 · 평균 👁 ${f(_avg(g.r.map(r=>r.views)))} · 시청 ${pc(_avg(g.r.map(r=>r.avp)))}`).join("<br>")}</div>`:""}
     <div style="overflow-x:auto;margin-top:9px"><table style="width:100%;border-collapse:collapse;font-size:10px;font-variant-numeric:tabular-nums">
-      <tr style="color:var(--sub);text-align:left"><th style="padding:4px 3px;font-weight:600">날짜</th><th style="padding:4px 3px;font-weight:600">제목</th><th style="padding:4px 3px;font-weight:600;text-align:right">👁</th><th style="padding:4px 3px;font-weight:600;text-align:right">시청</th><th style="padding:4px 3px;font-weight:600;text-align:right">👍율</th><th style="padding:4px 3px;font-weight:600;text-align:right">💬</th><th style="padding:4px 3px;font-weight:600;text-align:right" title="첫 3초 뒤 남은 비율">훅</th><th style="padding:4px 3px;font-weight:600">추이</th></tr>
-      ${rows.map(r=>`<tr style="border-top:1px solid var(--border)${r.privacy!=="public"?";opacity:.55":""}"><td style="padding:5px 3px;white-space:nowrap">${esc((r.pub||"").slice(5).replace("-","/"))}</td><td style="padding:5px 3px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.no?`#${esc(String(r.no))} `:""}${esc(r.title)}${r.topic==="지혜"?' <span style="color:var(--gold)">·지혜</span>':""}</td><td style="padding:5px 3px;text-align:right">${f(r.views)}</td><td style="padding:5px 3px;text-align:right">${pc(r.avp)}</td><td style="padding:5px 3px;text-align:right">${pc(r.lr)}</td><td style="padding:5px 3px;text-align:right">${f(r.comments)}</td><td style="padding:5px 3px;text-align:right" title="${r.ret?`가장 큰 이탈 ${r.ret.drop_s}초`:""}">${r.ret?Math.round(r.ret.hook*100)+"%":"–"}</td><td style="padding:5px 3px">${_spark(r.h)}</td></tr>`).join("")}
+      <tr style="color:var(--sub);text-align:left"><th style="padding:4px 3px;font-weight:600">날짜</th><th style="padding:4px 3px;font-weight:600">제목</th><th style="padding:4px 3px;font-weight:600;text-align:right">👁</th><th style="padding:4px 3px;font-weight:600;text-align:right">시청</th><th style="padding:4px 3px;font-weight:600;text-align:right">👍율</th><th style="padding:4px 3px;font-weight:600;text-align:right">💬</th><th style="padding:4px 3px;font-weight:600;text-align:right" title="이 영상에서 생긴 구독">구독+</th><th style="padding:4px 3px;font-weight:600;text-align:right" title="첫 3초 뒤 남은 비율">훅</th><th style="padding:4px 3px;font-weight:600">추이</th></tr>
+      ${rows.map(r=>`<tr style="border-top:1px solid var(--border)${r.privacy!=="public"?";opacity:.55":""}"><td style="padding:5px 3px;white-space:nowrap">${esc((r.pub||"").slice(5).replace("-","/"))}</td><td style="padding:5px 3px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.no?`#${esc(String(r.no))} `:""}${esc(r.title)}${r.topic==="지혜"?' <span style="color:var(--gold)">·지혜</span>':""}</td><td style="padding:5px 3px;text-align:right">${f(r.views)}</td><td style="padding:5px 3px;text-align:right">${pc(r.avp)}</td><td style="padding:5px 3px;text-align:right">${pc(r.lr)}</td><td style="padding:5px 3px;text-align:right" title="본인 외 ${typeof r.oc==="number"?r.oc:"–"}">${f(r.comments)}</td><td style="padding:5px 3px;text-align:right">${f(r.subs)}</td><td style="padding:5px 3px;text-align:right" title="${r.ret?`가장 큰 이탈 ${r.ret.drop_s}초`:""}">${r.ret?Math.round(r.ret.hook*100)+"%":"–"}</td><td style="padding:5px 3px">${_spark(r.h)}</td></tr>`).join("")}
     </table></div>
     <div style="display:flex;gap:6px;align-items:center;margin-top:9px"><button class="pill" style="font-size:9px" onclick="perfCopy(this)">📋 회의용 표 복사</button><span style="font-size:8.5px;color:var(--muted)">흐린 줄 = 아직 비공개 · 시청 %는 공개 1~2일 뒤부터</span></div>`:""}
   </div>`;
 }
 function perfCopy(btn){ const {st,rows}=_perfRows(); const f=n=>typeof n==="number"?String(Math.round(n)):"-", pc=n=>typeof n==="number"?n.toFixed(1)+"%":"-";
-  let t=[`HaJunNa 채널 성과 (${(st&&st.stats_day)||""} 기준, 최근 60일)`,"| 날짜 | # | 제목 | 주제 | 분위기 | 공개 | 조회 | 시청% | 좋아요 | 좋아요율 | 댓글 | 훅 유지 | 큰 이탈(초) | 조회 추이 |","|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
-    .concat(rows.map(r=>`| ${r.pub||""} | ${r.no||""} | ${String(r.title||"").replace(/\|/g,"/")} | ${r.topic} | ${r.mood||""} | ${r.privacy==="public"?"공개":"비공개"} | ${f(r.views)} | ${pc(r.avp)} | ${f(r.likes)} | ${pc(r.lr)} | ${f(r.comments)} | ${r.ret?Math.round(r.ret.hook*100)+"%":"-"} | ${r.ret?r.ret.drop_s:"-"} | ${(r.h||[]).join("→")} |`)).join("\n");
+  let t=[`HaJunNa 채널 성과 (${(st&&st.stats_day)||""} 기준, 최근 60일)`,"| 날짜 | # | 제목 | 주제 | 분위기 | 공개 | 조회 | 시청% | 좋아요 | 좋아요율 | 댓글 | 본인 외 댓글 | 구독+ | 훅 유지 | 큰 이탈(초) | 조회 추이 |","|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
+    .concat(rows.map(r=>`| ${r.pub||""} | ${r.no||""} | ${String(r.title||"").replace(/\|/g,"/")} | ${r.topic} | ${r.mood||""} | ${r.privacy==="public"?"공개":"비공개"} | ${f(r.views)} | ${pc(r.avp)} | ${f(r.likes)} | ${pc(r.lr)} | ${f(r.comments)} | ${f(r.oc)} | ${f(r.subs)} | ${r.ret?Math.round(r.ret.hook*100)+"%":"-"} | ${r.ret?r.ret.drop_s:"-"} | ${(r.h||[]).join("→")} |`)).join("\n");
+  const imp=st&&st.impact; if(imp) t+=`\n\n사회적 영향 (본인 외 댓글 누적): 위로 ${imp.comfort||0} · 연락했다 ${imp.contacted||0} · 내 이야기 ${imp.my_story||0}`;
+  const O=st&&st.outside; if(O&&(O.items||[]).length){
+    t+=`\n\n비슷한 채널 아웃라이어 (${String(O.at||"").slice(0,10)} 조사, 그 채널 평소 조회의 몇 배)\n| 배수 | 조회 | 채널 | 제목 | 며칠 전 | 길이(초) |\n|---|---|---|---|---|---|\n`+
+      O.items.slice(0,12).map(x=>`| x${x.x} | ${f(x.views)} | ${String(x.ch_title||"").replace(/\|/g,"/")} | ${String(x.title||"").replace(/\|/g,"/")} | ${x.days??"-"} | ${x.dur??"-"} |`).join("\n");
+    if((O.patterns||[]).length) t+=`\n패턴: ${O.patterns.join(" / ")}`;
+    if(O.apply) t+=`\n써 볼 것: ${O.apply}`; }
   const B=_blogData(); if(B&&(B.posts||[]).length){ const fv=n=>typeof n==="number"?String(n):"-";
     t+=`\n\nHaJunNa 블로그 (${(B.at||"").slice(0,16)} 기준) — 조회 7일 ${fv((B.views||{}).d7)} · 30일 ${fv((B.views||{}).d30)} · 전체 ${fv((B.views||{}).all)}\n| 날짜 | # | 글 | 상태 | 그날 블로그 조회 | 댓글 |\n|---|---|---|---|---|---|\n`+
       B.posts.slice(0,30).map(r=>`| ${(r.at||"").slice(0,10)} | ${r.no||""} | ${String(r.title||"").replace(/\|/g,"/")} | ${r.status} | ${fv(r.day_views)} | ${fv(r.comments)} |`).join("\n"); }
@@ -4206,7 +4212,7 @@ async function requestRecruit(){
 // ═══════════════════════════════════
 //  INIT
 // ═══════════════════════════════════
-const BUILD_VERSION = "v15.6";
+const BUILD_VERSION = "v15.7";
 const BUILD_TIME = "2026-10-29 08:40 EDT";
 STATE.advisorTab="papers";
 STATE.studioTab="idea";
