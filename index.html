@@ -1572,7 +1572,7 @@ async function approveAndProduce(payload){
   const wisdomCtx=W?wisdomBlock(W):"";
   const sys=`You are the Histara Shorts team for the YouTube channel @HaJunNa (Korean parent/keepsake twist stories, viewers aged 40–70).
 Team: Theo (story), Rio (narration), Choi (Mint auto-video).
-The video is made AUTOMATICALLY on Linux Mint: there is NO voice — the narration sentences appear one by one as big on-screen captions over photo scenes, with soft background music only, and a 4-second HaJuNa subscribe end card is always added at the end. No manual editing happens, so everything you write is final.
+The video is made AUTOMATICALLY on Linux Mint: there is NO voice — the narration sentences appear one by one as big on-screen captions over photo scenes, with soft background music only, and a 4-second HaJunNa subscribe end card is always added at the end. No manual editing happens, so everything you write is final.
 
 ${RESONANCE_2026}
 
@@ -1708,7 +1708,7 @@ function _musicNorm(m){ m=m||{}; const mood=MUSIC_MOODS[m.mood]?m.mood:"그리�
   return {mood, why:String(m.why||MUSIC_MOODS[mood]).slice(0,80), search:String(m.search||MUSIC_SEARCH[mood]).slice(0,80)}; }
 function _nchars(t){ return String(t||"").replace(/\s/g,"").length; }
 
-// ── 🎞️ Mint 자동 영상 (HaJuNa 스크립트용 story.json) ──
+// ── 🎞️ Mint 자동 영상 (HaJunNa 스크립트용 story.json) ──
 // Mint 스크립트(hajuna-shorts)가 그릴 수 있는 것만 고르게 한다. 이름은 스크립트와 글자 하나까지 같아야 한다.
 const MINT_SPACES = {
   "안방 · 시골":"옛 시골집 안방, 장롱·이불단·창호지 창·벽시계","안방 · 아파트":"아파트 안방, 침대·붙박이장",
@@ -1817,7 +1817,7 @@ function mintFromPkg(p){
 
 function mintStoryObj(p){
   const m=mintFromPkg(p), pub=p.publish_ko||p.publish||{};
-  return {format:"hajuna-story/2", title:p.title||p.title_ko||"HaJuNa", no:p.no||0, date:p.dstr||"",
+  return {format:"hajuna-story/2", title:p.title||p.title_ko||"HaJunNa", no:p.no||0, date:p.dstr||"",
     made_by:`Histara ${typeof BUILD_VERSION!=="undefined"?BUILD_VERSION:""}`, fallback:m.fallback,
     narrator:p.narrator==="남성"?"남성":"여성", music:p.music||_musicNorm(null),
     cuts:m.cuts, publish:{title:pub.title||pub.yt_title||p.title||"", description:pub.description||"",
@@ -2749,7 +2749,7 @@ async function analyzeStats(){
 }
 
 // ═══════════════════════════════════
-//  📈 투자·자산 → HaJuNa Money (v15.2): 공개 저장소·클라우드 동기화에서 빼고, Mint 로컬 비공개 앱으로 옮김.
+//  📈 투자·자산 → HaJunNa Money (v15.2): 공개 저장소·클라우드 동기화에서 빼고, Mint 로컬 비공개 앱으로 옮김.
 //  여기에는 '옮기기'만 남김: 암호 백업 만들기 → Mint의 http://127.0.0.1:8765 에서 열기 → 이 기기 숫자 지우기
 // ═══════════════════════════════════
 const MONEY_URL="http://127.0.0.1:8765";
@@ -2770,14 +2770,14 @@ async function vaultExport(){
   const o={format:"histara-vault/1", created:new Date().toISOString(), salt:_b64e(salt), iv:_b64e(iv), data:_b64e(ct)};
   const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(o)],{type:'application/json'}));
   a.download=`histara_백업_${new Date().toISOString().slice(0,10)}.hvault.json`; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1500);
-  if(msg) msg.innerHTML='<span style="color:var(--mint)">✓ 백업 파일을 만들었어요 — Mint로 옮겨 HaJuNa Money에서 📥 백업 열기 (암호 없이는 열 수 없어요)</span>';
+  if(msg) msg.innerHTML='<span style="color:var(--mint)">✓ 백업 파일을 만들었어요 — Mint로 옮겨 HaJunNa Money에서 📥 백업 열기 (암호 없이는 열 수 없어요)</span>';
 }
 function _investLeft(){
   const has=k=>{ try{ const v=localStorage.getItem(k); return !!(v&&v!=="{}"&&v!=="null"); }catch(e){ return false; } };
   return {fin:has('histara_fin'), portfolio:has('histara_portfolio'), retire:has('histara_retire'), reports:(REPORTS||[]).filter(r=>r&&INVEST_TYPES.has(r.type)).length};
 }
 function investPurge(){
-  if(!confirm("이 기기의 투자·자산 숫자(명세서·포트폴리오·은퇴 설정)와 투자 보고서를 지울까요?\n먼저 백업을 만들어 HaJuNa Money에서 열었는지 확인하세요.")) return;
+  if(!confirm("이 기기의 투자·자산 숫자(명세서·포트폴리오·은퇴 설정)와 투자 보고서를 지울까요?\n먼저 백업을 만들어 HaJunNa Money에서 열었는지 확인하세요.")) return;
   ['histara_fin','histara_portfolio','histara_retire'].forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} });
   REPORTS=(REPORTS||[]).filter(r=>!(r&&INVEST_TYPES.has(r.type))); persistReports();
   const b=document.getElementById('sec-body'); if(b) b.innerHTML=securityKeyPanel();
@@ -2785,10 +2785,10 @@ function investPurge(){
 function investMoveCard(){
   const L=_investLeft(), any=L.fin||L.portfolio||L.retire||L.reports;
   return `<div class="card" style="padding:12px 13px;margin-bottom:10px;border-color:rgba(52,211,153,.4)">
-    <div style="font-size:12px;font-weight:800;color:#34d399">📈 투자·자산은 HaJuNa Money로 옮겼어요</div>
+    <div style="font-size:12px;font-weight:800;color:#34d399">📈 투자·자산은 HaJunNa Money로 옮겼어요</div>
     <div style="font-size:10px;color:var(--sub);line-height:1.6;margin-top:4px">명세서·세금 점검·은퇴 로드맵·거시·S&P 500·이달의 투자처는 이제 <b>Mint 컴퓨터 안의 비공개 앱</b>에서만 (인터넷·동기화 없음). Mint 브라우저에서 <b>${MONEY_URL}</b></div>
     ${any?`<div style="font-size:10px;color:var(--gold);line-height:1.6;margin-top:6px">이 기기에 남은 것: ${[L.fin&&"명세서 숫자",L.portfolio&&"포트폴리오",L.retire&&"은퇴 설정",L.reports&&`투자 보고서 ${L.reports}개`].filter(Boolean).join(" · ")}</div>
-    <div style="font-size:9.5px;color:var(--sub);line-height:1.6;margin-top:3px">① 백업 만들기 (암호) → ② 파일을 Mint로 → HaJuNa Money의 📥 백업 열기 → ③ 여기서 지우기</div>
+    <div style="font-size:9.5px;color:var(--sub);line-height:1.6;margin-top:3px">① 백업 만들기 (암호) → ② 파일을 Mint로 → HaJunNa Money의 📥 백업 열기 → ③ 여기서 지우기</div>
     <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap"><button class="pill" style="font-size:10px" onclick="vaultExport()">📤 ① 백업 만들기</button><button class="pill" style="font-size:10px;color:var(--rose)" onclick="investPurge()">🗑 ③ 이 기기에서 지우기</button></div>
     <div id="vaultMsg" style="font-size:10px;margin-top:6px"></div>`:`<div style="font-size:10px;color:var(--mint);margin-top:6px">✓ 이 기기에는 투자 숫자가 남아 있지 않아요</div>`}
   </div>`;
@@ -4212,7 +4212,7 @@ async function requestRecruit(){
 // ═══════════════════════════════════
 //  INIT
 // ═══════════════════════════════════
-const BUILD_VERSION = "v15.7";
+const BUILD_VERSION = "v15.8";
 const BUILD_TIME = "2026-10-29 08:40 EDT";
 STATE.advisorTab="papers";
 STATE.studioTab="idea";
