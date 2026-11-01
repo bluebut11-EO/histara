@@ -1027,6 +1027,16 @@ function diversityDirective(lock){
   return d;
 }
 
+// v15.9 🧭 Mint 사연 엔진이 정해 준 설계 (지난 편들의 지문을 보고 덜 쓴 조합으로) — 공식은 그대로
+function briefDirective(b){
+  const recent=recentStudioTopics(10);
+  let d=`${CORE_FORMULA}
+
+${String(b.text||"").slice(0,1800)}`;
+  if(recent.length) d+=`\n- 최근 사연과 겹치지 마라 (제목·상황·반전 모두): ${recent.join(" / ")}.`;
+  return d;
+}
+
 // ── CROSS-DOMAIN diversity (travel/family, investment, advisory) + agent activity memory ──
 const DOMAIN_FOCUS={
   family:["실내 놀거리","자연·동물 체험","물놀이·스플래시 패드","무료 지역 축제","박물관·과학관","도서관·북카페 프로그램","농장·수확 체험","공원·트레일 산책","키즈 공방·만들기 체험","계절 이벤트(단풍·눈·꽃)","지역 도서관 이벤트","가성비 당일 나들이"],
@@ -1570,6 +1580,8 @@ async function approveAndProduce(payload){
     : (hook?`\n\nThe approved premise/hook to build from: "${hook}". Stay on this exact situation.\n`:"");
   const W=payload&&payload.wisdom||null;            // 🌿 지혜 편 씨앗 (있으면)
   const wisdomCtx=W?wisdomBlock(W):"";
+  const BR=payload&&payload.brief||null;               // v15.9 🧭 설계의 물건·공간을 장면표에 그대로
+  const briefCtx=BR?`\n🧭 이 편의 중심 물건은 "${BR.object||""}", 주 공간은 "${BR.place||""}" — 장면표(symbol·space)에 이 이름 그대로 쓰고, 같은 물건 사진을 세 번 넘게 쓰지 마라.\n`:"";
   const sys=`You are the Histara Shorts team for the YouTube channel @HaJunNa (Korean parent/keepsake twist stories, viewers aged 40–70).
 Team: Theo (story), Rio (narration), Choi (Mint auto-video).
 The video is made AUTOMATICALLY on Linux Mint: there is NO voice — the narration sentences appear one by one as big on-screen captions over photo scenes, with soft background music only, and a 4-second HaJunNa subscribe end card is always added at the end. No manual editing happens, so everything you write is final.
@@ -1583,7 +1595,7 @@ Write in natural Korean. Return ONLY JSON.`;
     // ① 이야기 + 나레이션 (목소리 없이 화면 자막으로)
     liveLog(box,"① 이야기·나레이션 쓰는 중... (Theo·Rio)");
     const raw1=await callClaude(sys,
-      `Content approved: title "${title}", hook "${hook}".${storyContext}${wisdomCtx}
+      `Content approved: title "${title}", hook "${hook}".${storyContext}${wisdomCtx}${briefCtx}
 이 사연으로 45~56초 세로 쇼츠를 쓴다. 목소리는 없다 — 화면마다 narration 문장이 큰 자막으로 한 문장씩 차례로 뜨고, 잔잔한 배경음악만 깔린다.
 · narration = 시청자가 화면에서 읽는 이야기. 소리 없이 읽기만 해도 장면의 디테일, 그때의 감정, 속마음, 손의 감촉까지 전해지도록, 누군가 들려주는 이야기처럼 이어서 쓴다.
 
@@ -1678,6 +1690,9 @@ JSON: {"scenes":[{"scene":"space","space":"안방 · 시골","time":"낮","peopl
       const tags=Array.isArray(pkg.publish.hashtags)?pkg.publish.hashtags:String(pkg.publish.hashtags||"").split(/\s+/).filter(Boolean);
       if(!tags.includes("#삶의지혜")) tags.push("#삶의지혜"); pkg.publish.hashtags=tags; }
     pkg._seed = {title, hook, story:draftBody};
+    if(BR){ pkg.brief={pillar:BR.pillar||"",relation:BR.relation||"",object:BR.object||"",place:BR.place||"",era:BR.era||"",
+      event:BR.event||"",twist:BR.twist||"",shade:BR.shade||"",season:BR.season||""}; pkg.pillar=BR.pillar||""; }
+    if(payload&&payload.fp){ const f=payload.fp; pkg.fp={}; ["relation","object","place","era","event","twist"].forEach(k=>{ if(f[k]) pkg.fp[k]=String(f[k]).slice(0,40); }); }
     pkg._coherence = coherenceCheck12(pkg);
     if(W){ pkg._coherence.issues=(pkg._coherence.issues||[]).concat(_wisdomCheck(pkg)); }
     LAST_SHORTS=pkg;
@@ -1921,13 +1936,20 @@ const WISDOM_SEEDS=[
 const WISDOM_SOURCES=["명심보감 안분편","명상록 4.17","하버드 성인발달연구","법구경 5","전도서 3장","잠언 15장","마태복음 6장",
   "빅터 프랭클 『죽음의 수용소에서』","논어 위령공편","도덕경 33장","피르케이 아보트 4:1","세네카 『인생의 짧음에 관하여』",
   "Emmons & McCullough (2003)","김형석 『백 년을 살아보니』","이어령 『이어령의 마지막 수업』","법륜스님","Bronnie Ware 『죽을 때 가장 후회하는 다섯 가지』"];
+// v15.9: Mint가 매달 보충한 씨앗(근거 목록 안·확인 주소 있는 것만)을 기본 10개 뒤에 이어 씀
+function wisdomPool(){
+  const ok=w=>w&&w.id&&w.line&&w.src&&WISDOM_SOURCES.includes(w.src)&&w.scene&&w.story&&w.twist;
+  const extra=((typeof window!=="undefined"&&Array.isArray(window.MINT_SEEDS))?window.MINT_SEEDS:[]).filter(ok);
+  return WISDOM_SEEDS.concat(extra.filter(x=>!WISDOM_SEEDS.some(w=>w.id===x.id)));
+}
 function pickWisdomSeed(){
+  const pool=wisdomPool();
   const used=shortsItems().map(r=>r.pkg&&r.pkg.wisdom&&r.pkg.wisdom.id).filter(Boolean);
-  const fresh=WISDOM_SEEDS.filter(w=>!used.includes(w.id));
+  const fresh=pool.filter(w=>!used.includes(w.id));
   if(fresh.length) return fresh[0];
   // 다 썼으면 가장 오래전에 쓴 것부터 (같은 근거로 새 장면을 짓게)
   const last={}; used.forEach((id,i)=>{ if(!(id in last)) last[id]=i; });
-  return WISDOM_SEEDS.slice().sort((a,b)=>(last[b.id]??-1)-(last[a.id]??-1))[0];
+  return pool.slice().sort((a,b)=>(last[b.id]??-1)-(last[a.id]??-1))[0];
 }
 function wisdomBlock(w){ return `
 🌿 이번 편은 '이제라도 알면 좋은 삶의 지혜' 편이다 (부모·유품 사연의 결은 그대로).
@@ -2437,6 +2459,7 @@ async function autoShorts(opts){
   const box=document.getElementById("shortsResult"); if(!box) return;
   const topic=(document.getElementById("shortsTopic")?.value||"").trim();
   const W=opts.wisdom?pickWisdomSeed():null;            // 🌿 지혜 편 (Mint가 3편에 1편 정함 / 화면 체크)
+  const B=(!topic&&!W&&typeof window!=="undefined"&&window.MINT_BRIEF&&window.MINT_BRIEF.text)?window.MINT_BRIEF:null;   // v15.9 🧭 Mint 사연 엔진 설계
   liveLog(box,W?`⓪ 🌿 지혜 편 「${W.title}」 사연 쓰는 중... (NOVA)`:"⓪ 오늘의 사연 고르는 중... (NOVA)");
   const sys=`You are NOVA, story editor for the YouTube channel @HaJunNa (Korean parent/keepsake twist stories for viewers aged 40–70, often listening late at night).
 ${nowStamp()}
@@ -2446,7 +2469,7 @@ ${recentPerformanceHint()}
 ${CORE_FORMULA}
 Respond in Korean. Return ONLY JSON.`;
   try{
-    STATE.ideaSpec = varietySpec();
+    STATE.ideaSpec = B?varietySpec({theme:B.pillar,object:B.object,twist:B.twist,shade:B.shade}):varietySpec();
     const raw=await callClaude(sys, W?
       `🌿 지혜 편 씨앗으로 쇼츠 한 편이 될 사연을 만든다. 씨앗을 살려 장면을 더 구체적으로(누가·어디서·무슨 말), 반전은 씨앗 그대로.
 씨앗: 장면 "${W.scene}" / 사연 "${W.story}" / 반전 "${W.twist}" / 물건 ${W.object} / 공간 ${W.space}
@@ -2454,13 +2477,15 @@ Respond in Korean. Return ONLY JSON.`;
 최근 사연과 겹치지 않게: ${recentStudioTopics(10).join(" / ")||"없음"}
 JSON: {"title":"궁금증을 부르는 제목","hook":"첫 문장 (장면으로 시작)","story":"사연 4~6문장 — 장면, 오해, 반전, 깨달음이 다 들어가게"}`:
       `${topic?`주제: "${topic}". 이 주제로 `:"오늘 "}쇼츠 한 편이 될 사연을 하나 만든다. 실제로 있었던 일처럼 구체적인 한 장면: 누가, 어디서, 어떤 물건, 무슨 말, 그리고 예상을 뒤집는 반전.
-${diversityDirective(STATE.ideaSpec)}
-JSON: {"title":"궁금증을 부르는 제목","hook":"첫 문장 (장면으로 시작)","story":"사연 4~6문장 — 상황, 오해, 반전, 여운이 다 들어가게"}`);
+${B?briefDirective(B):diversityDirective(STATE.ideaSpec)}
+JSON: {"title":"궁금증을 부르는 제목","hook":"첫 문장 (장면으로 시작)","story":"사연 4~6문장 — 상황, 오해, 반전, 여운이 다 들어가게",
+ "fp":{"relation":"중심 인물","object":"이야기를 거는 물건","place":"주 공간","era":"때","event":"무슨 날","twist":"반전의 방향(한 구절)"}}`);
     const g=keyGuard(raw); if(g){ box.innerHTML=g; return; }
     const p=pj(raw);
     if(!p||!p.story){ box.innerHTML=rawFailBox("오늘의 사연"); return; }
     try{ localStorage.setItem('histara_idea_date', todayKey()); }catch(e){}
-    await approveAndProduce({title:p.title||(W&&W.title)||topic||"오늘의 사연", hook:p.hook||"", sections:[{heading:"",body:p.story}], wisdom:W});
+    await approveAndProduce({title:p.title||(W&&W.title)||topic||"오늘의 사연", hook:p.hook||"", sections:[{heading:"",body:p.story}], wisdom:W,
+      brief:B, fp:(p.fp&&typeof p.fp==="object")?p.fp:null});
     const made=shortsItems()[0];
     if(!made || !LAST_SHORTS || made.pkg!==LAST_SHORTS) return;      // 제작 실패면 그 안내를 그대로 둔다
     STATE.openStudio=made.id; STATE.shortsFilter="all";
@@ -4212,8 +4237,8 @@ async function requestRecruit(){
 // ═══════════════════════════════════
 //  INIT
 // ═══════════════════════════════════
-const BUILD_VERSION = "v15.8";
-const BUILD_TIME = "2026-10-29 08:40 EDT";
+const BUILD_VERSION = "v15.9";
+const BUILD_TIME = "2026-11-01 21:30 EST";
 STATE.advisorTab="papers";
 STATE.studioTab="idea";
 STATE.investTab="money";
@@ -4423,7 +4448,7 @@ function derive(items,now){
   const sev=stale||A.some(a=>a.sev==="crit")?"crit":(A.some(a=>a.sev==="warn")?"warn":"ok");
   const latest=shorts[0];
   const info={atlas:st?`Mint${st.ver?" v"+st.ver:""} 정상 · ${md(st.checked_at)} ${hm(st.checked_at)} 확인${st.update_streak?` · 무사고 업데이트 ${st.update_streak}번`:""}`:"Mint 소식 기다리는 중",
-    nova:nextTxt(st)?`다음 사연: ${nextTxt(st)}${st.wisdom_next?" · 🌿 지혜 편":""}`:"다음 사연 고르는 중",
+    nova:nextTxt(st)?`다음 사연: ${nextTxt(st)}${st.wisdom_next?" · 🌿 지혜 편":(st.engine_next?" · 🧭 "+st.engine_next:"")}`:"다음 사연 고르는 중",
     theo:st&&st.book?`📚 ${String(st.book).replace(/\s*\(.*\)/,"")}`:"블로그 글 준비 중",
     choi:latest?`#${no(latest)} ${latest.up?"공개됨":(latest.yt?(latest.yt.publish_at&&new Date(latest.yt.publish_at)>now?`${md(latest.yt.publish_at)} ${hm(latest.yt.publish_at)} 공개 예약`:"비공개로 올려 둠"):"만들어 둠")}`:"Mint 영상 대기",
     max:seen[0]?`#${no(seen[0])} 👁 ${vf(seen[0].stats.views)}${pct(seen[0].stats)}`:(latest&&latest.up?`#${no(latest)} 반응 지켜보는 중`:"지난 영상 반응 읽는 중"),ceo:""};
