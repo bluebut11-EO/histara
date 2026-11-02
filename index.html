@@ -1603,7 +1603,8 @@ Write in natural Korean. Return ONLY JSON.`;
 - 1인칭 회상, 혼잣말처럼 낮고 담담하게. 다정한 반말체 독백("~였다", "~했다")이나 조용한 존댓말 중 하나로 끝까지 통일.
 - 느낌표·감탄·호들갑 금지. 무섭거나 자극적인 말 대신, 부모 세대의 고생과 말하지 못한 사랑, 미안함과 고마움.
 - 한 문장은 짧게(공백 포함 20자 안팎, 최대 24자) — 한 문장이 화면 자막 한 장이 된다. 쉼표로 호흡을 준다.
-- 마지막 beat는 마음을 내려놓게 하는 조용한 한 문장 + 시청자가 3초 안에 답할 수 있는 짧은 질문이나 여운으로 끝낸다 (예: "오늘 밤은, 그 손이 생각난다.").
+- 마지막 beat는 마음을 내려놓게 하는 조용한 한 문장 + 반전의 깨달음에서 나온 짧은 질문(26자 안)으로 끝낸다. 질문은 이 사연이 말한 단 하나를 시청자 자신의 삶으로 돌려 묻는 것 — 영상에 나온 물건·장면을 짚어 영상만 본 사람도 알아듣게, '언제·어떤·무엇'으로 열린 질문. 사소한 사실(무엇을 드셨나요), 예/아니오, 반전과 상관없는 질문 금지. 좋은 질문이 없으면 여운 한 문장으로 끝낸다.
+  예) 반전 "글자가 끊긴 건 쓰러져서가 아니라, 아들이 와서 행복해 펜을 놓은 것" → "오늘 밤은, 그 펜이 생각난다. 당신을 반기려 부모님이 멈추던 일은?"
 
 구조 (반전 있는 사연): 후크 → 상황 → 전환점(8~15초에 2차 후킹) → 반전 → 여운+짧은 질문.
 - beats 5~7개. 각 beat는 화면 한 장면이고 sec(화면 길이, 3~14초)를 정한다. sec 합계 45~56초 (끝에 구독 화면 4초가 자동으로 붙는다).
@@ -1615,7 +1616,7 @@ Write in natural Korean. Return ONLY JSON.`;
 
 🔍 현실 고증: 사물이 그 장소에 실제로 있을 법한지, 시대가 섞이지 않는지(삐삐·통장·손편지 vs 카톡·스마트폰), 크기·보존 상태·나이·금액이 맞는지 확인하고 realism_check에 한 줄로 적어라. 어색하면 그 디테일을 바꿔서 다시 써라.
 
-💬 댓글: comment_bait에 아주 쉬운 댓글 유도 문구 3개 (예: "아버지 생각나면 ㅇ 하나만"), pinned_comment에 업로드 직후 내가 달 고정 댓글 1개 (짧은 고백 + 되묻기).
+💬 댓글: comment_bait에 아주 쉬운 댓글 유도 문구 3개 (예: "아버지 생각나면 ㅇ 하나만"), pinned_comment에 업로드 직후 채널이 달 고정 댓글 1개 — 정확히 두 줄: ① 영상의 핵심 장면을 영상의 말 그대로 한 줄(평서문) ② 마지막 질문과 같은 깨달음에서 나온 열린 질문 한 줄. 채널 운영자 자신의 가족 고백("저희 어머니도…") 금지, 편지함의 목소리로.
 
 JSON: {"title_ko":"궁금증을 부르는 제목","narrator":"여성","twist":"반전 한 줄 요약","concrete_anchor":"이야기를 거는 사물 1개","beats":[{"role":"hook","sec":5,"narration":"엄마 유품에서, 통장이 나왔다."},{"role":"normal","sec":9,"narration":"20년 동안 같은 날, 3만원씩. 어디로 가는지는 적혀 있지 않았다."}],"comment_bait":["...","...","..."],"pinned_comment":"...","realism_check":"..."}`);
     const g1=keyGuard(raw1); if(g1){box.innerHTML=g1; return;}
@@ -1835,7 +1836,7 @@ function mintFromPkg(p){
 
 function mintStoryObj(p){
   const m=mintFromPkg(p), pub=p.publish_ko||p.publish||{};
-  return {format:"hajuna-story/2", title:p.title||p.title_ko||"HaJunNa", no:p.no||0, date:p.dstr||"",
+  return {format:"hajuna-story/2", title:p.title||p.title_ko||"HaJunNa", no:p.no||0, date:p.dstr||"", twist:p.twist||"",
     made_by:`Histara ${typeof BUILD_VERSION!=="undefined"?BUILD_VERSION:""}`, fallback:m.fallback,
     narrator:p.narrator==="남성"?"남성":"여성", music:p.music||_musicNorm(null),
     cuts:m.cuts, publish:{title:pub.title||pub.yt_title||p.title||"", description:pub.description||"",
@@ -4249,8 +4250,8 @@ async function requestRecruit(){
 // ═══════════════════════════════════
 //  INIT
 // ═══════════════════════════════════
-const BUILD_VERSION = "v15.12";
-const BUILD_TIME = "2026-11-01 19:55 EST";
+const BUILD_VERSION = "v15.13";
+const BUILD_TIME = "2026-11-02 08:50 EST";
 STATE.advisorTab="papers";
 STATE.studioTab="idea";
 STATE.investTab="money";
