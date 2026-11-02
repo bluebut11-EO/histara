@@ -1869,7 +1869,7 @@ function renderMintBlock(p){
     return `<div style="padding:7px 0;border-top:1px solid var(--border)">
       <div style="font-size:10px;font-weight:700">${i+1}. ${tag}${where} · ${esc(c.time)} <span style="color:var(--sub);font-weight:500">${c.sec}초</span></div>
       ${who?`<div style="font-size:9px;color:var(--sub);margin-top:2px">👤 ${who}</div>`:""}
-      <div style="font-size:11px;margin-top:3px;line-height:1.6;font-weight:700">💬 ${c.captions.map(x=>esc(x).replace(/\n/g," ")).join(" <span style='color:var(--muted)'>→</span> ")}${c.narration?` <span style="font-size:8px;font-weight:500;color:${_nchars(c.narration)>narrBudget(c.sec)+3?'var(--rose)':'var(--muted)'}">${_nchars(c.narration)}/${narrBudget(c.sec)}자</span>`:""}</div>
+      <div style="font-size:11px;margin-top:3px;line-height:1.6;font-weight:700">💬 ${c.captions.map(x=>esc(x).replace(/\n/g," ")).join(" <span style='color:var(--muted)'>→</span> ")}${c.narration?` <span style="font-size:8px;font-weight:500;color:${_readChars(c.narration)>readBudget(c.sec,(c.captions||[]).length)+2?'var(--rose)':'var(--muted)'}">${_readChars(c.narration)}/${readBudget(c.sec,(c.captions||[]).length)}자</span>`:""}</div>
     </div>`;}).join("");
   return `<div style="margin-top:11px;padding:12px;border-radius:11px;background:rgba(80,200,255,.07);border:1px solid rgba(80,200,255,.35)">
     <div style="font-size:12px;font-weight:800;color:var(--cyan)">🎞️ Mint 자동 영상 <span style="font-size:9px;font-weight:600;color:var(--sub)">— 손대지 않고 바로 영상으로</span></div>
@@ -1895,6 +1895,9 @@ function copyBlock(id, label, text){
 function _kw(str){ return (String(str||"").toLowerCase().match(/[가-힣a-z0-9]{2,}/g)||[]); }
 function _overlap(a,b){ const A=new Set(_kw(a)), B=_kw(b); if(!A.size||!B.length) return 0; let hit=0; B.forEach(w=>{ if(A.has(w)) hit++; }); return hit/Math.max(1,B.length); }
 // ── v12 자동 점검 (나레이션 기준) ──
+// v15.16 화면 표시는 Mint 읽는 속도와 같은 셈 (공백 빼고 1초 4.5자 + 자막 한 장 바뀔 때 0.6초)
+function _readChars(t){ return String(t||"").replace(/[\s.,!?…"'“”‘’·]/g,"").length; }
+function readBudget(sec,n){ return Math.max(0,Math.floor((Number(sec)-0.6*(n||1))*4.5)); }
 function narrBudget(sec){ return Math.floor((Number(sec)-1)*3); }   // 화면에서 천천히 읽을 수 있는 글자 수(공백 제외, 초당 3자)
 // ── 🌿 삶의 지혜 편 (v14.1) — 부모 사연 2 : 지혜 1 (Mint가 정함, 기본 꺼짐). 근거는 아래 표에 있는 것만 ──
 // 씨앗: 문서 '지혜 사연 씨앗 10편' (2026-10-21, 원문 확인). line = 근거 한 줄 그대로, src = 작게 붙는 출처
@@ -2004,7 +2007,9 @@ function coherenceCheck12(p){
   return {ok:issues.length===0, issues};
 }
 
-function renderShortsPackage(p){
+// v15.16 Mint가 마지막으로 고친 대본으로 카드만 다시 그릴 때: shortsPkgHTML(p) (목록에 새로 넣지 않음)
+function shortsPkgHTML(p){ return renderShortsPackage(p,{noSave:true}); }
+function renderShortsPackage(p,opt){
   const ttl = p.title || "무제";
   const c=p._coherence;
   const pub=p.publish||{};
@@ -2039,6 +2044,7 @@ function renderShortsPackage(p){
   if(baits.length) h+=`<div style="font-size:10px;line-height:1.7;margin-top:4px"><b style="color:#c878ff">💬 댓글 답글용</b><br>${baits.map(b=>"· "+esc(b)).join("<br>")}</div>`;
   h+=`<button class="btn-gold" style="margin-top:12px;background:var(--deep);color:var(--text);border:1px solid var(--border)" onclick="go('studio');switchStudio('shorts')">← 콘텐츠 스튜디오로</button>
   </div>`;
+  if(opt&&opt.noSave) return h;
   addStudioItem({type:"shorts", agent:"Theo·Rio·Choi", title:`${ordinal(p.no)} Shorts · ${ttl}`, html:h, summary:p.twist||"", pkg:p});
   stageReport("content","Theo (Shorts)", `${ordinal(p.no)} Shorts · ${esc(ttl)}`, h, p.twist||"");
   if(typeof renderTabs==='function') renderTabs();
@@ -4264,8 +4270,8 @@ async function requestRecruit(){
 // ═══════════════════════════════════
 //  INIT
 // ═══════════════════════════════════
-const BUILD_VERSION = "v15.15";
-const BUILD_TIME = "2026-11-02 16:30 EST";
+const BUILD_VERSION = "v15.16";
+const BUILD_TIME = "2026-11-02 17:00 EST";
 STATE.advisorTab="papers";
 STATE.studioTab="idea";
 STATE.investTab="money";
