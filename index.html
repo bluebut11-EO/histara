@@ -2282,11 +2282,20 @@ function noticeCard(r){
     <div style="font-size:12px;font-weight:800;color:var(--gold)">${esc(r.title||"알림")}</div>
     ${r.msg?`<div style="font-size:10px;color:var(--sub);margin-top:4px;line-height:1.55">${esc(r.msg)}</div>`:""}
     ${_todoList(r.todo)}
+    ${(r.link&&/^https:\/\//.test(r.link))||r.copy?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+      ${r.link&&/^https:\/\//.test(r.link)?`<a class="pill" style="font-size:10px;color:var(--sky);text-decoration:none" href="${esc(r.link)}" target="_blank" rel="noopener">📥 영상 받기</a>`:""}
+      ${r.copy?`<button class="pill" style="font-size:10px;color:var(--mint)" onclick="noticeCopy(${r.id},this)">📋 글 복사</button>`:""}
+    </div>`:""}
     <div style="display:flex;align-items:center;margin-top:8px">
       <span style="font-size:8px;color:var(--muted)">🤖 Mint 자동 · ${esc(r.ts||"")}</span>
       <button class="pill" style="font-size:9px;color:var(--mint);margin-left:auto" onclick="noticeDone(${r.id})">✅ 했어요</button>
     </div></div>`;
 }
+// v15.12 카드의 글 복사 (인스타 캡션 등)
+async function noticeCopy(id,btn){ const it=STUDIO_ITEMS.find(x=>x.id===id); if(!it||!it.copy) return;
+  let ok=false; try{ await navigator.clipboard.writeText(it.copy); ok=true; }catch(e){
+    try{ const ta=document.createElement("textarea"); ta.value=it.copy; document.body.appendChild(ta); ta.select(); ok=document.execCommand("copy"); ta.remove(); }catch(e2){} }
+  if(btn){ btn.textContent=ok?"✓ 복사됨":"복사 안 됨 — 길게 눌러 복사"; setTimeout(()=>{ btn.textContent="📋 글 복사"; },2500); } }
 function noticeDone(id){ const it=STUDIO_ITEMS.find(x=>x.id===id); if(!it) return; it.done=true; it.read=true; it.read_at=Date.now(); it.upd=Date.now(); it.done_at=new Date().toISOString(); persistStudio(); switchStudio(); }
 // 📝 글 한 줄 (v13.8) — Mint가 같은 사연으로 쓴 블로그 글. 본문은 Mint·Blogger에만 있음
 function _essSched(e){ if(!e) return null; const iso=e.status==="예약"?(e.at||e.scheduled):(!e.status&&!e.posted?e.scheduled:null); const d=iso?new Date(iso):null; return d&&!isNaN(d)?d:null; }
@@ -4240,8 +4249,8 @@ async function requestRecruit(){
 // ═══════════════════════════════════
 //  INIT
 // ═══════════════════════════════════
-const BUILD_VERSION = "v15.11";
-const BUILD_TIME = "2026-11-01 18:40 EST";
+const BUILD_VERSION = "v15.12";
+const BUILD_TIME = "2026-11-01 19:55 EST";
 STATE.advisorTab="papers";
 STATE.studioTab="idea";
 STATE.investTab="money";
