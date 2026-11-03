@@ -2123,6 +2123,50 @@ function renderStudio(){
   </div>
   <div id="studio-body" style="padding:0 14px 20px">${renderStudioBody()}</div>`;
 }
+// 📲 v15.20 Mint 리모컨 — 클라우드 동기화(같은 Supabase 표)에 작은 줄 하나("<동기화 코드>::mint")만 쓰고 읽는다. Mint가 5분마다 확인.
+let MINT_REQ={list:[], at:0, err:""};
+function _mintReqCode(){ return SYNC_CODE+"::mint"; }
+async function _mintReqGet(){
+  const r=await fetch(`${SUPA_URL}/rest/v1/histara_sync?code=eq.${encodeURIComponent(_mintReqCode())}&select=studio,updated_at`,{headers:_supaHeaders()});
+  if(!r.ok) throw new Error("읽기 실패 ("+r.status+")");
+  const rows=await r.json(); return (rows&&rows[0]&&Array.isArray(rows[0].studio))?rows[0].studio:[];
+}
+async function _mintReqPut(list){
+  const r=await fetch(`${SUPA_URL}/rest/v1/histara_sync`,{method:"POST",
+    headers:Object.assign({}, _supaHeaders(), {"Prefer":"resolution=merge-duplicates"}),
+    body:JSON.stringify([{code:_mintReqCode(), studio:list.slice(-20), reports:[], english:[], updated_at:new Date().toISOString()}])});
+  if(!r.ok){ const tx=await r.text().catch(()=> ""); throw new Error("보내기 실패 ("+r.status+") "+tx.slice(0,60)); }
+}
+const MINT_REQ_TXT={new:"⏳ 보냄 — Mint가 5분 안에 받아요", wait:"⏳ Mint가 다른 일을 끝내는 중 — 이어서 시작", got:"🛠 Mint가 만드는 중 (10~20분)", done:"✅ 끝", fail:"⚠ 실패", skip:"⏸ 다음 자동 제작 한 번 건너뜀 — 받음"};
+function mintReqStatus(){
+  if(!syncConfigured()) return `<div style="font-size:10px;color:var(--gold);margin-bottom:8px">⚠ 클라우드 동기화가 설정된 기기에서만 Mint에 요청할 수 있어요.</div>`;
+  if(Date.now()-MINT_REQ.at>60000) setTimeout(()=>mintReqRefresh(false),50);
+  const last=MINT_REQ.list.slice(-2).reverse();
+  if(MINT_REQ.err) return `<div style="font-size:10px;color:var(--rose);margin-bottom:8px">⚠ ${esc(MINT_REQ.err)}</div>`;
+  if(!last.length) return "";
+  return `<div style="font-size:10px;line-height:1.7;background:var(--deep);border-radius:8px;padding:7px 9px;margin-bottom:8px">${last.map(x=>
+    `<div>${x.kind==="skip"?"⏸":"📲"} ${esc(String(x.at||"").replace("T"," ").slice(5,16))} · ${esc(MINT_REQ_TXT[x.state]||x.state||"")}${x.msg?` — ${esc(String(x.msg).slice(0,90))}`:""}</div>`).join("")}</div>`;
+}
+async function mintReqRefresh(show){
+  if(!syncConfigured()) return;
+  try{ MINT_REQ.list=await _mintReqGet(); MINT_REQ.err=""; }catch(e){ MINT_REQ.err=String(e.message||e); }
+  MINT_REQ.at=Date.now(); switchStudio();
+}
+async function mintRequest(kind){
+  if(!syncConfigured()){ showErr("클라우드 동기화를 먼저 설정해 주세요 (설정 → 동기화)"); return; }
+  const topic=((document.getElementById("shortsTopic")||{}).value||"").trim().slice(0,120);
+  const wisdom=!!(document.getElementById("wisdomChk")||{}).checked;
+  if(kind==="make" && !confirm(`Mint에서 지금 한 편 만들까요?${topic?`\n주제: ${topic}`:""}${wisdom?"\n🌿 삶의 지혜 편":""}\n\n(이틀마다 자동 제작 날짜는 그대로 · API 비용 한 편)`)) return;
+  if(kind==="skip" && !confirm("다음 자동 제작을 한 번 건너뛸까요? (그 다음 날짜부터 다시 이틀마다)")) return;
+  try{
+    const list=await _mintReqGet();
+    if(kind==="make" && list.some(x=>x.kind==="make" && ["new","wait","got"].includes(x.state))){ showErr("이미 보낸 요청이 아직 진행 중이에요"); return; }
+    list.push({id:Date.now(), kind, at:new Date().toISOString(), state:"new", topic:kind==="make"?topic:"", wisdom:kind==="make"?wisdom:false, from:(navigator.userAgent||"").includes("Mobile")?"폰":"컴퓨터"});
+    await _mintReqPut(list); MINT_REQ.list=list; MINT_REQ.err=""; MINT_REQ.at=Date.now();
+    const i=document.getElementById("shortsTopic"); if(i&&kind==="make") i.value="";
+  }catch(e){ MINT_REQ.err=String(e.message||e); }
+  switchStudio();
+}
 function switchStudio(){ const b=document.getElementById("studio-body"); if(b) b.innerHTML=renderStudioBody(); }
 function shortsItems(){ return STUDIO_ITEMS.filter(x=>x.type==="shorts"); }
 function renderStudioBody(){
@@ -2136,11 +2180,14 @@ function renderStudioBody(){
   const notes=noticeItems();
   markSeenLater("studio", list.concat(notes).filter(x=>!x.read).map(x=>x.id));
   return `${mintStatusCard()}${notes.map(noticeCard).join("")}<div class="card" style="border-color:rgba(239,141,163,.4);background:linear-gradient(135deg,rgba(239,141,163,.1),transparent);margin-bottom:14px">
-    <div style="font-size:12px;font-weight:800;color:var(--rose)">💡 오늘의 쇼츠 만들기</div>
-    <div style="font-size:10px;color:var(--sub);line-height:1.6;margin:4px 0 9px">사연 아이디어 → 나레이션 자막 → 장면표·배경음악·업로드 문구까지 한 번에 만들고 아래 목록에 저장해요 (1~2분).${done?' <b style="color:var(--mint)">오늘 한 편 만들었어요.</b>':''}</div>
-    <input id="shortsTopic" placeholder="주제가 있으면 적어 주세요 (비워 두면 자동으로 골라요)" style="margin-bottom:8px" onkeydown="if(event.key==='Enter')autoShorts()">
+    <div style="font-size:12px;font-weight:800;color:var(--rose)">📲 Mint에서 지금 만들기</div>
+    <div style="font-size:10px;color:var(--sub);line-height:1.6;margin:4px 0 9px">이 버튼은 Mint 컴퓨터에 요청만 보내요 → Mint가 5분 안에 받아서 평소 자동 제작과 똑같이 (사연 → 감수 → 출고 관문 → 장면 맞춤 → 영상 → YouTube·블로그·페이스북) 만들어요. 이틀마다 자동 제작 날짜는 그대로예요. Mint가 켜져 있어야 해요.</div>
+    ${mintReqStatus()}
+    <input id="shortsTopic" placeholder="주제가 있으면 적어 주세요 (비워 두면 사연 엔진이 골라요)" style="margin-bottom:8px" onkeydown="if(event.key==='Enter')mintRequest('make')">
     <label style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--sub);margin-bottom:8px;cursor:pointer"><input type="checkbox" id="wisdomChk" style="width:auto;margin:0"> 🌿 삶의 지혜 편으로 (씨앗 ${WISDOM_SEEDS.length}편 중 안 쓴 것부터)</label>
-    <button class="btn-gold" style="background:var(--rose)" onclick="autoShorts({wisdom:!!(document.getElementById('wisdomChk')||{}).checked})">${done?'🔄 한 편 더 만들기':'💡 오늘의 쇼츠 만들기'}</button>
+    <div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn-gold" style="background:var(--rose)" onclick="mintRequest('make')">📲 Mint에서 지금 만들기</button>
+      <button class="pill" style="font-size:10px" onclick="mintRequest('skip')">⏸ 다음 자동 제작 한 번 건너뛰기</button>
+      <button class="pill" style="font-size:10px" onclick="mintReqRefresh(true)">🔄 상태</button></div>
     <div id="shortsResult" style="margin-top:10px"></div>
   </div>
   ${perfBoard()}
@@ -4285,7 +4332,7 @@ async function requestRecruit(){
 // ═══════════════════════════════════
 //  INIT
 // ═══════════════════════════════════
-const BUILD_VERSION = "v15.19";
+const BUILD_VERSION = "v15.20";
 const BUILD_TIME = "2026-11-02 17:15 EST";
 STATE.advisorTab="papers";
 STATE.studioTab="idea";
