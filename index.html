@@ -1655,7 +1655,7 @@ ${spaceList}
 [머리 8개 — hair] ${hairList}
 [옷 8개 — cloth] ${clothList}
 [상징 — symbol, 클로즈업 사진]
-· 물건 ${MINT_OBJECTS.length}개: ${MINT_OBJECTS.join(", ")}
+· 물건 ${MINT_OBJECTS.length}개: ${MINT_OBJECTS.map(o=>o==="상자"?"상자(편지가 든 낡은 상자 — 구두·선물 상자 아님, 그런 상자는 want로)":o).join(", ")}
 · 손·사람 ${MINT_HANDS.length}개 (얼굴 없이 손·뒷모습): ${MINT_HANDS.join(", ")}
 · 배경 ${MINT_BACKDROPS.length}개 (사람·물건 없는 고요한 풍경 — 마지막 여운·깨달음 컷용): ${MINT_BACKDROPS.join(", ")}
 [시간 — time] 낮, 저녁, 밤
@@ -4330,7 +4330,7 @@ async function requestRecruit(){
 // ═══════════════════════════════════
 //  INIT
 // ═══════════════════════════════════
-const BUILD_VERSION = "v15.24";
+const BUILD_VERSION = "v15.25";
 const BUILD_TIME = "2026-11-02 17:15 EST";
 STATE.advisorTab="papers";
 STATE.studioTab="idea";
