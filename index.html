@@ -1665,14 +1665,14 @@ ${spaceList}
 - scenes는 beat와 1:1, 정확히 ${p1.beats.length}개.
 - scene "space": 이야기 장소·시대에 맞는 공간 1개와 인물 1~2명. 같은 사람은 모든 장면에서 같은 hair·cloth, who에 "엄마","나" 같은 이름. reach는 무언가를 집거나 내미는 순간만 true.
 - scene "symbol": 이야기를 거는 물건 클로즈업·손·배경. 합쳐서 최대 3개, 서로 붙어 있지 않게 (같은 사진이 연달아 나오면 지루하다). 손·사람은 감정이 가장 큰 컷(반전)에 한 번, 배경은 마지막 여운 컷에 쓰기 좋다. detail은 물건 위 꼬리표 글자(12자 이내, 예 "매달 30,000원") 또는 빈 문자열.
-- 이야기를 거는 사물이 목록의 물건과 많이 다르면(예: 이름표 붙은 김치통, 끊긴 글씨의 일기장 마지막 장) symbol은 목록에서 가장 가까운 것을 고르고, want(실제 물건, 한국어 12자 이내)와 want_en(그 장면의 영어 사진 묘사 한 문장 — 물건·놓인 곳·빛·시대, 사람 얼굴과 읽을 수 있는 글자는 넣지 않음)을 더한다. Mint가 이 컷만 새 그림으로 만든다. 한 편에 최대 2컷, 목록 물건으로 충분하면 쓰지 않는다.
+- 이야기를 거는 사물이 목록의 물건과 많이 다르면(예: 이름표 붙은 김치통, 끊긴 글씨의 일기장 마지막 장) symbol은 목록에서 가장 가까운 것을 고르고, want(실제 물건, 한국어 12자 이내)와 want_en(그 장면의 영어 촬영 지시서 2~3문장 — 눈으로 보고 그리듯: 주인공 물건 하나와 정확한 개수(신발·장갑은 'exactly one pair: one left and one right'), 놓인 곳과 방향, 배경에는 최소한만(같은 물건을 여러 개 늘어놓지 않음), 시대·장소, 빛, 카메라 거리. 사람 얼굴·손가락 클로즈업·읽을 수 있는 글자는 넣지 않음)을 더한다. Mint가 이 컷만 새 그림으로 만든다. 한 편에 최대 2컷, 목록 물건으로 충분하면 쓰지 않는다.
 - 시대 고증: 국민학교는 1996년 이전, 초등학교는 이후. 장례·묘지에는 두꺼운코트나 한복저고리. 환자복은 병실·병원 복도에서만.
 - 사진은 낮 장면에서만 사람 뒷모습이 나온다. 인물이 중요한 장면은 가능하면 낮으로.
 - 밤에 보는 시청자를 생각해 마지막 1~2컷은 저녁·밤의 따뜻한 빛이 좋다.
 - publish: 유튜브 제목(40자 이내, 궁금증), 설명(2~3문장), 해시태그 5~8개.
 - music: 배경음악 분위기 하나를 고른다 — ${Object.entries(MUSIC_MOODS).map(([k,v])=>`"${k}"(${v})`).join(", ")}. why에 이 이야기에 맞는 이유 한 줄, search에 YouTube 오디오 보관함에서 찾을 때 쓸 필터(장르·분위기)와 영어 검색어 1~2개 (예: "장르 Classical · 분위기 Sad · piano"). 곡 제목은 지어내지 마라.
 
-JSON: {"scenes":[{"scene":"space","space":"안방 · 시골","time":"낮","people":[{"who":"엄마","hair":"쪽진머리","cloth":"카디건","pose":"앉음","reach":true}]},{"scene":"symbol","symbol":"통장","detail":"매달 30,000원","time":"밤"},{"scene":"symbol","symbol":"반찬통","detail":"","time":"저녁","want":"이름표 붙은 김치통","want_en":"a glass kimchi container with a small handwritten paper label on a Korean grocery store shelf, warm evening light"}],"publish":{"title":"...","description":"...","hashtags":["#엄마","#유품"]},"music":{"mood":"그리움","why":"...","search":"장르 Classical · 분위기 Sad · piano"}}`);
+JSON: {"scenes":[{"scene":"space","space":"안방 · 시골","time":"낮","people":[{"who":"엄마","hair":"쪽진머리","cloth":"카디건","pose":"앉음","reach":true}]},{"scene":"symbol","symbol":"통장","detail":"매달 30,000원","time":"밤"},{"scene":"symbol","symbol":"반찬통","detail":"","time":"저녁","want":"이름표 붙은 김치통","want_en":"Close-up of exactly one glass kimchi container with a small blank paper label, standing alone on the middle shelf of a small Korean grocery store fridge, front view at eye level. Only two or three other side-dish containers softly blurred behind it. Warm evening light, 2020s Korean-American store."}],"publish":{"title":"...","description":"...","hashtags":["#엄마","#유품"]},"music":{"mood":"그리움","why":"...","search":"장르 Classical · 분위기 Sad · piano"}}`);
       const g2=keyGuard(raw2); if(g2){box.innerHTML=g2; return;}
       p2=pj(raw2)||{};
     }catch(e2){ p2={}; }
@@ -4330,7 +4330,7 @@ async function requestRecruit(){
 // ═══════════════════════════════════
 //  INIT
 // ═══════════════════════════════════
-const BUILD_VERSION = "v15.21";
+const BUILD_VERSION = "v15.22";
 const BUILD_TIME = "2026-11-02 17:15 EST";
 STATE.advisorTab="papers";
 STATE.studioTab="idea";
