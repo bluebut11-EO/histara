@@ -1722,7 +1722,7 @@ function _capChunks(t){
   return out.slice(0,6);
 }
 function _sentences(t){ return (_ttsText(t).match(/[^.?!…]+(?:[.?!…]+|$)/g)||[]).map(s=>s.trim()).filter(Boolean).map(s=>s.replace(/\.$/,"")); }
-const MUSIC_MOODS={"그리움":"회상·상실 — 느린 피아노","잔잔":"일상·담담 — 앰비언트","따뜻":"화해·감사·희망 — 현악·피아노","긴장":"비밀·미스터리 — 낮은 첼로 (자극 없이)",
+const MUSIC_MOODS={"그리움":"회상·상실 — 느린 피아노 (상실·회상이 있는 이야기는 언제나 이것)","잔잔":"일상·담담 — 앰비언트","따뜻":"화해·감사·희망 — 현악·피아노","긴장":"비밀·미스터리 — 낮은 첼로 (자극 없이)",
   "성찰":"나를 돌아보는 이야기·깨달음 — 솔로 피아노·명상","새벽":"아침·새 출발이 이야기의 중심일 때만 — 밝은 어쿠스틱 (상실·그리움·후회가 있는 이야기에는 쓰지 않음: 그리움·성찰로)"};
 const MUSIC_SEARCH={"그리움":"장르 Classical · 분위기 Sad · piano","잔잔":"장르 Ambient · 분위기 Calm","따뜻":"장르 Cinematic · 분위기 Inspirational · strings","긴장":"장르 Cinematic · 분위기 Dark · cello","성찰":"장르 Ambient · 분위기 Calm · solo piano","새벽":"장르 Country & Folk · 분위기 Bright · acoustic guitar"};
 function _musicNorm(m){ m=m||{}; const mood=MUSIC_MOODS[m.mood]?m.mood:"그리움";
@@ -4330,7 +4330,7 @@ async function requestRecruit(){
 // ═══════════════════════════════════
 //  INIT
 // ═══════════════════════════════════
-const BUILD_VERSION = "v15.22";
+const BUILD_VERSION = "v15.23";
 const BUILD_TIME = "2026-11-02 17:15 EST";
 STATE.advisorTab="papers";
 STATE.studioTab="idea";
