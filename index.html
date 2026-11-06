@@ -1028,7 +1028,7 @@ function briefDirective(b){
   const recent=recentStudioTopics(10);
   let d=`${CORE_FORMULA}
 
-${String(b.text||"").slice(0,1800)}`;
+${String(b.text||"").slice(0,3000)}`;
   if(recent.length) d+=`\n- 최근 사연과 겹치지 마라 (제목·상황·반전 모두): ${recent.join(" / ")}.`;
   return d;
 }
@@ -1556,6 +1556,20 @@ function copyStr(btn, txt){
 let LAST_SHORTS = null; // for email/pdf
 let LAST_DRAFT = null;   // last generated content draft
 
+// v15.27 11/6 회의 — A·B 2주 실험 (목소리 나레이션: Google Chirp 3 HD, Mint가 읽음)
+function fmtNarrRules(f){
+  const voice=`목소리가 있다 — 차분한 한국어 나레이터가 narration을 그대로 읽고, 같은 문장이 화면 자막으로 뜬다 (잔잔한 배경음악은 아주 작게). 귀로 들어도 자연스러운 말로 쓴다 (괄호·기호·영어 약어·'~' 쓰지 않음, 숫자는 읽기 쉬운 말로).`;
+  if(f==="A") return `실험 A형 — 갈등 사연, 110~150초 세로 쇼츠. ${voice}
+구조: ① 후크 — 누군가의 한마디 대사(따옴표) 또는 그 말이 나온 장면으로 시작 ② 그 말에 서운하거나 오해한 '나', 갈등이 커지는 장면 2~3개 (요즘 가족 사이 실제로 흔한 갈등: 돌봄·돈·명절·손주·단톡방·말투) ③ 전환 — 예상과 다른 선택이나 몰랐던 사정이 드러남 ④ 짧은 여운 + 화자의 마음 한 줄.
+- 대사는 따옴표로 1~3번, 실제 사람이 하는 말처럼. 악역도 이해할 만한 이유가 있게. 막장·폭력·불륜·과장·신파 금지.
+- beats 10~14개. 한 beat에 1~4문장. 전체 narration 공백 제외 450~600자 (목소리로 약 2분). sec은 대략만 (Mint가 목소리 길이로 맞춘다).`;
+  return `실험 B형 — '몰랐던 것', 60~90초 세로 쇼츠. 사연이 아니라 40~60대가 실제로 걱정하는 주제에서 "대부분 이렇게 생각하지만, 사실은…" 한 가지를 알려 준다. ${voice}
+구조: ① 후크 — 질문이나 의외의 사실 한 문장 ② 흔한 생각 ③ 실제로는 — 이유 2~3가지를 쉬운 말로 ④ 요즘 우리 집 한 장면 예시 ⑤ 오늘 해 볼 작은 것 하나 ⑥ 화자의 마음 한 줄.
+- 화자: 내용에 가장 잘 맞는 사람의 1인칭 (예: 은퇴한 60대 남편, 부모를 돌보는 50대 딸). 그 사람의 경험으로 말하되 설교·훈계 금지.
+- 사실: 널리 알려진 상식·흔한 경험에 근거한 것만. 통계·연구 숫자, 의학·투자·법률·세금 조언은 쓰지 않는다 (틀릴 위험).
+- 반전 대신 '흔한 생각과 다른 점'이 twist (role "twist" beat = 그 점이 드러나는 곳).
+- beats 7~10개. 한 beat에 1~3문장. 전체 narration 공백 제외 260~380자 (목소리로 60~90초). sec은 대략만.`;
+}
 async function approveAndProduce(payload){
   payload = payload || LAST_DRAFT || {};
   let box=document.getElementById("shortsResult");
@@ -1577,10 +1591,11 @@ async function approveAndProduce(payload){
   const W=payload&&payload.wisdom||null;            // 🌿 지혜 편 씨앗 (있으면)
   const wisdomCtx=W?wisdomBlock(W):"";
   const BR=payload&&payload.brief||null;               // v15.9 🧭 설계의 물건·공간을 장면표에 그대로
-  const briefCtx=BR?`\n🧭 이 편의 중심 물건은 "${BR.object||""}", 주 공간은 "${BR.place||""}" — 장면표(symbol·space)에 이 이름 그대로 쓰고, 같은 물건 사진을 세 번 넘게 쓰지 마라.\n`:"";
+  const FMT=(BR&&(BR.fmt==="A"||BR.fmt==="B"))?BR.fmt:"";   // v15.27 11/6 회의: A·B 2주 실험 (목소리 나레이션)
+  const briefCtx=BR&&FMT==="B"?"":BR?`\n🧭 이 편의 중심 물건은 "${BR.object||""}", 주 공간은 "${BR.place||""}" — 장면표(symbol·space)에 이 이름 그대로 쓰고, 같은 물건 사진을 세 번 넘게 쓰지 마라.\n`:"";
   const sys=`You are the Histara Shorts team for the YouTube channel @HaJunNa (Korean parent/keepsake twist stories, viewers aged 40–70).
 Team: Theo (story), Rio (narration), Choi (Mint auto-video).
-The video is made AUTOMATICALLY on Linux Mint: there is NO voice — the narration sentences appear one by one as big on-screen captions over photo scenes, with soft background music only, and a 4-second HaJunNa subscribe end card is always added at the end. No manual editing happens, so everything you write is final.
+The video is made AUTOMATICALLY on Linux Mint: ${FMT?"a calm Korean narrator VOICE reads every narration sentence aloud, and the same sentence appears as a big on-screen caption over photo scenes, with quiet background music":"there is NO voice — the narration sentences appear one by one as big on-screen captions over photo scenes, with soft background music only"}, and a 4-second HaJunNa subscribe end card is always added at the end. No manual editing happens, so everything you write is final.
 
 ${RESONANCE_2026}
 
@@ -1592,7 +1607,7 @@ Write in natural Korean. Return ONLY JSON.`;
     liveLog(box,"① 이야기·나레이션 쓰는 중... (Theo·Rio)");
     const raw1=await callClaude(sys,
       `Content approved: title "${title}", hook "${hook}".${storyContext}${wisdomCtx}${briefCtx}
-이 사연으로 45~56초 세로 쇼츠를 쓴다. 목소리는 없다 — 화면마다 narration 문장이 큰 자막으로 한 문장씩 차례로 뜨고, 잔잔한 배경음악만 깔린다.
+${FMT?fmtNarrRules(FMT):`이 사연으로 45~56초 세로 쇼츠를 쓴다. 목소리는 없다 — 화면마다 narration 문장이 큰 자막으로 한 문장씩 차례로 뜨고, 잔잔한 배경음악만 깔린다.`}
 · narration = 시청자가 화면에서 읽는 이야기. 소리 없이 읽기만 해도 장면의 디테일, 그때의 감정, 속마음, 손의 감촉까지 전해지도록, 누군가 들려주는 이야기처럼 이어서 쓴다.
 
 🌙 읽는 사람: 40대 후반~60대 후반. 늦은 오후나 잠들지 못하는 밤에 혼자 본다. 그래서 narration은
@@ -1602,9 +1617,9 @@ Write in natural Korean. Return ONLY JSON.`;
 - 마지막 beat는 질문으로 끝내지 않는다. 반전 뒤 화자('나')에게 남은 마음(그리움·미안함·고마움·늦은 깨달음)을 담담히 말하는 공감형 한 문장으로 끝낸다 — 이야기 속 인물을 그대로 부르며 (예: "오늘따라 아버지가 더 그립습니다." / "이제는 아버지께 해드릴 수 있는 게 없어, 그게 가장 아픕니다."). 30자 안, 마침표.
   영상 안에서 시청자를 갑자기 '당신·여러분'으로 부르지 않는다 — 아버지 이야기 끝에 "누군가를 위해 아껴 두었던 것, 당신에겐 무엇인가요?"처럼 넘어가면 몰입이 깨진다. 교훈·설교('~해야 합니다', '소중함을 잊지 마세요')도 금지.
 
-구조 (반전 있는 사연): 후크 → 상황 → 전환점(8~15초에 2차 후킹) → 반전 → 여운+화자의 마음 한 줄.
+${FMT?"":`구조 (반전 있는 사연): 후크 → 상황 → 전환점(8~15초에 2차 후킹) → 반전 → 여운+화자의 마음 한 줄.
 - beats 5~7개. 각 beat는 화면 한 장면이고 sec(화면 길이, 3~14초)를 정한다. sec 합계 45~56초 (끝에 구독 화면 4초가 자동으로 붙는다).
-- 나이 든 시청자가 천천히 읽을 수 있게: 각 beat의 narration 글자 수(공백 제외)는 (sec − 1) × 3 이내, 한 beat에 1~3문장, 전체는 공백 제외 130~160자. 글이 많으면 자막이 빨리 넘어가 잔잔함이 깨진다 — 말을 아껴라.
+- 나이 든 시청자가 천천히 읽을 수 있게: 각 beat의 narration 글자 수(공백 제외)는 (sec − 1) × 3 이내, 한 beat에 1~3문장, 전체는 공백 제외 130~160자. 글이 많으면 자막이 빨리 넘어가 잔잔함이 깨진다 — 말을 아껴라.`}
 - narration: 문장은 마침표로 끝냄. 숫자는 읽기 쉬운 표기 그대로 (예: "매달 3만원", "20년").
 - 첫 beat(role "hook")는 3~5초. 인사·도입 없이 가장 강한 한 문장.
 - 반전이 드러나는 beat 하나는 role "twist". 나머지는 "normal".
@@ -1612,7 +1627,7 @@ Write in natural Korean. Return ONLY JSON.`;
 
 👤 호칭: narrator(나)의 자리에서 부른다. 내가 사위면 아내의 어머니는 '장모님'(장인어른 입장에서 말하듯 '돌아가신 아내'라 쓰지 마라), 며느리면 '시어머니', 자식이면 '엄마' 또는 '어머니' 하나로 끝까지. 같은 사람을 두 이름으로 부르지 않는다.
 🧩 행동의 이유: 인물이 하는 낯선 행동(예: 딸이 담근 김치를 마트 반찬 코너에 둠)에는 이유를 한 구절이라도 보여 준다 — '누구나 알겠지'가 아니라 '누구나 이해하기 쉽게'. 대신 덜 중요한 꾸밈말을 뺀다.
-⏱ 읽는 속도: 목소리가 없어서 자막을 다 읽어야 한다. 전체 공백 제외 160자를 넘기지 마라 — 넘으면 마지막 컷 자막이 1초씩 지나가 아무도 못 읽는다. 마지막 beat는 6초 이상.
+${FMT?"⏱ 길이: 위 실험 형식의 글자 수를 지켜라 (목소리가 읽는 시간 = 영상 길이).":"⏱ 읽는 속도: 목소리가 없어서 자막을 다 읽어야 한다. 전체 공백 제외 160자를 넘기지 마라 — 넘으면 마지막 컷 자막이 1초씩 지나가 아무도 못 읽는다. 마지막 beat는 6초 이상."}
 
 🔍 현실 고증: 사물이 그 장소에 실제로 있을 법한지, 시대가 섞이지 않는지(삐삐·통장·손편지 vs 카톡·스마트폰), 크기·보존 상태·나이·금액이 맞는지 확인하고 realism_check에 한 줄로 적어라. 어색하면 그 디테일을 바꿔서 다시 써라.
 
@@ -1622,7 +1637,7 @@ JSON: {"title_ko":"짧은 제목(20자 안팎, 반전은 말하지 않음)","nar
     const g1=keyGuard(raw1); if(g1){box.innerHTML=g1; return;}
     const p1=pj(raw1);
     if(!p1 || !(p1.beats||[]).length){ box.innerHTML=rawFailBox("쇼츠 제작(1단계)"); return; }
-    p1.beats=p1.beats.slice(0,8).map((b,i)=>({role:(b.role==="hook"||b.role==="twist")?b.role:(i===0?"hook":"normal"),
+    p1.beats=p1.beats.slice(0,FMT?16:8).map((b,i)=>({role:(b.role==="hook"||b.role==="twist")?b.role:(i===0?"hook":"normal"),
       sec:Math.max(3,Math.min(14,Number(b.sec)||8)), narration:_ttsText(b.narration||b.ko||""),
       captions:(Array.isArray(b.captions)?b.captions:[b.caption||""]).map(x=>String(x||"").trim()).filter(Boolean).slice(0,2)}))
       .filter(b=>b.narration||b.captions.length);
@@ -1660,7 +1675,7 @@ ${spaceList}
 규칙:
 - scenes는 beat와 1:1, 정확히 ${p1.beats.length}개.
 - scene "space": 이야기 장소·시대에 맞는 공간 1개와 인물 1~2명. 같은 사람은 모든 장면에서 같은 hair·cloth, who에 "엄마","나" 같은 이름. reach는 무언가를 집거나 내미는 순간만 true.
-- scene "symbol": 이야기를 거는 물건 클로즈업·손·배경. 합쳐서 최대 3개, 서로 붙어 있지 않게 (같은 사진이 연달아 나오면 지루하다). 손·사람은 감정이 가장 큰 컷(반전)에 한 번, 배경은 마지막 여운 컷에 쓰기 좋다. detail은 물건 위 꼬리표 글자(12자 이내, 예 "매달 30,000원") 또는 빈 문자열.
+- scene "symbol": 이야기를 거는 물건 클로즈업·손·배경. 합쳐서 최대 ${FMT?5:3}개, 서로 붙어 있지 않게 (같은 사진이 연달아 나오면 지루하다). 손·사람은 감정이 가장 큰 컷(반전)에 한 번, 배경은 마지막 여운 컷에 쓰기 좋다. detail은 물건 위 꼬리표 글자(12자 이내, 예 "매달 30,000원") 또는 빈 문자열.
 - 이야기를 거는 사물이 목록의 물건과 많이 다르면(예: 이름표 붙은 김치통, 끊긴 글씨의 일기장 마지막 장) symbol은 목록에서 가장 가까운 것을 고르고, want(실제 물건, 한국어 12자 이내)와 want_en(그 장면의 영어 촬영 지시서 2~3문장 — 눈으로 보고 그리듯: 주인공 물건 하나와 정확한 개수(신발·장갑은 'exactly one pair: one left and one right'), 놓인 곳과 방향, 배경에는 최소한만(같은 물건을 여러 개 늘어놓지 않음), 시대·장소, 빛, 카메라 거리. 사람 얼굴·손가락 클로즈업·읽을 수 있는 글자는 넣지 않음)을 더한다. Mint가 이 컷만 새 그림으로 만든다. 한 편에 최대 5컷. 요즘 장소(요양원 면회실·편의점·카페·지하철)나 요즘 물건(키오스크·택배 상자·휴대폰 화면)처럼 목록에 맞는 게 없으면 공간 장면에도 want·want_en을 붙인다. 목록으로 충분하면 쓰지 않는다.
 - 시대 고증: 국민학교는 1996년 이전, 초등학교는 이후. 장례·묘지에는 두꺼운코트나 한복저고리. 환자복은 병실·병원 복도에서만.
 - 사진은 낮 장면에서만 사람 뒷모습이 나온다. 인물이 중요한 장면은 가능하면 낮으로.
@@ -1681,7 +1696,7 @@ JSON: {"scenes":[{"scene":"space","space":"안방 · 시골","time":"낮","peopl
     const no=shortsNo();
     const dstr=new Date().toISOString().slice(0,10);
     const pub=p2.publish||{};
-    const pkg={v:12, no, dstr, title:p1.title_ko||title, title_ko:p1.title_ko||title,
+    const pkg={v:12, no, dstr, fmt:FMT||undefined, title:p1.title_ko||title, title_ko:p1.title_ko||title,
       narrator:p1.narrator==="남성"?"남성":"여성", twist:p1.twist||"", concrete_anchor:p1.concrete_anchor||"",
       realism_check:p1.realism_check||"", comment_bait:p1.comment_bait||[], pinned_comment:p1.pinned_comment||"",
       mint:{cuts:normMintCuts(cuts)}, scenes_ok:sc.length===p1.beats.length,
@@ -1693,7 +1708,7 @@ JSON: {"scenes":[{"scene":"space","space":"안방 · 시골","time":"낮","peopl
       if(!tags.includes("#삶의지혜")) tags.push("#삶의지혜"); pkg.publish.hashtags=tags; }
     pkg._seed = {title, hook, story:draftBody};
     if(BR){ pkg.brief={pillar:BR.pillar||"",relation:BR.relation||"",object:BR.object||"",place:BR.place||"",era:BR.era||"",
-      event:BR.event||"",twist:BR.twist||"",shade:BR.shade||"",season:BR.season||""}; pkg.pillar=BR.pillar||""; }
+      event:BR.event||"",twist:BR.twist||"",shade:BR.shade||"",season:BR.season||"",fmt:FMT||""}; pkg.pillar=BR.pillar||""; }
     if(payload&&payload.fp){ const f=payload.fp; pkg.fp={}; ["relation","object","place","era","event","twist"].forEach(k=>{ if(f[k]) pkg.fp[k]=String(f[k]).slice(0,40); }); }
     pkg._coherence = coherenceCheck12(pkg);
     if(W){ pkg._coherence.issues=(pkg._coherence.issues||[]).concat(_wisdomCheck(pkg)); }
@@ -1717,7 +1732,7 @@ function _capChunks(t){
   });
   return out.slice(0,6);
 }
-function _sentences(t){ return (_ttsText(t).match(/[^.?!…]+(?:[.?!…]+|$)/g)||[]).map(s=>s.trim()).filter(Boolean).map(s=>s.replace(/\.$/,"")); }
+function _sentences(t){ return (_ttsText(t).match(/[^.?!…]+(?:[.?!…]+["”’']?|$)/g)||[]).map(s=>s.trim()).filter(s=>/[가-힣A-Za-z0-9]/.test(s)).map(s=>s.replace(/\.(["”’']?)$/,"$1")); }   // v15.27 닫는 따옴표는 문장에 붙임
 const MUSIC_MOODS={"그리움":"회상·상실 — 느린 피아노 (상실·회상이 있는 이야기는 언제나 이것)","잔잔":"일상·담담 — 앰비언트","따뜻":"화해·감사·희망 — 현악·피아노","긴장":"비밀·미스터리 — 낮은 첼로 (자극 없이)",
   "성찰":"나를 돌아보는 이야기·깨달음 — 솔로 피아노·명상","새벽":"아침·새 출발이 이야기의 중심일 때만 — 밝은 어쿠스틱 (상실·그리움·후회가 있는 이야기에는 쓰지 않음: 그리움·성찰로)"};
 const MUSIC_SEARCH={"그리움":"장르 Classical · 분위기 Sad · piano","잔잔":"장르 Ambient · 분위기 Calm","따뜻":"장르 Cinematic · 분위기 Inspirational · strings","긴장":"장르 Cinematic · 분위기 Dark · cello","성찰":"장르 Ambient · 분위기 Calm · solo piano","새벽":"장르 Country & Folk · 분위기 Bright · acoustic guitar"};
@@ -1800,7 +1815,7 @@ function _mintWrap(t){
 // AI가 준 장면표를 Mint 어휘로 정리 (모르는 이름은 가장 가까운 것으로)
 function normMintCuts(cuts){
   const SP=Object.keys(MINT_SPACES), HR=Object.keys(MINT_HAIR), CL=Object.keys(MINT_CLOTH);
-  return (cuts||[]).slice(0,8).map((c,i)=>{
+  return (cuts||[]).slice(0,16).map((c,i)=>{
     c=c||{};
     const sym = c.scene==="symbol" || (c.symbol && !c.space);
     const narr=_ttsText(c.narration||"");
@@ -1841,7 +1856,7 @@ function mintStoryObj(p){
   const m=mintFromPkg(p), pub=p.publish_ko||p.publish||{};
   return {format:"hajuna-story/2", title:p.title||p.title_ko||"HaJunNa", no:p.no||0, date:p.dstr||"", twist:p.twist||"",
     made_by:`Histara ${typeof BUILD_VERSION!=="undefined"?BUILD_VERSION:""}`, fallback:m.fallback,
-    narrator:p.narrator==="남성"?"남성":"여성", music:p.music||_musicNorm(null),
+    narrator:p.narrator==="남성"?"남성":"여성", music:p.music||_musicNorm(null), fmt:p.fmt||"",
     cuts:m.cuts, publish:{title:pub.title||pub.yt_title||p.title||"", description:pub.description||"",
       hashtags:pub.hashtags||"", pinned_comment:p.pinned_comment||""}};
 }
@@ -1988,6 +2003,9 @@ function coherenceCheck12(p){
   const total=cuts.reduce((s,c)=>s+(Number(c.sec)||0),0);
   if(p._seed && p._seed.story && all && _overlap(p._seed.story, all+" "+cuts.map(c=>c.captions.join(" ")).join(" ")) < 0.12)
     issues.push("이야기가 승인한 초안과 많이 달라요 (다른 상황을 지어냈을 수 있어요).");
+  if(p.fmt){ const nc=_nchars(all), L=p.fmt==="A"?[420,640]:[230,400];      // v15.27 목소리 편: 길이는 목소리가 정함
+    if(nc<L[0]||nc>L[1]) issues.push(`실험 ${p.fmt}형 나레이션이 ${nc}자예요 — ${L[0]}~${L[1]}자가 맞아요.`);
+    return {ok:issues.length===0, issues}; }
   if(total>56) issues.push(`화면 길이 합계가 ${total}초예요 — Mint가 56초로 줄이면 자막도 그만큼 빨리 넘어가요.`);
   else if(total<40) issues.push(`화면 길이 합계가 ${total}초로 짧아요. 이 채널은 45~60초에서 시청률이 가장 높았어요.`);
   const nchar=_nchars(all);
@@ -2199,7 +2217,7 @@ function _perfRows(){
   const st=STUDIO_ITEMS.find(x=>x&&x.type==="status"); const rows=(st&&st.channel_stats)||[];
   const byId={}; shortsItems().forEach(r=>{ if(r.yt&&r.yt.id) byId[r.yt.id]=r; });
   return {st, rows:rows.map(x=>{ const it=byId[x.id]; const p=(it&&it.pkg)||{};
-    return Object.assign({},x,{no:p.no||"", topic:p.topic==="wisdom"?"지혜":"부모", mood:(p.music&&p.music.mood)||"",
+    return Object.assign({},x,{no:p.no||"", topic:p.fmt?("실험 "+p.fmt):p.topic==="wisdom"?"지혜":"부모", mood:(p.music&&p.music.mood)||"",
       title:x.title||p.title||"", lr:(x.views&&x.likes!=null)?x.likes/x.views*100:null}); })};
 }
 function _spark(h){ h=(h||[]).filter(v=>typeof v==="number"); if(h.length<2) return "";
@@ -2212,7 +2230,7 @@ function perfBoard(){
   const pub=rows.filter(r=>r.privacy==="public"); const open=!!STATE.perfOpen;
   const f=n=>typeof n==="number"?Math.round(n).toLocaleString("ko-KR"):"–", pc=n=>typeof n==="number"?`${n.toFixed(n<10?1:0)}%`:"–";
   const total=pub.reduce((t,r)=>t+(r.views||0),0);
-  const groups=["부모","지혜"].map(t=>({t,r:pub.filter(x=>x.topic===t)})).filter(g=>g.r.length);
+  const groups=["부모","지혜","실험 A","실험 B"].map(t=>({t,r:pub.filter(x=>x.topic===t)})).filter(g=>g.r.length);
   const day=st&&st.stats_at?(()=>{ const d=new Date(st.stats_at); return isNaN(d)?st.stats_at.slice(5,10).replace("-","/"):`${d.getMonth()+1}/${d.getDate()} ${d.toLocaleTimeString("ko-KR",{hour:"numeric",minute:"2-digit"})}`; })():(st&&st.stats_day?st.stats_day.slice(5).replace("-","/"):"");
   const chip=(l,v)=>`<div style="background:var(--deep);border:1px solid var(--border);border-radius:9px;padding:6px 9px;min-width:72px"><div style="font-size:8.5px;color:var(--sub)">${l}</div><div style="font-size:13px;font-weight:800;font-variant-numeric:tabular-nums">${v}</div></div>`;
   return `<div class="card" style="padding:11px 12px;margin-bottom:12px">
@@ -2565,6 +2583,10 @@ Respond in Korean. Return ONLY JSON.`;
 근거 한 줄(나중에 영상에 그대로 들어감): ${W.line} — ${W.src}
 최근 사연과 겹치지 않게: ${recentStudioTopics(10).join(" / ")||"없음"}
 JSON: {"title":"궁금증을 부르는 제목","hook":"첫 문장 (장면으로 시작)","story":"사연 4~6문장 — 장면, 오해, 반전, 깨달음이 다 들어가게"}`:
+      (B&&B.fmt==="B")?`오늘 쇼츠 한 편의 내용을 만든다 — 사연이 아니라 '몰랐던 것' 한 가지 (실험 B형).
+${briefDirective(B)}
+JSON: {"title":"짧은 제목 (20자 안팎, 답은 말하지 않고 궁금증만 — 예: 은퇴 후 부부가 자주 다투는 진짜 이유)","hook":"첫 문장 (질문이나 의외의 사실)","story":"내용 5~7문장 — 흔한 생각, 실제로는(이유 2~3가지), 요즘 우리 집 한 장면, 오늘 해 볼 작은 것 하나, 화자의 마음 한 줄",
+ "fp":{"relation":"화자","object":"예시 장면의 물건","place":"예시 장면의 공간","era":"요즘","event":"주제","twist":"흔한 생각과 다른 점(한 구절)"}}`:
       `${topic?`주제: "${topic}". 이 주제로 `:"오늘 "}쇼츠 한 편이 될 사연을 하나 만든다. 실제로 있었던 일처럼 구체적인 한 장면: 누가, 어디서, 어떤 물건, 무슨 말, 그리고 예상을 뒤집는 반전.
 ${B?briefDirective(B):diversityDirective(STATE.ideaSpec)}
 JSON: {"title":"짧은 제목 (20자 안팎, 반전은 말하지 않고 궁금증만 — 예: 엄마 카톡 프사가 바뀌었다)","hook":"첫 문장 (장면으로 시작)","story":"사연 4~6문장 — 지금(2020년대) 이야기, 상황, 오해, 반전, 여운이 다 들어가게",
@@ -4326,7 +4348,7 @@ async function requestRecruit(){
 // ═══════════════════════════════════
 //  INIT
 // ═══════════════════════════════════
-const BUILD_VERSION = "v15.26";
+const BUILD_VERSION = "v15.27";
 const BUILD_TIME = "2026-11-02 17:15 EST";
 STATE.advisorTab="papers";
 STATE.studioTab="idea";
