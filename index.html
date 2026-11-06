@@ -1624,16 +1624,20 @@ ${FMT?"":`구조 (반전 있는 사연): 후크 → 상황 → 전환점(8~15초
 - 첫 beat(role "hook")는 3~5초. 인사·도입 없이 가장 강한 한 문장.
 - 반전이 드러나는 beat 하나는 role "twist". 나머지는 "normal".
 - narrator: 이야기를 말하는 "나"의 성별 ("여성" 또는 "남성"). 모르면 "여성".
+- narrator_age: "나"의 나이대 — "청년"(20~30대) · "중년"(40~60대 초반) · "노년"(손주를 둔 할머니·할아버지, 대략 60대 후반 이상). 목소리 속도와 목소리를 이것으로 고른다.
 
 👤 호칭: narrator(나)의 자리에서 부른다. 내가 사위면 아내의 어머니는 '장모님'(장인어른 입장에서 말하듯 '돌아가신 아내'라 쓰지 마라), 며느리면 '시어머니', 자식이면 '엄마' 또는 '어머니' 하나로 끝까지. 같은 사람을 두 이름으로 부르지 않는다.
 🧩 행동의 이유: 인물이 하는 낯선 행동(예: 딸이 담근 김치를 마트 반찬 코너에 둠)에는 이유를 한 구절이라도 보여 준다 — '누구나 알겠지'가 아니라 '누구나 이해하기 쉽게'. 대신 덜 중요한 꾸밈말을 뺀다.
 ${FMT?"⏱ 길이: 위 실험 형식의 글자 수를 지켜라 (목소리가 읽는 시간 = 영상 길이).":"⏱ 읽는 속도: 목소리가 없어서 자막을 다 읽어야 한다. 전체 공백 제외 160자를 넘기지 마라 — 넘으면 마지막 컷 자막이 1초씩 지나가 아무도 못 읽는다. 마지막 beat는 6초 이상."}
 
+👥 내기 전 스스로 감수 (11/2026 운영자): 다 쓴 뒤 ① 이 이야기를 처음 보는 55세 ② 신파·설교·모호한 말에 바로 넘기는 50대 남성 ③ 관계 디테일에 민감한 50대 여성의 눈으로 처음부터 끝까지 한 번씩 읽어라. 앞뒤가 안 이어지는 줄, 설명 없이 건너뛴 시간·장소·사건, 무엇의 ~인지 대상이 빠진 말(✗ "방식도 바뀌었다" → ✓ "애 보는 방식도 바뀌었다"), 그 나이·성별 사람이 실제로 안 할 말투, ${FMT?"귀로 들으면 어색한 말, ":""}감정을 설명만 하는 문장을 찾아 고친 뒤 내라.${(typeof window!=="undefined"&&window.MINT_RULES)?`
+📐 편집 교훈 — 지난 편에서 독자·운영자가 실제로 지적한 것. 같은 실수를 처음부터 하지 마라: ${String(window.MINT_RULES).slice(0,1500)}`:""}
+
 🔍 현실 고증: 사물이 그 장소에 실제로 있을 법한지, 시대가 섞이지 않는지(삐삐·통장·손편지 vs 카톡·스마트폰), 크기·보존 상태·나이·금액이 맞는지 확인하고 realism_check에 한 줄로 적어라. 어색하면 그 디테일을 바꿔서 다시 써라.
 
 💬 댓글: comment_bait에 아주 쉬운 댓글 유도 문구 3개 (예: "아버지 생각나면 ㅇ 하나만"), pinned_comment에 업로드 직후 달 고정 댓글 1개 — 이야기 속 '나'가 영상 뒤에 먼저 마음을 나누는 1~2줄: 이 이야기의 인물·물건·장면에 닿아, 읽은 사람이 자기 이야기나 마음을 자연스럽게 꺼내고 싶어지게. 꼭 질문이나 '들려주세요'일 필요는 없다 (마음 나누기·작은 고백·함께 떠올리게 하는 한 줄·부드러운 물음 중 이 이야기에 가장 자연스러운 것). '당신에겐 무엇인가요?'처럼 갑자기 주제를 바꾸는 물음·예/아니오·구독 부탁·채널 운영자 자신의 가족 고백("저희 어머니도…") 금지.
 
-JSON: {"title_ko":"짧은 제목(20자 안팎, 반전은 말하지 않음)","narrator":"여성","twist":"반전 한 줄 요약","concrete_anchor":"이야기를 거는 사물 1개","beats":[{"role":"hook","sec":5,"narration":"엄마 유품에서, 통장이 나왔다."},{"role":"normal","sec":9,"narration":"20년 동안 같은 날, 3만원씩. 어디로 가는지는 적혀 있지 않았다."}],"comment_bait":["...","...","..."],"pinned_comment":"...","realism_check":"..."}`);
+JSON: {"title_ko":"짧은 제목(20자 안팎, 반전은 말하지 않음)","narrator":"여성","narrator_age":"중년","twist":"반전 한 줄 요약","concrete_anchor":"이야기를 거는 사물 1개","beats":[{"role":"hook","sec":5,"narration":"엄마 유품에서, 통장이 나왔다."},{"role":"normal","sec":9,"narration":"20년 동안 같은 날, 3만원씩. 어디로 가는지는 적혀 있지 않았다."}],"comment_bait":["...","...","..."],"pinned_comment":"...","realism_check":"..."}`);
     const g1=keyGuard(raw1); if(g1){box.innerHTML=g1; return;}
     const p1=pj(raw1);
     if(!p1 || !(p1.beats||[]).length){ box.innerHTML=rawFailBox("쇼츠 제작(1단계)"); return; }
@@ -1697,7 +1701,7 @@ JSON: {"scenes":[{"scene":"space","space":"안방 · 시골","time":"낮","peopl
     const dstr=new Date().toISOString().slice(0,10);
     const pub=p2.publish||{};
     const pkg={v:12, no, dstr, fmt:FMT||undefined, title:p1.title_ko||title, title_ko:p1.title_ko||title,
-      narrator:p1.narrator==="남성"?"남성":"여성", twist:p1.twist||"", concrete_anchor:p1.concrete_anchor||"",
+      narrator:p1.narrator==="남성"?"남성":"여성", narrator_age:["청년","중년","노년"].includes(p1.narrator_age)?p1.narrator_age:"", twist:p1.twist||"", concrete_anchor:p1.concrete_anchor||"",
       realism_check:p1.realism_check||"", comment_bait:p1.comment_bait||[], pinned_comment:p1.pinned_comment||"",
       mint:{cuts:normMintCuts(cuts)}, scenes_ok:sc.length===p1.beats.length,
       publish:{title:pub.title||p1.title_ko||title, description:pub.description||"", hashtags:pub.hashtags||[]},
@@ -1856,7 +1860,7 @@ function mintStoryObj(p){
   const m=mintFromPkg(p), pub=p.publish_ko||p.publish||{};
   return {format:"hajuna-story/2", title:p.title||p.title_ko||"HaJunNa", no:p.no||0, date:p.dstr||"", twist:p.twist||"",
     made_by:`Histara ${typeof BUILD_VERSION!=="undefined"?BUILD_VERSION:""}`, fallback:m.fallback,
-    narrator:p.narrator==="남성"?"남성":"여성", music:p.music||_musicNorm(null), fmt:p.fmt||"",
+    narrator:p.narrator==="남성"?"남성":"여성", narrator_age:p.narrator_age||"", music:p.music||_musicNorm(null), fmt:p.fmt||"",
     cuts:m.cuts, publish:{title:pub.title||pub.yt_title||p.title||"", description:pub.description||"",
       hashtags:pub.hashtags||"", pinned_comment:p.pinned_comment||""}};
 }
@@ -2390,7 +2394,7 @@ function _statsLine(r){ const s=r.stats; if(!s) return "";
 // 최근 성과를 다음 사연 고를 때 참고만 (공개 4편 이상, 올린 지 2일 넘은 것만 — 숫자가 자리 잡은 뒤)
 function recentPerformanceHint(){ const base=_recentPerfBase(); const R=(typeof window!=="undefined"&&window.MINT_RULES)||"";
   return base+(R?`
-LEARNED RULES (Mint's monthly channel audit of real numbers — soft guidance, never copy past stories): ${R}`:""); }
+LEARNED RULES & EDITING LESSONS (from Mint's audits, readers' and the operator's corrections — follow them; never copy past stories): ${R}`:""); }
 function _recentPerfBase(){
   const now=Date.now();
   const rows=shortsItems().filter(r=>r.pkg&&r.stats&&r.stats.privacy==="public"&&typeof r.stats.views==="number")
@@ -4348,7 +4352,7 @@ async function requestRecruit(){
 // ═══════════════════════════════════
 //  INIT
 // ═══════════════════════════════════
-const BUILD_VERSION = "v15.27";
+const BUILD_VERSION = "v15.28";
 const BUILD_TIME = "2026-11-02 17:15 EST";
 STATE.advisorTab="papers";
 STATE.studioTab="idea";
