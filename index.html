@@ -1633,7 +1633,7 @@ ${FMT?"":`구조 (반전 있는 사연): 후크 → 상황 → 전환점(8~15초
 ${FMT?"⏱ 길이: 위 실험 형식의 글자 수를 지켜라 (목소리가 읽는 시간 = 영상 길이).":"⏱ 읽는 속도: 목소리가 없어서 자막을 다 읽어야 한다. 전체 공백 제외 160자를 넘기지 마라 — 넘으면 마지막 컷 자막이 1초씩 지나가 아무도 못 읽는다. 마지막 beat는 6초 이상."}
 
 👥 내기 전 스스로 감수 (11/2026 운영자): 다 쓴 뒤 ① 이 이야기를 처음 보는 55세 ② 신파·설교·모호한 말에 바로 넘기는 50대 남성 ③ 관계 디테일에 민감한 50대 여성의 눈으로 처음부터 끝까지 한 번씩 읽어라. 앞뒤가 안 이어지는 줄, 설명 없이 건너뛴 시간·장소·사건, 무엇의 ~인지 대상이 빠진 말(✗ "방식도 바뀌었다" → ✓ "애 보는 방식도 바뀌었다"), 그 나이·성별 사람이 실제로 안 할 말투, ${FMT?"귀로 들으면 어색한 말, ":""}감정을 설명만 하는 문장을 찾아 고친 뒤 내라.${(typeof window!=="undefined"&&window.MINT_RULES)?`
-📐 편집 교훈 — 지난 편에서 독자·운영자가 실제로 지적한 것. 같은 실수를 처음부터 하지 마라: ${String(window.MINT_RULES).slice(0,1500)}`:""}
+📐 편집 교훈 — 지난 편에서 독자·운영자가 실제로 지적한 것. 같은 실수를 처음부터 하지 마라: ${String(window.MINT_RULES).slice(0,2600)}`:""}
 
 🔍 현실 고증: 사물이 그 장소에 실제로 있을 법한지, 시대가 섞이지 않는지(삐삐·통장·손편지 vs 카톡·스마트폰), 크기·보존 상태·나이·금액이 맞는지 확인하고 realism_check에 한 줄로 적어라. 어색하면 그 디테일을 바꿔서 다시 써라.
 
@@ -2365,7 +2365,7 @@ function noticeCard(r){
     ${r.msg?`<div style="font-size:10px;color:var(--sub);margin-top:4px;line-height:1.55">${esc(r.msg)}</div>`:""}
     ${_todoList(r.todo)}
     ${(r.link&&/^https:\/\//.test(r.link))||r.copy?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
-      ${r.link&&/^https:\/\//.test(r.link)?`<a class="pill" style="font-size:10px;color:var(--sky);text-decoration:none" href="${esc(r.link)}" target="_blank" rel="noopener">📥 영상 받기</a>`:""}
+      ${r.link&&/^https:\/\//.test(r.link)?`<a class="pill" style="font-size:10px;color:var(--sky);text-decoration:none" href="${esc(r.link)}" target="_blank" rel="noopener">${esc(r.link_label||"📥 영상 받기")}</a>`:""}
       ${r.copy?`<button class="pill" style="font-size:10px;color:var(--mint)" onclick="noticeCopy(${r.id},this)">📋 글 복사</button>`:""}
     </div>`:""}
     <div style="display:flex;align-items:center;margin-top:8px">
@@ -4354,7 +4354,7 @@ async function requestRecruit(){
 // ═══════════════════════════════════
 //  INIT
 // ═══════════════════════════════════
-const BUILD_VERSION = "v15.30";
+const BUILD_VERSION = "v15.31";
 const BUILD_TIME = "2026-11-02 17:15 EST";
 STATE.advisorTab="papers";
 STATE.studioTab="idea";
