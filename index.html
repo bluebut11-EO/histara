@@ -739,6 +739,13 @@ let REPORTS = loadReports();
 function loadReports(){ try{return JSON.parse(localStorage.getItem('histara_reports')||'[]')}catch(e){return []} }
 function persistReports(){ try{localStorage.setItem('histara_reports', JSON.stringify(REPORTS.slice(0,120)))}catch(e){} try{syncPushDebounced();}catch(e){} }
 let STUDIO_ITEMS = (function(){ try{return JSON.parse(localStorage.getItem('histara_studio')||'[]')}catch(e){return []} })();
+// v15.35 지운 카드 기억 (tombstone) — 기기끼리 합칠 때 지운 카드가 다른 기기에서 되살아나지 않게. 클라우드에는 studio 안의 {id:1,type:"tomb"} 한 장으로 실어 보냄
+let STUDIO_DELETED = (function(){ try{return JSON.parse(localStorage.getItem('histara_deleted')||'[]')}catch(e){return []} })();
+function _tombSave(){ STUDIO_DELETED=STUDIO_DELETED.slice(-400); try{localStorage.setItem('histara_deleted', JSON.stringify(STUDIO_DELETED))}catch(e){} }
+function _tombAdd(ids){ const s=new Set(STUDIO_DELETED.map(String)); (ids||[]).forEach(i=>{ if(i!=null&&i!==1&&!s.has(String(i))){ STUDIO_DELETED.push(i); s.add(String(i)); } }); _tombSave(); }
+function _tombFilter(arr){ const s=new Set(STUDIO_DELETED.map(String)); return (arr||[]).filter(x=>x&&x.type!=="tomb"&&!s.has(String(x.id))); }
+function forgetStudio(ids){ _tombAdd(ids); STUDIO_ITEMS=_tombFilter(STUDIO_ITEMS); persistStudio(); return STUDIO_ITEMS.length; }
+function _studioForCloud(){ return _tombFilter(STUDIO_ITEMS).concat(STUDIO_DELETED.length?[{id:1,type:"tomb",ids:STUDIO_DELETED.slice(),read:true,upd:Date.now()}]:[]); }
 function persistStudio(){ try{localStorage.setItem('histara_studio', JSON.stringify(STUDIO_ITEMS.slice(0,80)))}catch(e){} try{syncPushDebounced();}catch(e){} try{window.HOffice&&HOffice.refresh();}catch(e){} }
 function addStudioItem(obj){
   const sig=reportSig(obj); const newBody=normContent(obj.html);
@@ -746,7 +753,7 @@ function addStudioItem(obj){
   const stamp=new Date().toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
   if(twin){
     if(normContent(twin.html)===newBody) return 'duplicate';
-    STUDIO_ITEMS=STUDIO_ITEMS.filter(x=>reportSig(x)!==sig);
+    _tombAdd(STUDIO_ITEMS.filter(x=>reportSig(x)===sig).map(x=>x.id)); STUDIO_ITEMS=STUDIO_ITEMS.filter(x=>reportSig(x)!==sig);
     STUDIO_ITEMS.unshift(Object.assign({id:Date.now(),reviewed:true,read:false,ts:stamp,rev:(twin.rev||1)+1},obj));
     persistStudio(); return 'updated';
   }
@@ -755,7 +762,7 @@ function addStudioItem(obj){
   try{ logActivity('studio', obj.agent, obj.title); }catch(e){}
   return 'new';
 }
-function delStudioItem(id){ STUDIO_ITEMS=STUDIO_ITEMS.filter(x=>x.id!==id); persistStudio(); switchStudio(STATE.studioTab||'idea'); }
+function delStudioItem(id){ forgetStudio([id]); switchStudio(STATE.studioTab||'idea'); }
 function toggleStudioItem(id){ STATE.openStudio=(STATE.openStudio===id?null:id); const it=STUDIO_ITEMS.find(x=>x.id===id); if(it){ if(it.pkg)LAST_SHORTS=it.pkg; if(STATE.openStudio===id){it.read=true; it.read_at=Date.now(); persistStudio();} } switchStudio(STATE.studioTab||'idea'); renderTabs(); }
 // dedup by CONTENT (Verity). identical → suppressed; changed → revised; new → added.
 function normContent(s){ return (s||"").replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim(); }
@@ -1116,16 +1123,19 @@ async function syncPull(){
   const rows=await r.json();
   let needPush=false;
   if(rows && rows[0]){
-    const remoteStudio=rows[0].studio||[]; const remoteAll=rows[0].reports||[]; const remoteReports=remoteAll.filter(r=>!(r&&INVEST_TYPES.has(r.type))); const remoteEnglish=rows[0].english||[];
+    const _rsAll=rows[0].studio||[];
+    _rsAll.filter(x=>x&&x.type==="tomb").forEach(x=>_tombAdd(x.ids));          // v15.35 다른 기기에서 지운 카드
+    const _hadTomb=_rsAll.some(x=>x&&x.type==="tomb"), _rsN=_rsAll.length;
+    const remoteStudio=_tombFilter(_rsAll); const remoteAll=rows[0].reports||[]; const remoteReports=remoteAll.filter(r=>!(r&&INVEST_TYPES.has(r.type))); const remoteEnglish=rows[0].english||[];
     const _ids=a=>new Set((a||[]).map(x=>x&&x.id));
     const _unreadRemote=new Set([].concat(remoteStudio,remoteReports,remoteEnglish).filter(x=>x&&!x.read).map(x=>x.id));
     const rS=_ids(remoteStudio), rR=_ids(remoteReports), rE=_ids(remoteEnglish);
-    STUDIO_ITEMS=mergeById(STUDIO_ITEMS, remoteStudio); persistStudio();
+    STUDIO_ITEMS=_tombFilter(mergeById(STUDIO_ITEMS, remoteStudio)); persistStudio();
     REPORTS=mergeById(REPORTS, remoteReports).slice(0,120); persistReports();
     ENGLISH_ITEMS=mergeById(ENGLISH_ITEMS, remoteEnglish).slice(0,120); persistEnglish();
     // 이 기기에만 있는 항목이 있으면 올려야 함
     expireOldNew();
-    needPush = remoteAll.length!==remoteReports.length || [].concat(STUDIO_ITEMS,REPORTS,ENGLISH_ITEMS).some(x=>x&&x.read&&_unreadRemote.has(x.id)) || STUDIO_ITEMS.some(x=>!rS.has(x.id)) || REPORTS.some(x=>!INVEST_TYPES.has(x.type)&&!rR.has(x.id)) || (rows[0].english!==undefined && ENGLISH_ITEMS.some(x=>!rE.has(x.id)));
+    needPush = (STUDIO_DELETED.length>0 && (!_hadTomb || remoteStudio.length+1!==_rsN || (_rsAll.find(x=>x&&x.type==="tomb").ids||[]).length<STUDIO_DELETED.length)) || remoteAll.length!==remoteReports.length || [].concat(STUDIO_ITEMS,REPORTS,ENGLISH_ITEMS).some(x=>x&&x.read&&_unreadRemote.has(x.id)) || STUDIO_ITEMS.some(x=>!rS.has(x.id)) || REPORTS.some(x=>!INVEST_TYPES.has(x.type)&&!rR.has(x.id)) || (rows[0].english!==undefined && ENGLISH_ITEMS.some(x=>!rE.has(x.id)));
   } else {
     needPush = (STUDIO_ITEMS.length+REPORTS.length+ENGLISH_ITEMS.length)>0;
   }
@@ -1134,7 +1144,7 @@ async function syncPull(){
 async function syncPush(){
   if(!syncConfigured()) return {ok:false,msg:"동기화 설정이 필요해요"};
   const _rep=(REPORTS||[]).filter(r=>!(r&&INVEST_TYPES.has(r.type)));   // v15.2: 투자 보고서는 클라우드에 안 올림
-  const full=[{ code:SYNC_CODE, studio:STUDIO_ITEMS, reports:_rep, english:ENGLISH_ITEMS, updated_at:new Date().toISOString() }];
+  const full=[{ code:SYNC_CODE, studio:_studioForCloud(), reports:_rep, english:ENGLISH_ITEMS, updated_at:new Date().toISOString() }];
   let r=await fetch(`${SUPA_URL}/rest/v1/histara_sync`,{
     method:"POST",
     headers:Object.assign({}, _supaHeaders(), {"Prefer":"resolution=merge-duplicates"}),
@@ -1144,7 +1154,7 @@ async function syncPush(){
   // if the 'english' column doesn't exist yet, retry without it so studio/reports still sync
   const t=await r.text().catch(()=> "");
   if(/english|column|PGRST204|42703|schema cache/i.test(t)){
-    const base=[{ code:SYNC_CODE, studio:STUDIO_ITEMS, reports:_rep, updated_at:new Date().toISOString() }];
+    const base=[{ code:SYNC_CODE, studio:_studioForCloud(), reports:_rep, updated_at:new Date().toISOString() }];
     const r2=await fetch(`${SUPA_URL}/rest/v1/histara_sync`,{
       method:"POST",
       headers:Object.assign({}, _supaHeaders(), {"Prefer":"resolution=merge-duplicates"}),
@@ -2220,7 +2230,7 @@ function renderStudioBody(){
   </div>
   ${list.length?list.map(shortsCard).join(""):`<div class="card" style="text-align:center;padding:18px;color:var(--muted);font-size:11px">${all.length?'이 조건의 쇼츠가 없어요.':'아직 만든 쇼츠가 없어요. 위 버튼을 눌러 보세요.'}</div>`}
   <div style="font-size:9px;color:var(--muted);line-height:1.7;margin-top:10px">만들 차례 = Mint 파일을 아직 안 받음 · 올릴 차례 = Mint 파일 받음 또는 🤖 Mint가 비공개로 올려 둠 · 올림 = 유튜브에 공개함</div>
-  ${old>0?`<div style="text-align:center;margin-top:10px"><button class="pill" style="font-size:9px" onclick="if(confirm('예전 아이디어·초안·전자책·채널 분석 ${old}개를 지울까요? (만든 쇼츠는 그대로)')){STUDIO_ITEMS=STUDIO_ITEMS.filter(x=>x&&(x.type==='shorts'||x.type==='notice'||x.type==='status'));persistStudio();switchStudio();}">🧹 예전 아이디어·초안·분석 ${old}개 지우기</button></div>`:""}`;
+  ${old>0?`<div style="text-align:center;margin-top:10px"><button class="pill" style="font-size:9px" onclick="if(confirm('예전 아이디어·초안·전자책·채널 분석 ${old}개를 지울까요? (만든 쇼츠는 그대로)')){forgetStudio(STUDIO_ITEMS.filter(x=>x&&!(x.type==='shorts'||x.type==='notice'||x.type==='status')).map(x=>x.id));switchStudio();}">🧹 예전 아이디어·초안·분석 ${old}개 지우기</button></div>`:""}`;
 }
 // 📊 채널 성과 판 (v14.1) — Mint가 하루 한 번 채널의 최근 60일 영상 숫자를 상태 줄에 실어 보냄. 10/30 회의 자료
 function _perfRows(){
@@ -4358,8 +4368,8 @@ async function requestRecruit(){
 // ═══════════════════════════════════
 //  INIT
 // ═══════════════════════════════════
-const BUILD_VERSION = "v15.34";
-const BUILD_TIME = "2026-11-02 17:15 EST";
+const BUILD_VERSION = "v15.35";
+const BUILD_TIME = "2026-11-08 19:05 EST";
 STATE.advisorTab="papers";
 STATE.studioTab="idea";
 STATE.investTab="money";
