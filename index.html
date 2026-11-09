@@ -1572,7 +1572,7 @@ let LAST_DRAFT = null;   // last generated content draft
 
 // v15.27 11/6 회의 — A·B 2주 실험 (목소리 나레이션: Google Chirp 3 HD, Mint가 읽음)
 // v15.29 독자 셋이 되풀이해 짚은 흐름 끊김 (11/6 다시 만들기 세 번)
-const FLOW_RULES=`흐름 규칙: ① 일반 이야기(늘·요즘)에서 특정한 하루의 장면으로 넘어갈 때는 다리 한 문장("지난주 목요일 저녁이었다.") ② 하겠다고 한 일(말해 보겠다·물어보겠다)은 결과와 상대의 말·반응까지 ③ 무엇의 방식·마음인지 대상을 빼지 않기("애 보는 방식도") ④ 제목·호칭·말투가 화자(성별·나이·자리)와 맞게 ⑤ 대사는 꼭 큰따옴표로, 대사와 동사가 맞게 — 알려 주는 말은 '말했다'("형은 받자마자 먼저 말했다. \"아버지 결과는 괜찮대.\""), 묻는 말만 '물었다'+물음표 (목소리 억양이 이걸 따라감).`;
+const FLOW_RULES=`흐름 규칙: ① 일반 이야기(늘·요즘)에서 특정한 하루의 장면으로 넘어갈 때는 다리 한 문장("지난주 목요일 저녁이었다.") ② 하겠다고 한 일(말해 보겠다·물어보겠다)은 결과와 상대의 말·반응까지 ③ 무엇의 방식·마음인지 대상을 빼지 않기("애 보는 방식도") ④ 제목·호칭·말투가 화자(성별·나이·자리)와 맞게 ⑤ 대사는 꼭 큰따옴표로, 대사와 동사가 맞게 — 알려 주는 말은 '말했다'("형은 받자마자 먼저 말했다. \"아버지 결과는 괜찮대.\""), 묻는 말만 '물었다'+물음표 (목소리 억양이 이걸 따라감). 한 대사(여는 따옴표~닫는 따옴표)는 한 컷 안에 — 두 컷으로 나누지 않기 ⑥ 다리 문장은 날짜만이 아니라 앞 장면의 실을 이어받아 새 장면의 이유로, 회상으로 들어가고 나올 때는 첫머리에 표지.`;
 function fmtNarrRules(f){
   const voice=`목소리가 있다 — 차분한 한국어 나레이터가 narration을 그대로 읽고, 같은 문장이 화면 자막으로 뜬다 (잔잔한 배경음악은 아주 작게). 귀로 들어도 자연스러운 말로 쓴다 (괄호·기호·영어 약어·'~' 쓰지 않음, 숫자는 읽기 쉬운 말로). 나레이터는 쉼표에서 한 박자 쉰다 — 숨 쉴 곳·뜻이 갈리는 곳에는 쉼표를 꼭 찍고(예: "예쁘기만 하지, 그런 말을 듣는다"), 필요 없는 쉼표는 찍지 않는다.`;
   if(f==="A") return `실험 A형 — 갈등 사연, 110~150초 세로 쇼츠. ${voice} ${FLOW_RULES}
@@ -1741,18 +1741,45 @@ JSON: {"scenes":[{"scene":"space","space":"안방 · 시골","time":"낮","peopl
 // 나레이션 문장 정리 — Mint narrate.py 와 같은 문장 나누기 규칙 (. ? ! … 뒤)
 function _ttsText(t){ return String(t||"").replace(/\s+/g," ").trim(); }
 // 화면 자막 나누기 — 한 문장 = 자막 한 장, 22자 넘는 문장은 가운데 쉼표에서 나눔 (Mint story.py caption_chunks 와 같은 규칙)
+// v15.36 Mint story.py caption_chunks 와 같은 규칙 — 따옴표 안의 마침표에서는 나누지 않음(대사의 여닫는 따옴표가 한 장에) · 긴 대사는 문장마다 따옴표 · 쉼표 나눔은 따옴표 밖에서만
+function _qOk(s){ s=String(s||""); return (s.split('"').length-1)%2===0 && (s.split("“").length===s.split("”").length); }
+function _sentences(t){
+  t=_ttsText(t); const out=[]; let buf="", inq=false;
+  for(let i=0;i<t.length;i++){
+    const ch=t[i]; buf+=ch;
+    if(ch==='"') inq=!inq; else if(ch==="“"||ch==="‘") inq=true; else if(ch==="”"||ch==="’") inq=false;
+    if('"”’'.includes(ch) && !inq && buf.length>=2 && ".?!…".includes(buf[buf.length-2])){ out.push(buf.trim()); buf=""; }
+    else if(".?!…".includes(ch) && !inq){
+      while(i+1<t.length && ".?!…".includes(t[i+1])){ i++; buf+=t[i]; }
+      while(i+1<t.length && '"”’\''.includes(t[i+1]) && !_qOk(buf)){ i++; buf+=t[i]; inq=false; }
+      out.push(buf.trim()); buf="";
+    }
+  }
+  if(buf.trim()) out.push(buf.trim());
+  return out.filter(s=>/[가-힣A-Za-z0-9]/.test(s));
+}
+function _splitQuote(s){
+  const m=s.match(/^(.*?)(["“])(.+)(["”])(.*)$/); if(!m) return [s];
+  const parts=(m[3].match(/[^.?!…]+(?:[.?!…]+|$)/g)||[]).map(x=>x.trim()).filter(Boolean);
+  if(parts.length<2) return [s];
+  const out=parts.map(x=>m[2]+x+m[4]); out[0]=(m[1]+out[0]).trim(); out[out.length-1]=(out[out.length-1]+m[5]).trim(); return out;
+}
 function _capChunks(t){
   const out=[];
-  _sentences(t).forEach(s=>{
-    const parts=s.split(/,\s*/);
-    if(s.replace(/\s/g,"").length<=22 || parts.length<2){ out.push(s); return; }
-    let best=1, bd=1e9;
-    for(let i=1;i<parts.length;i++){ const d=Math.abs(parts.slice(0,i).join(", ").length - s.length/2); if(d<bd){bd=d;best=i;} }
-    out.push(parts.slice(0,best).join(", ")+","); out.push(parts.slice(best).join(", "));
+  _sentences(t).forEach(s0=>{
+    const pieces=(s0.replace(/\s/g,"").length>34 && /["“].*[.?!…].+["”]/.test(s0)) ? _splitQuote(s0) : [s0];
+    pieces.forEach(s=>{
+      s=s.trim().replace(/\.(["”’']?)$/,"$1");
+      if(s.replace(/\s/g,"").length<=22){ out.push(s); return; }
+      const cuts=[]; let inq=false;
+      for(let k=0;k<s.length;k++){ const ch=s[k]; if(ch==='"') inq=!inq; else if(ch==="“"||ch==="‘") inq=true; else if(ch==="”"||ch==="’") inq=false; else if(ch===","&&!inq) cuts.push(k); }
+      if(!cuts.length){ out.push(s); return; }
+      const best=cuts.reduce((a,b)=>Math.abs(b-s.length/2)<Math.abs(a-s.length/2)?b:a);
+      out.push(s.slice(0,best+1).trim()); out.push(s.slice(best+1).trim());
+    });
   });
-  return out.slice(0,6);
+  return out.filter(Boolean).slice(0,6);
 }
-function _sentences(t){ return (_ttsText(t).match(/[^.?!…]+(?:[.?!…]+["”’']?|$)/g)||[]).map(s=>s.trim()).filter(s=>/[가-힣A-Za-z0-9]/.test(s)).map(s=>s.replace(/\.(["”’']?)$/,"$1")); }   // v15.27 닫는 따옴표는 문장에 붙임
 const MUSIC_MOODS={"그리움":"회상·상실 — 느린 피아노 (상실·회상이 있는 이야기는 언제나 이것)","잔잔":"일상·담담 — 앰비언트","따뜻":"화해·감사·희망 — 현악·피아노","긴장":"비밀·미스터리 — 낮은 첼로 (자극 없이)",
   "성찰":"나를 돌아보는 이야기·깨달음 — 솔로 피아노·명상","새벽":"아침·새 출발이 이야기의 중심일 때만 — 밝은 어쿠스틱 (상실·그리움·후회가 있는 이야기에는 쓰지 않음: 그리움·성찰로)"};
 const MUSIC_SEARCH={"그리움":"장르 Classical · 분위기 Sad · piano","잔잔":"장르 Ambient · 분위기 Calm","따뜻":"장르 Cinematic · 분위기 Inspirational · strings","긴장":"장르 Cinematic · 분위기 Dark · cello","성찰":"장르 Ambient · 분위기 Calm · solo piano","새벽":"장르 Country & Folk · 분위기 Bright · acoustic guitar"};
@@ -1817,16 +1844,30 @@ function _mintMatch(name, list, def){
   return def;
 }
 function _mintSec(tc){ const m=String(tc||"").match(/(\d+):(\d+)\s*[-~–]\s*(\d+):(\d+)/); if(!m) return 0; return ((+m[3])*60+(+m[4]))-((+m[1])*60+(+m[2])); }
+const _JOSA_END=/(은|는|이|가|을|를|에|에서|에게|께|께서|한테|로|으로|와|과|도|만|까지|부터|처럼|보다|고|며|서|면|면서|지만|는데|은데|니까|아서|어서|여서|다가|도록|게|죠|다)["”’'.?!]*$/;
+const _AUX_START=/^(보|봐|봤|주|줘|줬|두|둬|뒀|놓|놔|있|없|버리|버렸|싶|않|못|드리|드렸|계시|계셨|내|냈|대|댔)/;
+const _NO_BREAK_AFTER=/^(그|이|저|한|두|세|네|몇|새|옛|온|각|모든|어느|무슨|이런|그런|저런|아무|매|전|첫|단|약|총|제)$|의$|던$|[0-9]$/;
+function _breakCost(l,r){
+  if(/^["”’',.?!…]/.test(r)) return 20;
+  let c=0;
+  if(l.endsWith(",")) c-=4.5; else if(_JOSA_END.test(l)) c-=1.5;
+  if(_NO_BREAK_AFTER.test(l)) c+=8;
+  if(/(아|어|여|해|고|게|지)$/.test(l) && _AUX_START.test(r)) c+=7;
+  return c;
+}
 function _mintWrap(t){
-  // 어절 단위로 줄을 고르게 (한 줄 12자 안팎, 최대 3줄) — Mint story.py wrap()과 같은 규칙
+  // 어절 단위로 줄을 고르게 (한 줄 12자 안팎, 최대 3줄) — Mint story.py wrap()과 같은 규칙 (v15.36 조사·어미·쉼표 뒤에서, 꾸미는 말 뒤·보조용언 앞은 피함)
   t=String(t||"").trim(); if(!t) return "";
   if(t.includes("\n")) return t.split("\n").map(x=>x.trim()).filter(Boolean).slice(0,3).join("\n");
   const w=t.split(/\s+/);
   if(t.length<=12 || w.length<2) return t;
   const n=Math.min(w.length, t.length<=26?2:3);
+  const cost=[0]; let inq=false;
+  for(let k=1;k<w.length;k++){ for(const ch of w[k-1]){ if(ch==='"') inq=!inq; else if(ch==="“") inq=true; else if(ch==="”") inq=false; } cost.push(_breakCost(w[k-1],w[k])+(inq?3:0)); }
   let best=null, bs=1e9;
   const tryCut=(b)=>{ const L=[]; for(let i=0;i<b.length-1;i++) L.push(w.slice(b[i],b[i+1]).join(" "));
-    const sc=Math.max(...L.map(x=>x.length))-(L.slice(0,-1).some(x=>x.endsWith(","))?3.5:0); if(sc<bs){bs=sc;best=L;} };
+    let sc=Math.max(...L.map(x=>x.length)); for(let i=1;i<b.length-1;i++) sc+=cost[b[i]];
+    sc+=L.filter(x=>x.replace(/\s/g,"").length<=2).length*4.5; if(sc<bs){bs=sc;best=L;} };
   if(n===2){ for(let i=1;i<w.length;i++) tryCut([0,i,w.length]); }
   else { for(let i=1;i<w.length-1;i++) for(let j=i+1;j<w.length;j++) tryCut([0,i,j,w.length]); }
   return best.join("\n");
@@ -4368,8 +4409,8 @@ async function requestRecruit(){
 // ═══════════════════════════════════
 //  INIT
 // ═══════════════════════════════════
-const BUILD_VERSION = "v15.35";
-const BUILD_TIME = "2026-11-08 19:05 EST";
+const BUILD_VERSION = "v15.36";
+const BUILD_TIME = "2026-11-09 16:30 EST";
 STATE.advisorTab="papers";
 STATE.studioTab="idea";
 STATE.investTab="money";
