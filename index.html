@@ -612,7 +612,7 @@ function usagePanel(){
     <div style="font-size:10px;color:var(--sub);line-height:1.6">
       ${SEARCH_ON?'현재 <b style="color:var(--cyan)">최신 모드</b>(웹검색 ON)예요. ':'현재 <b style="color:var(--gold)">빠른 모드</b>(웹검색 OFF)예요. '}
       ${searchShare>0.5?'비용의 절반 이상이 웹 검색이에요. 최신 정보가 꼭 필요할 때만 최신 모드를 쓰면 비용이 크게 줄어요.':'검색 비용 비중은 적정해요.'}
-      검색당 약 $${PRICE.perSearch.toFixed(2)}, 토큰은 <b>${PRICE_TABLE[API_MODE].label}</b> 기준 입력 $${PRICE.inPerM}/M·출력 $${PRICE.outPerM}/M이에요.
+      검색당 약 $${PRICE.perSearch.toFixed(2)}, 토큰은 v15.37부터 <b>부른 모델의 값</b>으로 셈해요 (쓰기 Opus 5.5 $4/$20 · 점검 Sonnet 5.5 $2/$10 · 백만 토큰당). 그 전 기록은 <b>${PRICE_TABLE[API_MODE].label}</b> 기준 입력 $${PRICE.inPerM}/M·출력 $${PRICE.outPerM}/M.
     </div>
     <div style="font-size:8px;color:var(--muted);margin-top:7px">⚠️ 추정치예요. 정확한 청구액은 console.anthropic.com에서 확인하세요. (캐시·배치 등으로 실제와 다를 수 있어요)</div>
   </div>`;
@@ -665,7 +665,7 @@ async function testConnection(){
     step("② 요청 전송 — 응답 대기 중...");
     const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",signal:ctrl.signal,
       headers:{"Content-Type":"application/json","x-api-key":API_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
-      body:JSON.stringify({model:"claude-opus-4-8",max_tokens:16,messages:[{role:"user",content:"Say OK"}]})});
+      body:JSON.stringify({model:pickModel(),max_tokens:16,messages:[{role:"user",content:"Say OK"}]})});
     clearTimeout(to);
     phase="응답 파싱";
     const elapsed=((Date.now()-t0)/1000).toFixed(1);
@@ -1089,6 +1089,12 @@ const PRICE_TABLE = {
 let API_MODE = (function(){ try{ return localStorage.getItem('histara_apimode')||'fast'; }catch(e){ return 'fast'; } })();
 function setApiMode(m){ API_MODE=m; try{localStorage.setItem('histara_apimode',m);}catch(e){} const b=document.getElementById('sec-body'); if(b&&STATE.secTab==='usage') b.innerHTML=usagePanel(); }
 const PRICE = { get inPerM(){return PRICE_TABLE[API_MODE].inPerM;}, get outPerM(){return PRICE_TABLE[API_MODE].outPerM;}, perSearch:0.01 };
+// v15.37 모델 나누기 (운영자 11/11: AI 비용 줄이기) — 쓰기는 Opus 5.5, 읽고 점검하기는 Sonnet 5.5 (Mint가 opts.model로 고름)
+const DEFAULT_MODEL="claude-opus-5-5", FALLBACK_MODEL="claude-opus-4-8";
+const MODEL_PRICE={"claude-opus-5-5":{inPerM:4,outPerM:20,label:"Opus 5.5"},"claude-sonnet-5-5":{inPerM:2,outPerM:10,label:"Sonnet 5.5"},
+  "claude-haiku-4-5-20251001":{inPerM:1,outPerM:5,label:"Haiku 4.5"},"claude-opus-4-8":{inPerM:5,outPerM:25,label:"Opus 4.8"}};
+let _BAD_MODELS=(function(){ try{return JSON.parse(localStorage.getItem('histara_bad_models')||'[]')}catch(e){return []} })();
+function pickModel(m){ m=m||DEFAULT_MODEL; if(!_BAD_MODELS.includes(m)) return m; return _BAD_MODELS.includes(DEFAULT_MODEL)?FALLBACK_MODEL:DEFAULT_MODEL; }
 let USAGE = (function(){ try{return JSON.parse(localStorage.getItem('histara_usage')||'[]')}catch(e){return []} })();
 function persistUsage(){ try{localStorage.setItem('histara_usage', JSON.stringify(USAGE.slice(-3000)))}catch(e){} }
 
@@ -1239,13 +1245,15 @@ window.addEventListener('pageshow',e=>{ if(e.persisted) autoPull('resume'); });
 window.addEventListener('pagehide',()=>flushPush());
 window.addEventListener('focus',()=>autoPull('focus'));
 setInterval(()=>{ if(document.visibilityState==='visible') autoPull('tick'); }, 120000);
-function callCost(inTok,outTok,searches){
+function callCost(inTok,outTok,searches,model){
+  const mp=MODEL_PRICE[model||""];               // v15.37 모델별 값 (모르는 모델·예전 기록은 예전 방식)
+  if(mp) return (inTok/1e6)*mp.inPerM + (outTok/1e6)*mp.outPerM + (searches||0)*PRICE.perSearch;
   return (inTok/1e6)*PRICE.inPerM + (outTok/1e6)*PRICE.outPerM + (searches||0)*PRICE.perSearch;
 }
-function recordCost(inTok,outTok,searches,searched){
+function recordCost(inTok,outTok,searches,searched,model){
   const now=new Date();
   const rec={ ts:now.getTime(), day:now.toISOString().slice(0,10), in:inTok||0, out:outTok||0, searches:searches||0,
-    cost:callCost(inTok,outTok,searches), searched:!!searched, feature:curFeature() };
+    cost:callCost(inTok,outTok,searches,model), searched:!!searched, feature:curFeature(), model:model||"" };
   USAGE.push(rec); persistUsage();
   // live refresh if on the usage tab
   if(STATE.tab==='security' && STATE.secTab==='usage'){ const b=document.getElementById('usage-body'); if(b) b.innerHTML=usagePanel(); }
@@ -3258,9 +3266,10 @@ function wxTip(rec, outdoor){
   if(hot) return "🥤 더워요 — 물·모자·자외선 차단을 챙기세요.";
   return "🌤️ 야외 활동하기 좋은 날씨예요.";
 }
+let LAST_MODEL="";
 async function callClaude(sys,usr,opts){
   opts=opts||{};
-  const ck=(opts.search?"S|":"")+sys.slice(0,40)+"|"+usr.slice(0,80);
+  const ck=(opts.search?"S|":"")+(opts.model?opts.model+"|":"")+sys.slice(0,40)+"|"+usr.slice(0,80);
   LAST_CK=ck; LAST_TRUNC=false;
   if(_cache.has(ck))return _cache.get(ck);
   if(!API_KEY){ secLog("CALL_BLOCKED","API 키 미등록 — 호출 차단"); return "__NO_KEY__"; }
@@ -3293,7 +3302,7 @@ async function callClaudeOnce(sys,usr,ck,opts){
   const timer=setTimeout(()=>ctrl.abort(),TIMEOUT);
   secLog("API_CALL","요청 전송 ("+maskKey(API_KEY)+")"+(opts.search?" +웹검색":""));
   try{
-    const body={model:"claude-opus-4-8",max_tokens:opts.maxTokens||(opts.search?4000:3000),
+    const body={model:pickModel(opts.model),max_tokens:opts.maxTokens||(opts.search?4000:3000),
       system:sys,messages:[{role:"user",content:usr}]};
     if(opts.search){ body.tools=[{type:"web_search_20250305",name:"web_search",max_uses:opts.maxSearches||3}]; }
     const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",signal:ctrl.signal,
@@ -3310,6 +3319,12 @@ async function callClaudeOnce(sys,usr,ck,opts){
       let detail="";
       try{ const ej=await r.json(); detail=(ej.error&&ej.error.message)?ej.error.message:JSON.stringify(ej); }
       catch(e){ detail="HTTP "+r.status; }
+      if((r.status===404 || /model[^.]*(not found|does not exist|not available|invalid|unknown)|not_found_error/i.test(detail)) && body.model!==FALLBACK_MODEL && !opts._fellBack){   // v15.37 이 키로 못 쓰는 모델이면 예전 모델로 한 번 더 (다음부터는 바로)
+        secLog("MODEL_FALLBACK", body.model+" 못 씀 → "+FALLBACK_MODEL);
+        if(!_BAD_MODELS.includes(body.model)){ _BAD_MODELS.push(body.model); try{localStorage.setItem('histara_bad_models',JSON.stringify(_BAD_MODELS))}catch(e){} }
+        clearTimeout(timer);
+        return await callClaudeOnce(sys,usr,ck,Object.assign({},opts,{model:pickModel(body.model),_fellBack:body.model===DEFAULT_MODEL}));
+      }
       LAST_ERR="HTTP "+r.status+" · "+detail; LAST_RAW=detail;
       secLog("API_ERROR", LAST_ERR.slice(0,70));
       return "__ERR__";
@@ -3318,14 +3333,15 @@ async function callClaudeOnce(sys,usr,ck,opts){
     const out=d.content.filter(b=>b.type==="text").map(b=>b.text).join("");
     LAST_RAW = out || JSON.stringify(d).slice(0,400);
     LAST_TRUNC = d.stop_reason==="max_tokens";          // 길이 제한에 걸려 JSON 끝이 잘림 → 캐시하지 않음
-    // record usage cost (Opus 4.8 pricing via PRICE; web search $10/1000)
+    // record usage cost (v15.37 모델별 값 MODEL_PRICE; web search $10/1000)
     try{
       const u=d.usage||{};
       const inTok=(u.input_tokens||0)+(u.cache_read_input_tokens||0)+(u.cache_creation_input_tokens||0);
       const outTok=u.output_tokens||0;
       let searches=0;
       if(u.server_tool_use && typeof u.server_tool_use.web_search_requests==='number') searches=u.server_tool_use.web_search_requests;
-      recordCost(inTok, outTok, searches, opts.search);
+      recordCost(inTok, outTok, searches, opts.search, body.model);
+      LAST_MODEL = body.model;
     }catch(e){}
     if(out && !LAST_TRUNC){ if(ck) _cache.set(ck,out); secLog("API_OK","응답 수신 정상");}
     else if(LAST_TRUNC) secLog("API_TRUNC","응답이 길이 제한에서 잘림 ("+(body.max_tokens)+" 토큰)");
@@ -4409,8 +4425,8 @@ async function requestRecruit(){
 // ═══════════════════════════════════
 //  INIT
 // ═══════════════════════════════════
-const BUILD_VERSION = "v15.36";
-const BUILD_TIME = "2026-11-09 16:30 EST";
+const BUILD_VERSION = "v15.37";
+const BUILD_TIME = "2026-11-11 15:20 EST";
 STATE.advisorTab="papers";
 STATE.studioTab="idea";
 STATE.investTab="money";
