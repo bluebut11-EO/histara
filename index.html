@@ -1094,7 +1094,10 @@ const DEFAULT_MODEL="claude-opus-5-5", FALLBACK_MODEL="claude-opus-4-8";
 const MODEL_PRICE={"claude-opus-5-5":{inPerM:4,outPerM:20,label:"Opus 5.5"},"claude-sonnet-5-5":{inPerM:2,outPerM:10,label:"Sonnet 5.5"},
   "claude-haiku-4-5-20251001":{inPerM:1,outPerM:5,label:"Haiku 4.5"},"claude-opus-4-8":{inPerM:5,outPerM:25,label:"Opus 4.8"}};
 let _BAD_MODELS=(function(){ try{return JSON.parse(localStorage.getItem('histara_bad_models')||'[]')}catch(e){return []} })();
-function pickModel(m){ m=m||DEFAULT_MODEL; if(!_BAD_MODELS.includes(m)) return m; return _BAD_MODELS.includes(DEFAULT_MODEL)?FALLBACK_MODEL:DEFAULT_MODEL; }
+// v15.38 긴급(11/12): Opus 5.5·Sonnet 5.5는 늘 먼저 '생각'을 하고 그 토큰이 max_tokens 안에 들어가 → 답이 잘려 사연 만들기 실패.
+//   제대로 맞출 때(effort·max_tokens)까지 모든 호출을 예전 Opus 4.8로 (생각 없이 · 지금까지와 같음)
+const SAFE_MODEL_ONLY = true;
+function pickModel(m){ if(SAFE_MODEL_ONLY) return FALLBACK_MODEL; m=m||DEFAULT_MODEL; if(!_BAD_MODELS.includes(m)) return m; return _BAD_MODELS.includes(DEFAULT_MODEL)?FALLBACK_MODEL:DEFAULT_MODEL; }
 let USAGE = (function(){ try{return JSON.parse(localStorage.getItem('histara_usage')||'[]')}catch(e){return []} })();
 function persistUsage(){ try{localStorage.setItem('histara_usage', JSON.stringify(USAGE.slice(-3000)))}catch(e){} }
 
@@ -4425,8 +4428,8 @@ async function requestRecruit(){
 // ═══════════════════════════════════
 //  INIT
 // ═══════════════════════════════════
-const BUILD_VERSION = "v15.37";
-const BUILD_TIME = "2026-11-11 15:20 EST";
+const BUILD_VERSION = "v15.38";
+const BUILD_TIME = "2026-11-12 15:22 EST";
 STATE.advisorTab="papers";
 STATE.studioTab="idea";
 STATE.investTab="money";
