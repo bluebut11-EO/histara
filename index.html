@@ -3311,8 +3311,14 @@ async function callClaudeOnce(sys,usr,ck,opts){
   const timer=setTimeout(()=>ctrl.abort(),TIMEOUT);
   secLog("API_CALL","요청 전송 ("+maskKey(API_KEY)+")"+(opts.search?" +웹검색":""));
   try{
+    // v15.44 프롬프트 캐싱 — 긴 지시문(system)은 5분 동안 다시 읽을 때 입력값의 1/10 · 짧으면 API가 그냥 넘김(오류·추가 비용 없음)
+    // 사용자 글에 "\n<<<CACHE>>>\n" 가 있으면 그 앞부분(여러 번 같은 부분)도 캐시
+    const CM="\n<<<CACHE>>>\n";
+    let content=usr;
+    if(typeof usr==="string" && usr.includes(CM)){ const i=usr.indexOf(CM); content=[{type:"text",text:usr.slice(0,i),cache_control:{type:"ephemeral"}},{type:"text",text:usr.slice(i+CM.length)}]; }
+    const system=(typeof sys==="string" && sys.length>=2500)?[{type:"text",text:sys,cache_control:{type:"ephemeral"}}]:sys;
     const body={model:pickModel(opts.model),max_tokens:opts.maxTokens||(opts.search?4000:3000),
-      system:sys,messages:[{role:"user",content:usr}]};
+      system,messages:[{role:"user",content}]};
     if(opts.search){ body.tools=[{type:"web_search_20250305",name:"web_search",max_uses:opts.maxSearches||3}]; }
     const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",signal:ctrl.signal,
       headers:{
@@ -3345,7 +3351,9 @@ async function callClaudeOnce(sys,usr,ck,opts){
     // record usage cost (v15.37 모델별 값 MODEL_PRICE; web search $10/1000)
     try{
       const u=d.usage||{};
-      const inTok=(u.input_tokens||0)+(u.cache_read_input_tokens||0)+(u.cache_creation_input_tokens||0);
+      const cr=u.cache_read_input_tokens||0, cw=u.cache_creation_input_tokens||0;
+      const inTok=Math.round((u.input_tokens||0)+cr*0.1+cw*1.25);   // v15.44 캐시는 읽기 1/10 · 쓰기 1.25배로 계산 (실제 청구와 맞게)
+      if(cr||cw){ try{ const k=JSON.parse(localStorage.getItem('histara_cache_stat')||'{"r":0,"w":0}'); k.r+=cr; k.w+=cw; localStorage.setItem('histara_cache_stat',JSON.stringify(k)); }catch(e){} }
       const outTok=u.output_tokens||0;
       let searches=0;
       if(u.server_tool_use && typeof u.server_tool_use.web_search_requests==='number') searches=u.server_tool_use.web_search_requests;
@@ -4434,7 +4442,7 @@ async function requestRecruit(){
 // ═══════════════════════════════════
 //  INIT
 // ═══════════════════════════════════
-const BUILD_VERSION = "v15.43";
+const BUILD_VERSION = "v15.44";
 const BUILD_TIME = "2026-11-12 16:00 EST";
 STATE.advisorTab="papers";
 STATE.studioTab="idea";
