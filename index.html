@@ -2221,7 +2221,7 @@ async function _mintReqPut(list){
     body:JSON.stringify([{code:_mintReqCode(), studio:list.slice(-20), reports:[], english:[], updated_at:new Date().toISOString()}])});
   if(!r.ok){ const tx=await r.text().catch(()=> ""); throw new Error("보내기 실패 ("+r.status+") "+tx.slice(0,60)); }
 }
-const MINT_REQ_TXT={new:"⏳ 보냄 — Mint가 5분 안에 받아요", wait:"⏳ Mint가 다른 일을 끝내는 중 — 이어서 시작", got:"🛠 Mint가 만드는 중 (10~20분)", done:"✅ 끝", fail:"⚠ 실패", skip:"⏸ 다음 자동 제작 한 번 건너뜀 — 받음"};
+const MINT_REQ_TXT={new:"⏳ 보냄 — Mint가 5분 안에 받아요", wait:"⏳ Mint가 다른 일을 끝내는 중 — 이어서 시작", got:"🛠 Mint가 하는 중", done:"✅ 끝", fail:"⚠ 실패", skip:"⏸ 다음 자동 제작 한 번 건너뜀 — 받음"};
 function mintReqStatus(){
   if(!syncConfigured()) return `<div style="font-size:10px;color:var(--gold);margin-bottom:8px">⚠ 클라우드 동기화가 설정된 기기에서만 Mint에 요청할 수 있어요.</div>`;
   if(Date.now()-MINT_REQ.at>60000) setTimeout(()=>mintReqRefresh(false),50);
@@ -2229,7 +2229,7 @@ function mintReqStatus(){
   if(MINT_REQ.err) return `<div style="font-size:10px;color:var(--rose);margin-bottom:8px">⚠ ${esc(MINT_REQ.err)}</div>`;
   if(!last.length) return "";
   return `<div style="font-size:10px;line-height:1.7;background:var(--deep);border-radius:8px;padding:7px 9px;margin-bottom:8px">${last.map(x=>
-    `<div>${x.kind==="skip"?"⏸":"📲"} ${esc(String(x.at||"").replace("T"," ").slice(5,16))} · ${esc(MINT_REQ_TXT[x.state]||x.state||"")}${x.msg?` — ${esc(String(x.msg).slice(0,90))}`:""}</div>`).join("")}</div>`;
+    `<div>${({skip:"⏸",update:"⬆️",repic:"🖼"})[x.kind]||"📲"} ${esc(String(x.at||"").replace("T"," ").slice(5,16))} · ${esc(MINT_REQ_TXT[x.state]||x.state||"")}${x.msg?` — ${esc(String(x.msg).slice(0,90))}`:""}</div>`).join("")}</div>`;
 }
 async function mintReqRefresh(show){
   if(!syncConfigured()) return;
@@ -2242,10 +2242,14 @@ async function mintRequest(kind){
   const wisdom=!!(document.getElementById("wisdomChk")||{}).checked;
   if(kind==="make" && !confirm(`Mint에서 지금 한 편 만들까요?${topic?`\n주제: ${topic}`:""}${wisdom?"\n🌿 삶의 지혜 편":""}\n\n(이틀마다 자동 제작 날짜는 그대로 · API 비용 한 편)`)) return;
   if(kind==="skip" && !confirm("다음 자동 제작을 한 번 건너뛸까요? (그 다음 날짜부터 다시 이틀마다)")) return;
+  let no="";
+  if(kind==="update" && !confirm("Mint를 새 버전으로 업데이트할까요?\n(Mint가 5분 안에 받아 업데이트하고 자체 점검까지 해요 · 만드는 중이면 끝난 뒤에)")) return;
+  if(kind==="repic"){ no=(prompt("그림만 다시 그릴 편 번호 (예: 19)\n무료 그림이 채워지는 뉴욕 저녁 7시 10분에 저절로 돌아요 · 공개 전이면 공개를 하루 미뤄요")||"").trim(); if(!/^\d{1,4}$/.test(no)) return; }
   try{
     const list=await _mintReqGet();
     if(kind==="make" && list.some(x=>x.kind==="make" && ["new","wait","got"].includes(x.state))){ showErr("이미 보낸 요청이 아직 진행 중이에요"); return; }
-    list.push({id:Date.now(), kind, at:new Date().toISOString(), state:"new", topic:kind==="make"?topic:"", wisdom:kind==="make"?wisdom:false, from:(navigator.userAgent||"").includes("Mobile")?"폰":"컴퓨터"});
+    if((kind==="update"||kind==="repic") && list.some(x=>x.kind===kind && ["new","wait","got"].includes(x.state))){ showErr("이미 보낸 요청이 아직 진행 중이에요"); return; }
+    list.push({id:Date.now(), kind, at:new Date().toISOString(), state:"new", topic:kind==="make"?topic:"", wisdom:kind==="make"?wisdom:false, no:kind==="repic"?no:"", from:(navigator.userAgent||"").includes("Mobile")?"폰":"컴퓨터"});
     await _mintReqPut(list); MINT_REQ.list=list; MINT_REQ.err=""; MINT_REQ.at=Date.now();
     const i=document.getElementById("shortsTopic"); if(i&&kind==="make") i.value="";
   }catch(e){ MINT_REQ.err=String(e.message||e); }
@@ -2271,6 +2275,8 @@ function renderStudioBody(){
     <label style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--sub);margin-bottom:8px;cursor:pointer"><input type="checkbox" id="wisdomChk" style="width:auto;margin:0"> 🌿 삶의 지혜 편으로 (씨앗 ${WISDOM_SEEDS.length}편 중 안 쓴 것부터)</label>
     <div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn-gold" style="background:var(--rose)" onclick="mintRequest('make')">📲 Mint에서 지금 만들기</button>
       <button class="pill" style="font-size:10px" onclick="mintRequest('skip')">⏸ 다음 자동 제작 한 번 건너뛰기</button>
+      <button class="pill" style="font-size:10px" onclick="mintRequest('update')">⬆️ Mint 업데이트</button>
+      <button class="pill" style="font-size:10px" onclick="mintRequest('repic')">🖼 그림만 다시 (번호)</button>
       <button class="pill" style="font-size:10px" onclick="mintReqRefresh(true)">🔄 상태</button></div>
     <div id="shortsResult" style="margin-top:10px"></div>
   </div>
@@ -4428,7 +4434,7 @@ async function requestRecruit(){
 // ═══════════════════════════════════
 //  INIT
 // ═══════════════════════════════════
-const BUILD_VERSION = "v15.42";
+const BUILD_VERSION = "v15.43";
 const BUILD_TIME = "2026-11-12 16:00 EST";
 STATE.advisorTab="papers";
 STATE.studioTab="idea";
