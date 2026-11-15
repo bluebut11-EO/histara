@@ -2570,7 +2570,7 @@ async function autoEssay(pkg){
   const seed=pkg._seed||{};
   const narr=((pkg.mint&&pkg.mint.cuts)||[]).map(c=>c.narration).filter(Boolean).join(" ");
   const D=(pkg.design&&typeof pkg.design==="object")?pkg.design:null, WS=pkg.wisdom||null;   // v15.46 설계표가 있으면 이 글이 원본 (쇼츠는 이 글을 줄여 만듦)
-  const sys=`You are SOL, essay editor for the HaJunNa blog — the written companion of the YouTube channel @HaJunNa (Korean stories about parents, keepsakes and the small wisdom of life, for readers aged 30–70 who may feel tired or alone).
+  const sys=`You are SOL, essay editor for the HaJunNa blog — the written companion of the YouTube channel @HaJunNa (Korean stories of real present-day life and its small wisdom — family, neighbours, lovers, friends; the readers are whoever the story is about).
 ${nowStamp()}
 Write in Korean. Warm, quiet, plain words. No clickbait, no preaching, no invented facts or quotes.
 ${writingRules()}`;
@@ -2585,7 +2585,7 @@ ${pkg.concrete_anchor?`이야기를 거는 물건: ${pkg.concrete_anchor}
 `:""}${WS?`근거 한 줄 (글에 그대로, 출처와 함께): ${WS.line} — ${WS.src}
 `:""}${(typeof window!=="undefined"&&window.MINT_CHECK)||""}
 
-쇼츠보다 깊게: 장면을 더 자세히 보여 주고, 반전 뒤에 '나와 이웃, 삶을 이해하게 하는' 성찰을 담는다.
+쇼츠보다 깊게: 장면을 더 자세히 보여 주고, 깨달음(반전이든 공감이든) 뒤에 '나와 이웃, 삶을 이해하게 하는' 성찰을 담는다.
 규칙:
 - 본문 1,500~2,500자 (띄어쓰기 빼고 약 1,200~2,000자). 문단은 2~4문장, 문단 사이 빈 줄.
 - 흐름: 장면으로 시작 → 사연 → 깨달음(반전이든 '그렇지' 하는 공감이든) → 성찰 → 마지막 한 줄. 소제목은 없거나 2개까지 ("## "로 시작).
@@ -2594,9 +2594,9 @@ ${pkg.concrete_anchor?`이야기를 거는 물건: ${pkg.concrete_anchor}
 - 인용은 출처가 확실한 것만 (책 제목과 저자, 속담, 경전의 책·장·절). 확실하지 않으면 인용하지 않는다. 지어낸 인용 금지.
 - 이 글만 읽은 사람도 다 이해되게 쓴다 (쇼츠를 안 봤어도). 깨달음은 하나 — 더 깊게.
 - 독자 공감 원칙: 감정을 설명하지 말고 물건·행동·말버릇으로 보여 준다. 설교·교훈 강요 금지. 성찰은 '나도 그랬다'는 고백처럼 낮게, 독자가 자기 사람을 떠올리게. 우연·과장 금지, 시대·물건·나이가 맞게.
-- [질문] 칸에는 맺음 한 줄을 쓴다 (본문에 넣지 않음): 질문이 아니라 화자('나')가 반전 뒤 남은 마음(그리움·미안함·고마움)을 담담히 말하는 한 문장, 이야기 속 인물을 부르며, 40자 안, 마침표 (예: "새 구두를 볼 때마다, 아버지가 그립습니다."). 독자를 갑자기 '당신'으로 부르기·교훈·운영자 자신의 가족 고백 금지.
-- 기승전결로 빈틈없이: 일이 일어날 때마다 '어떻게, 왜' 그렇게 됐는지 보여 준다 (물건이 어떻게 거기 갔는지, 누가 어떻게 알게 됐는지). 인물이 아직 모르는 것을 아는 것처럼 쓰지 않는다. 화자('나')가 반전을 어떻게 알게 됐는지(누구의 말, 어떤 물건, 어떤 장면)를 꼭 보여 준다. 가족 호칭은 화자 자리에서 (사위면 장인어른·장모님).
-- 아래 [본보기]는 다른 사연의 글이다. 짜임(낯선 처지 → 정성 → 거절 → 엇갈림의 장치 → 남의 입으로 듣는 단서 → 직접 묻고 듣는 한 마디 → 그 뒤의 작은 행동 → 낮은 성찰)과 문장의 온도만 본받는다. 사연·물건·인물·문장은 절대 가져오지 않는다.
+- [질문] 칸에는 맺음 한 줄을 쓴다 (본문에 넣지 않음): 질문이 아니라 화자('나')가 깨달음 뒤 남은 마음(그리움·미안함·고마움)을 담담히 말하는 한 문장, 이야기 속 인물을 부르며, 40자 안, 마침표 (예: "새 구두를 볼 때마다, 아버지가 그립습니다."). 독자를 갑자기 '당신'으로 부르기·교훈·운영자 자신의 가족 고백 금지.
+- 기승전결로 빈틈없이: 일이 일어날 때마다 '어떻게, 왜' 그렇게 됐는지 보여 준다 (물건이 어떻게 거기 갔는지, 누가 어떻게 알게 됐는지). 인물이 아직 모르는 것을 아는 것처럼 쓰지 않는다. 화자('나')가 깨달음(반전이면 그 진실)을 어떻게 알게 됐는지(누구의 말, 어떤 물건, 어떤 장면)를 꼭 보여 준다. 가족 호칭은 화자 자리에서 (사위면 장인어른·장모님).
+- 아래 [본보기]는 다른 사연의 글이다 (예전 글이라 장소가 미국이고 숨은 이유를 남에게서 듣는 짜임 — 장소·장치·짜임은 따르지 말 것. 이번 글은 요즘 한국, 설계표의 순서 그대로). 문단의 호흡·장면 묘사·낮은 성찰의 온도만 본받는다. 사연·물건·인물·문장은 절대 가져오지 않는다.
 
 [본보기]
 ${ESSAY_EXEMPLAR}
@@ -2664,7 +2664,7 @@ JSON: {"title":"궁금증을 부르는 제목","hook":"첫 문장 (장면으로 
 ${briefDirective(B,true)}
 JSON: {"title":"짧은 제목 (20자 안팎, 답은 말하지 않고 궁금증만 — 예: 은퇴 후 부부가 자주 다투는 진짜 이유)","hook":"첫 문장 (질문이나 의외의 사실)","story":"내용 5~7문장 — 흔한 생각, 실제로는(이유 2~3가지), 요즘 우리 집 한 장면, 오늘 해 볼 작은 것 하나, 화자의 마음 한 줄",
  "fp":{"relation":"화자","object":"예시 장면의 물건","place":"예시 장면의 공간","era":"요즘","event":"주제","twist":"흔한 생각과 다른 점(한 구절)"}}`:
-      `${topic?`주제: "${topic}". 이 주제로 `:"오늘 "}쇼츠 한 편이 될 사연을 하나 만든다. 실제로 있었던 일처럼 구체적인 한 장면: 누가, 어디서, 어떤 물건, 무슨 말, 그리고 예상을 뒤집는 반전.
+      `${topic?`주제: "${topic}". 이 주제로 `:"오늘 "}쇼츠 한 편이 될 사연을 하나 만든다. 실제로 있었던 일처럼 구체적인 한 장면: 누가, 어디서, 어떤 물건, 무슨 말, 그리고 보는 사람이 '그렇구나'(반전) 또는 '그렇지'(공감) 하는 깨달음.
 ${B?briefDirective(B,true):diversityDirective(STATE.ideaSpec,true)}
 먼저 설계하고, 아래 점검표로 설계를 스스로 확인한 뒤 낸다. 반전은 이 이야기에 자연스러울 때만 — 아니면 '그렇지' 하고 마음이 닿는 잔잔한 이야기로.
 ${(typeof window!=="undefined"&&window.MINT_CHECK)||""}
@@ -2707,7 +2707,7 @@ JSON: {"ok":true,"problems":[""],"design":{},"story":""}`);
       }catch(e){}
     }
     let ES=null;
-    if(!(typeof window!=="undefined"&&window.MINT_BLOG_FIRST===false)){
+    if(typeof window!=="undefined"&&window.MINT_BLOG_FIRST===true){      // Mint(6.80+)가 블로그를 쓸 때만 — 아니면 예전 순서(쓰지 않을 글에 돈 쓰지 않게)
       liveLog(box,"①-0 설계대로 블로그 원본 쓰는 중... (SOL · 1~3분)");
       try{ const er=await autoEssay({_seed:{title:p.title,story:p.story}, title:p.title, hook:p.hook||"", design:D, wisdom:W, brief:B, fmt:(B&&B.fmt)||""});
            if(er&&er.ok) ES=er.essay; else liveLog(box,"①-0 블로그 원본 실패 — 사연으로 바로 쇼츠 (Mint가 뒤에서 블로그를 씀)"); }catch(e){}
@@ -4479,7 +4479,7 @@ async function requestRecruit(){
 // ═══════════════════════════════════
 //  INIT
 // ═══════════════════════════════════
-const BUILD_VERSION = "v15.46";
+const BUILD_VERSION = "v15.47";
 const BUILD_TIME = "2026-11-12 16:00 EST";
 STATE.advisorTab="papers";
 STATE.studioTab="idea";
