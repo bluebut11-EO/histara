@@ -909,73 +909,23 @@ function setSearch(on){ SEARCH_ON=!!on; try{localStorage.setItem('histara_search
 function sx(maxSearches){ return SEARCH_ON ? {search:true, maxSearches:maxSearches||3} : {}; }
 
 // 2026 resonance playbook + @HaJuNA's REAL channel data — injected into shorts/idea generation
-const RESONANCE_2026 = `RESONANCE PLAYBOOK — tuned to @HaJuNA's ACTUAL data (apply strictly):
-
-CHANNEL REALITY (measured from @HaJuNA's actual Studio data, normalized by time-since-upload — obey these):
-- LENGTH IS NOT A FACTOR. Earlier raw view counts only reflected how long a video had been up. Normalized per hour, 0:42 and 0:38 and 0:44 all performed similarly. Do NOT force a specific length. Let the story decide; 35-50s is the natural range. Never pad, never rush.
-- PROVEN TOPIC LAW (strongest signal): CONCRETE objects/scenes beat abstract concepts. Winners are built on a physical thing or a specific scene you can picture/smell/touch: 기차역 벤치의 커피, 부모님 냉장고, 남의 장례식, 곰팡이 냄새. The abstract framing (작은 것에 감사하는 마음) spread slowest. ALWAYS anchor title + hook to ONE concrete object, place, or scene.
-- BEST PERFORMER (by rate): "기차역 벤치에서 낯선 사람이 건넨 한마디" — 215 views in 6 hours with a 4.7% like rate (channel best; others 0.5-2.2%). What worked: a SPECIFIC SCENE + a SHORT LINE OF UNEXPECTED KINDNESS FROM A STRANGER (할머니가 커피를 내밀며 "고생 많죠"). Lean into this: brief human warmth between strangers, one remembered sentence, a small physical gesture (커피, 손, 자리).
-- LIKE RATE matters more than raw views for judging a video. Aim for moments that make a 40s-60s viewer feel seen enough to tap like.
-- AUDIENCE IS IN KOREA: 72.9% South Korea, 8.6% US. Write for viewers living in Korea (Korean seasons, Korean daily life, Korean places like 기차역, 시장, 동네 병원) — not for Korean-Americans.
-- Core viewers are 40s-60s: life-reflection, aging parents, midlife meaning, empty-nest, retirement purpose, loneliness & hope after 50, reconnecting with grown children, quiet kindness between ordinary people.
-- ERA RULE (11/2026 owner decision — strongest current feedback): set every story NOW, in the mid-2020s, with today's 40s-60s as the main people and their LIVING parents / grown kids / grandkids. Use today's things (KakaoTalk, video calls, family group chats, delivery apps, kiosks, nursing-home visits, grandparent childcare, retirement, job hunting). NO 1960s-70s flashbacks or retro props (연탄·고무신·다방·국민학교) — viewers think "요즘 저런 사람이 있나?" and lose interest. NO 신파: avoid tear-jerking; prefer a small twist with a wry smile and "우리 집도 저래" recognition. Death/funeral/keepsake stories at most 1 in 4.
-- COMMENTS ARE 0 across all videos — the biggest missed signal. The closing question must be EASY and CONCRETE (answerable in 3 words about their own memory/object), e.g. "당신은 어디서 그런 말을 들었나요?" — never philosophical.
-- The "25-second cliff": only ~30% watch past 25s. Raising this is priority #1.
-- Korean Shorts perform; keep Korean as the primary language and tone.
-
-WRITE TO BEAT THE 25s CLIFF:
-- Let the story set the length (35–50s is the natural range). Do NOT pad and do NOT rush. Every second must earn its place; cut anything that sags.
-- Put a SECOND hook around 8–15s (a turn, a question, a new scene, a small confession) to reset attention — don't let the middle sag.
-- One dominant emotion only (위로, 그리움, 희망, 안도). Validate the feeling first, then a gentle reframe. End with a soft, earned reassurance — never a lecture.
-- End with the narrator's own empathic line, not a question to the viewer (11/2026 owner decision — a sudden question breaks immersion). Comments are invited in the pinned comment.
-
-40s–60s CRAFT NOTES:
-- Captions BIG and slower-paced; clear, calm narration. Avoid tiny text and rapid jump-cuts (this age group needs readable pacing) — this directly affects retention.
-- Tone = warm, sincere, like a trusted friend the same age, not a young brand voice.
-
-AUDIENCE WIDENING (gently, both directions — don't chase Gen Z):
-- Down to 30s–40s via the "sandwich generation" (raising kids while caring for aging parents), midlife burnout, finding meaning at 40.
-- Up to 60s+ via looking back on life from today, "한마디 to my younger self".
-
-UNIVERSAL 2026 SIGNALS (still apply):
-- Connection > performance; meaningful over addictive; cozy/calming mood.
-- "이건 완전 내 얘기" share-trigger: anchor to a specific ordinary moment, not abstract advice.
-- Honesty & imperfection > polish; a small human/imperfect line is good.
-- 7-second rule: make them FEEL something fast.
-
-LANGUAGE: Korean-first. (English versions underperform on THIS channel because mixing languages confuses the algorithm — English is better as a SEPARATE channel or on TikTok/Instagram, not mixed here.)`;
+// v15.46 운영자 11/15: 글쓰기 원칙은 한 곳 — Mint auto/writing_rules.py 가 window.MINT_WRITING 으로 넣어 줌 (예전 두 덩어리는 서로 모순돼 지움)
+const WRITING_FALLBACK = `[HaJunNa 글쓰기 원칙]
+1. 요즘(2020년대) 한국의 실제 삶. 보는 사람이 '그렇구나'(몰랐던 것) 또는 '그렇지'(내 얘기) 하고 고개를 끄덕이게. 반전은 내용에 맞을 때만 — 억지 반전보다 잔잔한 진짜 이야기가 낫다.
+2. 억지 금지 — 모든 행동에 요즘 실제 사람이 그렇게 하는 이유. '굳이 왜?' '요즘 누가 저래?' '말이 돼?'가 들면 바꾼다. 숨긴 물건·몰래 넣어 둔 쪽지·유품에서 나온 통장 같은 발견형 반전 금지. 옛날식 희생·끝까지 말없이 참기 금지.
+3. 요즘 것(카톡·영상통화·단톡방·배달앱·키오스크·요양원 면회·황혼 육아). 옛 물건을 열쇠로 쓰지 않는다. 깨끗한 요즘 아파트·동네.
+4. 화자 자리에서 부르는 호칭 하나로 끝까지. 그 나이·성별 사람이 실제로 하는 말투.
+5. 시간·장소가 바뀌면 다리 한 구절. 누가 무엇을 언제·어떻게 알게 됐는지 빠짐없이. 모르는 걸 아는 듯 쓰지 않는다.
+6. 감정은 행동·말·물건으로. 설교·교훈·시청자를 '당신'으로 부르기 금지.
+7. 끝은 질문이 아니라 화자의 마음 한 줄.
+8. 독자는 내용이 정한다. 길이는 이야기와 형식이 정한다. 실명·상호·실화 주장·지어낸 인용 금지.`;
+function writingRules(){ return (typeof window!=="undefined"&&window.MINT_WRITING)?String(window.MINT_WRITING):WRITING_FALLBACK; }
 
 // ── DIVERSITY ENGINE — rotate emotion/format/lens so content doesn't repeat ──
 // ── PROVEN FORMULA (locked) + surface variation ──
 // Measured: 낯선 사람의 온기 = 기차역 벤치 905뷰/24h(시청률 72.8%), 시장 할머니 936뷰(시청률 112.9%)
 // Off-formula: 새벽 세 시(인물·몸짓 없음) 33뷰/16h(시청률 56.7%), 작은 것에 감사 552뷰
-const CORE_FORMULA = `LOCKED STORY FORMULA — 반전 있는 짧은 사연 (measured pivot: 반복되던 "낯선 사람의 온기"가 4~40뷰로 식음. 조사 결론 = 반전·궁금증·다음이 궁금한 구조가 조회수를 만든다).
-
-이야기 뼈대 (픽사 구조, 45~60초 — 시청자가 40~70대라 충분히 듣고 공감할 시간이 필요하다):
-1) 후크 (0~4초) — 첫 문장에 궁금증. 결과·수수께끼·의외의 장면을 먼저 던진다. 예: "엄마가 카톡 프로필 사진을 바꿨다." / "아빠가 중고거래 앱에 낚싯대를 올렸다."
-2) 상황 (4~14초) — 평범한 일상, 인물, 배경을 짧게 세운다. ("매일 같은 국밥집, 늘 혼자 앉는 노인이 있었다.")
-3) 전환점 (14~26초) — "그러던 어느 날" 예상 밖의 사건. 여기서 궁금증이 커진다.
-4) 반전 (26~42초) — 예상과 다른 진실이 드러난다. 오해가 풀리거나, 숨은 사연이 밝혀지거나, 관계가 뒤집힌다. 이게 핵심이다. 반전이 없으면 만들지 마라.
-5) 여운 (42~60초) — 짧은 감정의 착지 + 화자의 마음 한 줄 (질문으로 끝내지 않음).
-
-필수 요소:
-- 반전(예상 → 뒤집힘)이 반드시 있어야 한다. 잔잔하기만 하고 뒤집힘이 없으면 실패한다.
-- 8~15초 지점에 2차 후킹(작은 궁금증/떡밥)을 심어 이탈을 막는다.
-- 구체적 사물/장면 1개에 이야기를 건다 (카톡 한 줄·택배 상자·영상통화 화면·건강검진 결과지·요양원 면회 일정표 — 요즘 것으로).
-- 마지막 줄은 "다음이 궁금하거나" "내 이야기가 떠오르는" 여운으로.
-
-📊 소재 우선순위 (이 채널 실측, 12편 기준):
-- 1순위 부모·죽음·유품 = 평균 1,018뷰 (아버지 지갑 903뷰·좋아요율 4.5%, 부모님 냉장고 1,000, 남의 장례식 1,300, 곰팡이 냄새 870)
-- 2순위 낯선 사람의 온기 = 평균 592뷰 (편차가 크다)
-- 3순위 추상적 위로 = 평균 245뷰 → 쓰지 마라
-🌏 채널이 보여 주고 싶은 세상 (운영자 11/8): 아직은 살 만한 세상, 사람들의 온정이 남아 있는 세상, 서로 돕는 세상, 혼자 외롭지 않은 세상, 당신과 나 우리가 사는 세상 — 가족 이야기든 이웃·낯선 사람 이야기든 끝에 이 마음이 장면으로 남게 (말로 설교하지 말 것).
-가능하면 부모·가족 사연으로 써라 — 단 지금 시대의 살아 있는 부모·가족으로 (11/2026 운영자: 옛날 회상·신파는 '요즘 저런 사람이 있나?'로 흥미를 잃게 한다). 죽음·유품은 4편에 1편 이하.
-
-HARD BANS (이걸로 망했다):
-- 시청자에게 직접 설교("~한 당신에게", "당신은 ~하세요") 금지.
-- 추상 개념(감사·위로·휴식·불면)만으로 인물·사건 없이 만들기 금지.
-- 반전 없는 잔잔한 관찰기 금지 (이게 최근 저조의 직접 원인).
-- 매번 똑같은 "낯선 사람이 한마디 건네는" 구조 반복 금지 — 소재와 반전 종류를 바꿔라.`;
+// (v15.46 예전 고정 공식 → writingRules())
 
 // 소재·반전을 다양하게 — surface variation
 const DIV_THEMES=[
@@ -991,10 +941,9 @@ const DIV_THEMES=[
   "오해했던 이웃이 알고 보니 나를 돕고 있었다","낯선 사람이 건넨 작은 친절이 하루를 바꾼 날","아파트 단톡방에서 시작된 서로 돕기",
   "혼자 사는 어르신 곁을 지키는 동네 사람들","내가 건넨 친절이 몇 년 뒤 돌아온 날"
 ];
-const DIV_OBJECTS=[
-  "낡은 통장","빛바랜 편지","오래된 가족사진","손때 묻은 지갑","어머니의 일기장",
-  "아버지의 작업복","할머니의 반지","오래된 손목시계","제사상 위 숟가락","낡은 반닫이 서랍",
-  "빈 약봉지","먼지 쌓인 상자","녹슨 열쇠","구겨진 봉투","오래된 녹음테이프","해진 이불"
+const DIV_OBJECTS=[   // v15.46 요즘 물건 (옛 물건·숨겨 둔 물건을 열쇠로 쓰지 않음)
+  "가족 단톡방","카톡 프로필 사진","영상통화 화면","배달앱 주문 내역","키오스크","요양원 면회 일정",
+  "아파트 현관 택배","손주 어린이집 가방","건강검진 결과 문자","중고거래 앱","동네 수영장 회원권","자동차 블랙박스"
 ];
 const DIV_TWISTS=[
   "알고 보니 정반대였다","가장 미워한 사람이 가장 나를 지켰다","비난받던 행동에 숨은 이유가 있었다",
@@ -1019,25 +968,25 @@ function recentStudioTopics(n){
   return STUDIO_ITEMS.filter(x=>x.type==='idea'||x.type==='draft'||x.type==='shorts')
     .slice(0,n||10).map(x=>(x.title||"").replace(/^[💡✍️🎬📖\s]+/,"").trim()).filter(Boolean);
 }
-function diversityDirective(lock){
+function diversityDirective(lock, noRules){
   const v=varietySpec(lock);
   const recent=recentStudioTopics(10);
-  let d=`${CORE_FORMULA}
+  let d=`${noRules?"":writingRules()}
 
-이번 사연의 소재 (공식은 그대로, 소재/반전만 바꿔라):
+이번 사연의 소재:
 - 주제: ${v.theme}
 - 이야기를 거는 사물: ${v.object}
-- 반전의 방향: ${v.twist}
+- 깨달음의 방향 (반전이어도, 공감이어도 됨): ${v.twist}
 - 감정 결: ${v.shade}
-서로 다른 소재로, 최근 것과 겹치지 않게. 반전은 위 방향을 참고하되 억지스럽지 않게 자연스럽게.`;
+서로 다른 소재로, 최근 것과 겹치지 않게. 억지스러우면 반전 대신 잔잔한 공감으로.`;
   if(recent.length) d+=`\n- 최근 사연과 겹치지 마라: ${recent.join(" / ")}.`;
   return d;
 }
 
 // v15.9 🧭 Mint 사연 엔진이 정해 준 설계 (지난 편들의 지문을 보고 덜 쓴 조합으로) — 공식은 그대로
-function briefDirective(b){
+function briefDirective(b, noRules){
   const recent=recentStudioTopics(10);
-  let d=`${CORE_FORMULA}
+  let d=`${noRules?"":writingRules()}
 
 ${String(b.text||"").slice(0,3000)}`;
   if(recent.length) d+=`\n- 최근 사연과 겹치지 마라 (제목·상황·반전 모두): ${recent.join(" / ")}.`;
@@ -1525,7 +1474,7 @@ async function genDraft(){
   const sys=`You are NOVA, Content Strategist for ${myName()}'s creator brand.
 Philosophy: "왜 사는가, 어떻게 함께 사는가" — universal human meaning. NOT immigration-specific. For people who are tired but seeking meaning, and the meaning of living together.
 
-${CORE_FORMULA}
+${writingRules()}
 
 This draft becomes a Short, so it MUST already contain the stranger, the place, the spoken line, and the gesture. Write it as a scene that happened, not as advice.
 Tone: warm, thoughtful, honest, gently hopeful. Write in natural Korean prose. Keep it concise. Return ONLY JSON.`;
@@ -1612,7 +1561,12 @@ async function approveAndProduce(payload){
   const draftBody = draftSections.length
     ? draftSections.map(s=>`${s.heading?("["+s.heading+"] "):""}${s.body||s.text||""}`).join("\n").trim()
     : "";
-  const storyContext = draftBody
+  const ES=payload&&payload.essay||null, DS=payload&&payload.design||null;   // v15.46 블로그 원본 · 설계표
+  const storyContext = (ES&&ES.body)
+    ? `\n\n[원본 — 이 이야기의 블로그 글. 쇼츠는 이 글을 줄여 다시 들려주는 것이다]\n${String(ES.body).slice(0,6000)}\n[원본 끝]\n`
+      + `원본에 있는 사실만 쓴다 — 사람·호칭·장소·때·일어난 순서·누가 무엇을 언제 어떻게 알았는지를 바꾸거나 더하지 않는다. 원본의 원인→결과 고리를 빠뜨리지 않는다. 첫 문장은 원본의 장면 하나로 궁금증을 연다.\n`
+      + (DS?`[설계표 — 호칭·순서 확인용]\n${JSON.stringify(DS).slice(0,2500)}\n`:"")
+    : draftBody
     ? `\n\nAPPROVED STORY — build the Short DIRECTLY from this (same premise, scene, and message; do NOT invent a different situation):\n"${title}"\n${hook?("훅: "+hook+"\n"):""}${draftBody}\n`
     : (hook?`\n\nThe approved premise/hook to build from: "${hook}". Stay on this exact situation.\n`:"");
   const W=payload&&payload.wisdom||null;            // 🌿 지혜 편 씨앗 (있으면)
@@ -1620,13 +1574,11 @@ async function approveAndProduce(payload){
   const BR=payload&&payload.brief||null;               // v15.9 🧭 설계의 물건·공간을 장면표에 그대로
   const FMT=(BR&&(BR.fmt==="A"||BR.fmt==="B"))?BR.fmt:"";   // v15.27 11/6 회의: A·B 2주 실험 (목소리 나레이션)
   const briefCtx=BR&&FMT==="B"?"":BR?`\n🧭 이 편의 중심 물건은 "${BR.object||""}", 주 공간은 "${BR.place||""}" — 장면표(symbol·space)에 이 이름 그대로 쓰고, 같은 물건 사진을 세 번 넘게 쓰지 마라.\n`:"";
-  const sys=`You are the Histara Shorts team for the YouTube channel @HaJunNa (Korean parent/keepsake twist stories, viewers aged 40–70).
+  const sys=`You are the Histara Shorts team for the YouTube channel @HaJunNa (Korean stories of real present-day life; the audience is whoever this story is about).
 Team: Theo (story), Rio (narration), Choi (Mint auto-video).
 The video is made AUTOMATICALLY on Linux Mint: ${FMT?"a calm Korean narrator VOICE reads every narration sentence aloud, and the same sentence appears as a big on-screen caption over photo scenes, with quiet background music":"there is NO voice — the narration sentences appear one by one as big on-screen captions over photo scenes, with soft background music only"}, and a 4-second HaJunNa subscribe end card is always added at the end. No manual editing happens, so everything you write is final.
 
-${RESONANCE_2026}
-
-${CORE_FORMULA}
+${writingRules()}
 
 Write in natural Korean. Return ONLY JSON.`;
   try{
@@ -1644,12 +1596,12 @@ ${FMT?fmtNarrRules(FMT):`이 사연으로 45~56초 세로 쇼츠를 쓴다. 목�
 - 마지막 beat는 질문으로 끝내지 않는다. 반전 뒤 화자('나')에게 남은 마음(그리움·미안함·고마움·늦은 깨달음)을 담담히 말하는 공감형 한 문장으로 끝낸다 — 이야기 속 인물을 그대로 부르며 (예: "오늘따라 아버지가 더 그립습니다." / "이제는 아버지께 해드릴 수 있는 게 없어, 그게 가장 아픕니다."). 30자 안, 마침표.
   영상 안에서 시청자를 갑자기 '당신·여러분'으로 부르지 않는다 — 아버지 이야기 끝에 "누군가를 위해 아껴 두었던 것, 당신에겐 무엇인가요?"처럼 넘어가면 몰입이 깨진다. 교훈·설교('~해야 합니다', '소중함을 잊지 마세요')도 금지.
 
-${FMT?"":`구조 (반전 있는 사연): 후크 → 상황 → 전환점(8~15초에 2차 후킹) → 반전 → 여운+화자의 마음 한 줄.
+${FMT?"":`구조: 후크 → 상황 → 전환점(8~15초에 2차 후킹) → 깨달음(반전이든, '그렇지' 하는 공감이든 원본 그대로) → 여운+화자의 마음 한 줄.
 - beats 5~7개. 각 beat는 화면 한 장면이고 sec(화면 길이, 3~14초)를 정한다. sec 합계 45~56초 (끝에 구독 화면 4초가 자동으로 붙는다).
 - 나이 든 시청자가 천천히 읽을 수 있게: 각 beat의 narration 글자 수(공백 제외)는 (sec − 1) × 3 이내, 한 beat에 1~3문장, 전체는 공백 제외 130~160자. 글이 많으면 자막이 빨리 넘어가 잔잔함이 깨진다 — 말을 아껴라.`}
 - narration: 문장은 마침표로 끝냄. 숫자는 읽기 쉬운 표기 그대로 (예: "매달 3만원", "20년").
 - 첫 beat(role "hook")는 3~5초. 인사·도입 없이 가장 강한 한 문장.
-- 반전이 드러나는 beat 하나는 role "twist". 나머지는 "normal".
+- 깨달음이 드러나는 beat 하나는 role "twist" (반전이 아니어도 마음이 닿는 그 순간). 나머지는 "normal".
 - narrator: 이야기를 말하는 "나"의 성별 ("여성" 또는 "남성"). 모르면 "여성".
 - narrator_age: "나"의 나이대 — "청년"(20~30대) · "중년"(40~60대 초반) · "노년"(손주를 둔 할머니·할아버지, 대략 60대 후반 이상). 목소리 속도와 목소리를 이것으로 고른다.
 
@@ -1657,14 +1609,16 @@ ${FMT?"":`구조 (반전 있는 사연): 후크 → 상황 → 전환점(8~15초
 🧩 행동의 이유: 인물이 하는 낯선 행동(예: 딸이 담근 김치를 마트 반찬 코너에 둠)에는 이유를 한 구절이라도 보여 준다 — '누구나 알겠지'가 아니라 '누구나 이해하기 쉽게'. 대신 덜 중요한 꾸밈말을 뺀다.
 ${FMT?"⏱ 길이: 위 실험 형식의 글자 수를 지켜라 (목소리가 읽는 시간 = 영상 길이).":"⏱ 읽는 속도: 목소리가 없어서 자막을 다 읽어야 한다. 전체 공백 제외 160자를 넘기지 마라 — 넘으면 마지막 컷 자막이 1초씩 지나가 아무도 못 읽는다. 마지막 beat는 6초 이상."}
 
-👥 내기 전 스스로 감수 (11/2026 운영자): 다 쓴 뒤 ① 이 이야기를 처음 보는 55세 ② 신파·설교·모호한 말에 바로 넘기는 50대 남성 ③ 관계 디테일에 민감한 50대 여성의 눈으로 처음부터 끝까지 한 번씩 읽어라. 앞뒤가 안 이어지는 줄, 설명 없이 건너뛴 시간·장소·사건, 무엇의 ~인지 대상이 빠진 말(✗ "방식도 바뀌었다" → ✓ "애 보는 방식도 바뀌었다"), 그 나이·성별 사람이 실제로 안 할 말투, ${FMT?"귀로 들으면 어색한 말, ":""}감정을 설명만 하는 문장을 찾아 고친 뒤 내라.${(typeof window!=="undefined"&&window.MINT_RULES)?`
+👥 내기 전 스스로 감수: 다 쓴 뒤 이 이야기를 처음 보는 사람, 신파·설교에 바로 넘기는 사람, 관계 디테일에 민감한 사람의 눈으로 처음부터 끝까지 한 번씩 읽어라. ${(typeof window!=="undefined"&&window.MINT_CHECK)||""}${(typeof window!=="undefined"&&window.MINT_EXAMPLES)?`
+📗 본보기 — 이 채널에서 끝까지 본 사람이 가장 많았던 편의 실제 자막 (흐름·온도만 본받고 내용·문장은 가져오지 않는다):
+${String(window.MINT_EXAMPLES).slice(0,2500)}`:""} 앞뒤가 안 이어지는 줄, 설명 없이 건너뛴 시간·장소·사건, 무엇의 ~인지 대상이 빠진 말(✗ "방식도 바뀌었다" → ✓ "애 보는 방식도 바뀌었다"), 그 나이·성별 사람이 실제로 안 할 말투, ${FMT?"귀로 들으면 어색한 말, ":""}감정을 설명만 하는 문장을 찾아 고친 뒤 내라.${(typeof window!=="undefined"&&window.MINT_RULES)?`
 📐 편집 교훈 — 지난 편에서 독자·운영자가 실제로 지적한 것. 같은 실수를 처음부터 하지 마라: ${String(window.MINT_RULES).slice(0,6000)}`:""}
 
 🔍 현실 고증: 사물이 그 장소에 실제로 있을 법한지, 시대가 섞이지 않는지(삐삐·통장·손편지 vs 카톡·스마트폰), 크기·보존 상태·나이·금액이 맞는지 확인하고 realism_check에 한 줄로 적어라. 어색하면 그 디테일을 바꿔서 다시 써라.
 
 💬 댓글: comment_bait에 아주 쉬운 댓글 유도 문구 3개 (예: "아버지 생각나면 ㅇ 하나만"), pinned_comment에 업로드 직후 달 고정 댓글 1개 — 이야기 속 '나'가 영상 뒤에 먼저 마음을 나누는 1~2줄: 이 이야기의 인물·물건·장면에 닿아, 읽은 사람이 자기 이야기나 마음을 자연스럽게 꺼내고 싶어지게. 꼭 질문이나 '들려주세요'일 필요는 없다 (마음 나누기·작은 고백·함께 떠올리게 하는 한 줄·부드러운 물음 중 이 이야기에 가장 자연스러운 것). '당신에겐 무엇인가요?'처럼 갑자기 주제를 바꾸는 물음·예/아니오·구독 부탁·채널 운영자 자신의 가족 고백("저희 어머니도…") 금지.
 
-JSON: {"title_ko":"짧은 제목(20자 안팎, 반전은 말하지 않음)","narrator":"여성","narrator_age":"중년","twist":"반전 한 줄 요약","concrete_anchor":"이야기를 거는 사물 1개","beats":[{"role":"hook","sec":5,"narration":"엄마 유품에서, 통장이 나왔다."},{"role":"normal","sec":9,"narration":"20년 동안 같은 날, 3만원씩. 어디로 가는지는 적혀 있지 않았다."}],"comment_bait":["...","...","..."],"pinned_comment":"...","realism_check":"..."}`);
+JSON: {"title_ko":"짧은 제목(20자 안팎, 반전은 말하지 않음)","narrator":"여성","narrator_age":"중년","twist":"깨달음 한 줄 요약 (반전이면 반전, 공감이면 마음이 닿는 순간)","concrete_anchor":"이야기를 거는 사물 1개","beats":[{"role":"hook","sec":5,"narration":"엄마가 카톡 프로필 사진을 바꿨다."},{"role":"normal","sec":9,"narration":"십 년 넘게 그대로던 꽃 사진이었다. 바뀐 건 동네 수영장이었다."}],"comment_bait":["...","...","..."],"pinned_comment":"...","realism_check":"..."}`);
     const g1=keyGuard(raw1); if(g1){box.innerHTML=g1; return;}
     const p1=pj(raw1);
     if(!p1 || !(p1.beats||[]).length){ box.innerHTML=rawFailBox("쇼츠 제작(1단계)"); return; }
@@ -1732,7 +1686,7 @@ JSON: {"scenes":[{"scene":"space","space":"안방 · 시골","time":"낮","peopl
       realism_check:p1.realism_check||"", comment_bait:p1.comment_bait||[], pinned_comment:p1.pinned_comment||"",
       mint:{cuts:normMintCuts(cuts)}, scenes_ok:sc.length===p1.beats.length,
       publish:{title:pub.title||p1.title_ko||title, description:pub.description||"", hashtags:pub.hashtags||[]},
-      music:_musicNorm(p2.music)};
+      music:_musicNorm(p2.music), design:DS||undefined, _essay:(ES&&ES.body)?ES:undefined, design_check:(payload&&payload.design_check)||undefined};
     if(W){ pkg.topic="wisdom"; pkg.wisdom={id:W.id,line:W.line,src:W.src};
       pkg.music=Object.assign({},pkg.music,{mood:W.mood});
       const tags=Array.isArray(pkg.publish.hashtags)?pkg.publish.hashtags:String(pkg.publish.hashtags||"").split(/\s+/).filter(Boolean);
@@ -1927,6 +1881,7 @@ function mintFromPkg(p){
 function mintStoryObj(p){
   const m=mintFromPkg(p), pub=p.publish_ko||p.publish||{};
   return {format:"hajuna-story/2", title:p.title||p.title_ko||"HaJunNa", no:p.no||0, date:p.dstr||"", twist:p.twist||"",
+    design:p.design||null, kind:((p.design||{}).kind||""), insight:((p.design||{}).insight||""),
     made_by:`Histara ${typeof BUILD_VERSION!=="undefined"?BUILD_VERSION:""}`, fallback:m.fallback,
     narrator:p.narrator==="남성"?"남성":"여성", narrator_age:p.narrator_age||"", music:p.music||_musicNorm(null), fmt:p.fmt||"",
     cuts:m.cuts, publish:{title:pub.title||pub.yt_title||p.title||"", description:pub.description||"",
@@ -2608,30 +2563,36 @@ function _essayCheck(e,pkg){
   return iss;
 }
 // v15.18 글 본보기 (운영자가 '감동적'이라 한 11/2 글) — 흐름·톤·짜임만 본받고 내용·문장은 가져오지 않음
-const ESSAY_EXEMPLAR="[제목]\n장인어른이 마트에서만 김치를 사신 이유\n[요약]\n딸이 담근 김치에는 손도 안 대시던 장인어른이, 왜 매주 마트에서 그 김치를 사 오셨을까.\n[본문]\n장모님이 돌아가신 이듬해 봄, 장인어른이 미국 우리 집으로 오셨다. 혼자 시골집에 계시게 둘 수 없다며 아내가 오래 설득한 끝이었다. 짐은 가방 두 개가 전부였다. 낯선 동네, 알아들을 수 없는 말 속에서 장인어른은 말수가 눈에 띄게 줄었다. 아침이면 창가에 앉아 한참 바깥만 보셨고, 저녁 밥상에서도 젓가락이 오래 머무는 곳이 없었다.\n\n아내는 아버지를 위해 김치부터 담갔다. 어릴 때 어깨너머로 본 장모님 방식 그대로였다. 배추를 하룻밤 절이고, 젓갈은 조금 넉넉하게, 그리고 꼭 며칠을 더 익혀 시큼해질 때 상에 올리는 것까지.\n\n그런데 장인어른은 그 김치에 손을 대지 않으셨다. 처음엔 \"짜다\" 하셨고, 다음엔 \"됐다\" 하셨다. 다른 반찬은 잘 드시면서 김치 그릇만 비켜 가셨다. 아내는 서운해했다. 엄마 맛을 못 낸 걸까, 아니면 딸에게 신세 지는 게 불편하신 걸까. 아무리 생각해도 이유를 알 수 없었다.\n\n우리 동네 한인마트에는 근처 어머니들이 집에서 만든 반찬을 맡겨 파는 코너가 있다. 아내는 그 마트 단골이었고, 사장님과도 가까웠다. 어느 날 아내가 지나가듯 사정을 털어놓자 사장님이 말했다. \"그럼 여기 두고 가요. 아버님, 혼자 장 보러 자주 오시던데.\" 아내는 반쯤은 기대로, 반쯤은 체념으로 김치를 작은 통 몇 개에 나눠 맡겼다. 딸이 담근 줄 모르면 혹시 편하게 드실까 싶었다. 통마다 날짜를 적는 버릇대로, 라벨 구석에 작은 글씨도 남겼다.\n\n그 마트는 장인어른이 이 동네에서 유일하게 혼자 다니시는 곳이었다. 한국말이 들리고, 고향 과자가 있고, 아무도 말을 걸지 않아서 좋다고 하셨다. 장인어른은 일주일에 한 번, 그곳까지 천천히 걸어가셨다. 그 주부터 장바구니에는 늘 김치 한 통이 들어 있었다. 아내는 \"아빠가 모르고 사 드신다\"며 웃었다. 나도 그런 줄 알았다.\n\n몇 주 뒤, 마트 사장님이 계산대에서 나에게 조용히 말했다. \"아버님은 김치 고르실 때 꼭 돋보기를 꺼내세요. 통 라벨을 한참 보시고, 그중 하나를 고르시더라고요.\" 라벨 구석의 작은 글씨. 장인어른은 처음부터 알고 계셨던 것이다. 그런데 왜, 딸이 담근 줄 알면서도 집에서는 안 드시고 굳이 마트에서 사 오셨을까. 그 이유는 아내도 나도 짐작하지 못했다.\n\n나는 그 말을 아내에게 전했다. 그날 저녁, 아내가 김치를 식탁에 올리며 조심스레 말을 꺼냈다. \"아빠, 그 마트 김치… 사실 내가 담근 거야.\" 장인어른은 한동안 젓가락만 쥐고 계시다가 낮게 말씀하셨다.\n\n\"알고 있었다. 네 엄마 맛이랑 똑같더라. 그래서 네 앞에선 못 먹겠더라.\"\n\n딸 앞에서 우는 아버지가 되고 싶지 않으셨던 거다. 그래서 김치는 마트에서 사 오셨고, 아무도 없는 방에서 혼자 드셨다. 거절처럼 보였던 그 손사래는, 장모님을 향한 그리움을 삼키는 방법이었다.\n\n아내는 그날 오래 울었다. 그리고 다음 주에도 김치를 마트에 맡겼다. 라벨 구석, 날짜 옆에 한 줄을 더 적어서. \"아빠, 천천히 드세요.\"\n\n어떤 음식은 배를 채우기보다 사람을 불러온다. 그 맛 앞에서 목이 메는 건, 아직 그 사람을 다 보내지 못했기 때문일 것이다. 장인어른에게 그 김치는 반찬이 아니라, 장모님과 함께한 사십 년의 저녁이었을 것이다.\n[질문]\n그리운 사람이 생각나 목이 메는 음식, 당신에겐 무엇인가요?";
+const ESSAY_EXEMPLAR="[제목]\n장인어른이 마트에서만 김치를 사신 이유\n[요약]\n딸이 담근 김치에는 손도 안 대시던 장인어른이, 왜 매주 마트에서 그 김치를 사 오셨을까.\n[본문]\n장모님이 돌아가신 이듬해 봄, 장인어른이 미국 우리 집으로 오셨다. 혼자 시골집에 계시게 둘 수 없다며 아내가 오래 설득한 끝이었다. 짐은 가방 두 개가 전부였다. 낯선 동네, 알아들을 수 없는 말 속에서 장인어른은 말수가 눈에 띄게 줄었다. 아침이면 창가에 앉아 한참 바깥만 보셨고, 저녁 밥상에서도 젓가락이 오래 머무는 곳이 없었다.\n\n아내는 아버지를 위해 김치부터 담갔다. 어릴 때 어깨너머로 본 장모님 방식 그대로였다. 배추를 하룻밤 절이고, 젓갈은 조금 넉넉하게, 그리고 꼭 며칠을 더 익혀 시큼해질 때 상에 올리는 것까지.\n\n그런데 장인어른은 그 김치에 손을 대지 않으셨다. 처음엔 \"짜다\" 하셨고, 다음엔 \"됐다\" 하셨다. 다른 반찬은 잘 드시면서 김치 그릇만 비켜 가셨다. 아내는 서운해했다. 엄마 맛을 못 낸 걸까, 아니면 딸에게 신세 지는 게 불편하신 걸까. 아무리 생각해도 이유를 알 수 없었다.\n\n우리 동네 한인마트에는 근처 어머니들이 집에서 만든 반찬을 맡겨 파는 코너가 있다. 아내는 그 마트 단골이었고, 사장님과도 가까웠다. 어느 날 아내가 지나가듯 사정을 털어놓자 사장님이 말했다. \"그럼 여기 두고 가요. 아버님, 혼자 장 보러 자주 오시던데.\" 아내는 반쯤은 기대로, 반쯤은 체념으로 김치를 작은 통 몇 개에 나눠 맡겼다. 딸이 담근 줄 모르면 혹시 편하게 드실까 싶었다. 통마다 날짜를 적는 버릇대로, 라벨 구석에 작은 글씨도 남겼다.\n\n그 마트는 장인어른이 이 동네에서 유일하게 혼자 다니시는 곳이었다. 한국말이 들리고, 고향 과자가 있고, 아무도 말을 걸지 않아서 좋다고 하셨다. 장인어른은 일주일에 한 번, 그곳까지 천천히 걸어가셨다. 그 주부터 장바구니에는 늘 김치 한 통이 들어 있었다. 아내는 \"아빠가 모르고 사 드신다\"며 웃었다. 나도 그런 줄 알았다.\n\n몇 주 뒤, 마트 사장님이 계산대에서 나에게 조용히 말했다. \"아버님은 김치 고르실 때 꼭 돋보기를 꺼내세요. 통 라벨을 한참 보시고, 그중 하나를 고르시더라고요.\" 라벨 구석의 작은 글씨. 장인어른은 처음부터 알고 계셨던 것이다. 그런데 왜, 딸이 담근 줄 알면서도 집에서는 안 드시고 굳이 마트에서 사 오셨을까. 그 이유는 아내도 나도 짐작하지 못했다.\n\n나는 그 말을 아내에게 전했다. 그날 저녁, 아내가 김치를 식탁에 올리며 조심스레 말을 꺼냈다. \"아빠, 그 마트 김치… 사실 내가 담근 거야.\" 장인어른은 한동안 젓가락만 쥐고 계시다가 낮게 말씀하셨다.\n\n\"알고 있었다. 네 엄마 맛이랑 똑같더라. 그래서 네 앞에선 못 먹겠더라.\"\n\n딸 앞에서 우는 아버지가 되고 싶지 않으셨던 거다. 그래서 김치는 마트에서 사 오셨고, 아무도 없는 방에서 혼자 드셨다. 거절처럼 보였던 그 손사래는, 장모님을 향한 그리움을 삼키는 방법이었다.\n\n아내는 그날 오래 울었다. 그리고 다음 주에도 김치를 마트에 맡겼다. 라벨 구석, 날짜 옆에 한 줄을 더 적어서. \"아빠, 천천히 드세요.\"\n\n어떤 음식은 배를 채우기보다 사람을 불러온다. 그 맛 앞에서 목이 메는 건, 아직 그 사람을 다 보내지 못했기 때문일 것이다. 장인어른에게 그 김치는 반찬이 아니라, 장모님과 함께한 사십 년의 저녁이었을 것이다.\n[질문]\n아빠, 그 김치 이제는 우리 앞에서 드셔도 돼요.";
 const _EX_SENT=ESSAY_EXEMPLAR.split(/[.?!」\n]/).map(s=>s.trim()).filter(s=>s.length>=16);
 async function autoEssay(pkg){
   pkg=pkg||LAST_SHORTS; if(!pkg) return {ok:false,msg:"쇼츠 패키지가 없어요"};
   const seed=pkg._seed||{};
   const narr=((pkg.mint&&pkg.mint.cuts)||[]).map(c=>c.narration).filter(Boolean).join(" ");
+  const D=(pkg.design&&typeof pkg.design==="object")?pkg.design:null, WS=pkg.wisdom||null;   // v15.46 설계표가 있으면 이 글이 원본 (쇼츠는 이 글을 줄여 만듦)
   const sys=`You are SOL, essay editor for the HaJunNa blog — the written companion of the YouTube channel @HaJunNa (Korean stories about parents, keepsakes and the small wisdom of life, for readers aged 30–70 who may feel tired or alone).
 ${nowStamp()}
-Write in Korean. Warm, quiet, plain words. No clickbait, no preaching, no invented facts or quotes.`;
+Write in Korean. Warm, quiet, plain words. No clickbait, no preaching, no invented facts or quotes.
+${writingRules()}`;
   const body=`[#${pkg.no||""}] ${pkg.title||seed.title||""} — 이 사연으로 블로그 글 한 편을 쓴다.
 
-사연: ${seed.story||""}
-반전: ${pkg.twist||""}
-이야기를 거는 물건: ${pkg.concrete_anchor||""}
-쇼츠 나레이션(참고만): ${narr}
+${D?`[설계표 — 이 글이 이야기의 원본이 된다 (쇼츠는 이 글을 줄여 만든다). 사람·호칭·장소·때·일어난 순서·누가 무엇을 언제 어떻게 알게 됐는지를 설계 그대로 쓴다. 설계에 없는 사건·인물·장소를 새로 만들지 않는다 — 장면 묘사·감정·생각·대화의 결은 더해도 된다]
+${JSON.stringify(D).slice(0,4000)}
+`:""}사연: ${seed.story||""}
+깨달음: ${pkg.twist||(D&&D.insight)||""}${D?` (${D.kind||"반전 또는 공감"})`:""}
+${pkg.concrete_anchor?`이야기를 거는 물건: ${pkg.concrete_anchor}
+`:""}${narr?`쇼츠 나레이션(참고만): ${narr}
+`:""}${WS?`근거 한 줄 (글에 그대로, 출처와 함께): ${WS.line} — ${WS.src}
+`:""}${(typeof window!=="undefined"&&window.MINT_CHECK)||""}
 
 쇼츠보다 깊게: 장면을 더 자세히 보여 주고, 반전 뒤에 '나와 이웃, 삶을 이해하게 하는' 성찰을 담는다.
 규칙:
 - 본문 1,500~2,500자 (띄어쓰기 빼고 약 1,200~2,000자). 문단은 2~4문장, 문단 사이 빈 줄.
-- 흐름: 장면으로 시작 → 사연 → 반전 → 성찰 → 마지막 한 줄. 소제목은 없거나 2개까지 ("## "로 시작).
-- 쇼츠 나레이션 문장을 그대로 옮기지 말고 새로 쓴다.
+- 흐름: 장면으로 시작 → 사연 → 깨달음(반전이든 '그렇지' 하는 공감이든) → 성찰 → 마지막 한 줄. 소제목은 없거나 2개까지 ("## "로 시작).
+- ${narr?"쇼츠 나레이션 문장을 그대로 옮기지 말고 새로 쓴다.":"이 글이 원본이다 — 처음 읽는 사람이 앞뒤 빈틈 없이 따라오게."}
 - '실화'라고 주장하지 않는다. 실존 인물·기관·상호 이름을 쓰지 않는다.
 - 인용은 출처가 확실한 것만 (책 제목과 저자, 속담, 경전의 책·장·절). 확실하지 않으면 인용하지 않는다. 지어낸 인용 금지.
-- 이 글만 읽은 사람도 다 이해되게 쓴다 (쇼츠를 안 봤어도). 쇼츠와 같은 반전, 같은 깨달음 하나를 더 깊게.
+- 이 글만 읽은 사람도 다 이해되게 쓴다 (쇼츠를 안 봤어도). 깨달음은 하나 — 더 깊게.
 - 독자 공감 원칙: 감정을 설명하지 말고 물건·행동·말버릇으로 보여 준다. 설교·교훈 강요 금지. 성찰은 '나도 그랬다'는 고백처럼 낮게, 독자가 자기 사람을 떠올리게. 우연·과장 금지, 시대·물건·나이가 맞게.
 - [질문] 칸에는 맺음 한 줄을 쓴다 (본문에 넣지 않음): 질문이 아니라 화자('나')가 반전 뒤 남은 마음(그리움·미안함·고마움)을 담담히 말하는 한 문장, 이야기 속 인물을 부르며, 40자 안, 마침표 (예: "새 구두를 볼 때마다, 아버지가 그립습니다."). 독자를 갑자기 '당신'으로 부르기·교훈·운영자 자신의 가족 고백 금지.
 - 기승전결로 빈틈없이: 일이 일어날 때마다 '어떻게, 왜' 그렇게 됐는지 보여 준다 (물건이 어떻게 거기 갔는지, 누가 어떻게 알게 됐는지). 인물이 아직 모르는 것을 아는 것처럼 쓰지 않는다. 화자('나')가 반전을 어떻게 알게 됐는지(누구의 말, 어떤 물건, 어떤 장면)를 꼭 보여 준다. 가족 호칭은 화자 자리에서 (사위면 장인어른·장모님).
@@ -2684,12 +2645,12 @@ async function autoShorts(opts){
   const W=opts.wisdom?pickWisdomSeed():null;            // 🌿 지혜 편 (Mint가 3편에 1편 정함 / 화면 체크)
   const B=(!topic&&!W&&typeof window!=="undefined"&&window.MINT_BRIEF&&window.MINT_BRIEF.text)?window.MINT_BRIEF:null;   // v15.9 🧭 Mint 사연 엔진 설계
   liveLog(box,W?`⓪ 🌿 지혜 편 「${W.title}」 사연 쓰는 중... (NOVA)`:"⓪ 오늘의 사연 고르는 중... (NOVA)");
-  const sys=`You are NOVA, story editor for the YouTube channel @HaJunNa (Korean parent/keepsake twist stories for viewers aged 40–70, often listening late at night).
+  const sys=`You are NOVA, story designer for the YouTube channel @HaJunNa (Korean stories of real present-day life — family, neighbours, lovers, friends; the audience is whoever this story is about).
+You DESIGN before anyone writes: who the people are and what the narrator calls them, where and when, what happens in what order, why each person acts as they do (as real people in Korea today would), and who learns what, when and how. A professional writer writes the blog from your design and the Short is condensed from that blog, so a hole in your design becomes a hole everywhere.
 ${nowStamp()}
-${RESONANCE_2026}
 ${recentPerformanceHint()}
 
-${CORE_FORMULA}
+${writingRules()}
 Respond in Korean. Return ONLY JSON.`;
   try{
     STATE.ideaSpec = B?varietySpec({theme:B.pillar,object:B.object,twist:B.twist,shade:B.shade}):varietySpec();
@@ -2700,19 +2661,59 @@ Respond in Korean. Return ONLY JSON.`;
 최근 사연과 겹치지 않게: ${recentStudioTopics(10).join(" / ")||"없음"}
 JSON: {"title":"궁금증을 부르는 제목","hook":"첫 문장 (장면으로 시작)","story":"사연 4~6문장 — 장면, 오해, 반전, 깨달음이 다 들어가게"}`:
       (B&&B.fmt==="B")?`오늘 쇼츠 한 편의 내용을 만든다 — 사연이 아니라 '몰랐던 것' 한 가지 (실험 B형).
-${briefDirective(B)}
+${briefDirective(B,true)}
 JSON: {"title":"짧은 제목 (20자 안팎, 답은 말하지 않고 궁금증만 — 예: 은퇴 후 부부가 자주 다투는 진짜 이유)","hook":"첫 문장 (질문이나 의외의 사실)","story":"내용 5~7문장 — 흔한 생각, 실제로는(이유 2~3가지), 요즘 우리 집 한 장면, 오늘 해 볼 작은 것 하나, 화자의 마음 한 줄",
  "fp":{"relation":"화자","object":"예시 장면의 물건","place":"예시 장면의 공간","era":"요즘","event":"주제","twist":"흔한 생각과 다른 점(한 구절)"}}`:
       `${topic?`주제: "${topic}". 이 주제로 `:"오늘 "}쇼츠 한 편이 될 사연을 하나 만든다. 실제로 있었던 일처럼 구체적인 한 장면: 누가, 어디서, 어떤 물건, 무슨 말, 그리고 예상을 뒤집는 반전.
-${B?briefDirective(B):diversityDirective(STATE.ideaSpec)}
-JSON: {"title":"짧은 제목 (20자 안팎, 반전은 말하지 않고 궁금증만 — 예: 엄마 카톡 프사가 바뀌었다)","hook":"첫 문장 (장면으로 시작)","story":"사연 4~6문장 — 지금(2020년대) 이야기, 상황, 오해, 반전, 여운이 다 들어가게",
- "fp":{"relation":"중심 인물","object":"이야기를 거는 물건","place":"주 공간","era":"때","event":"무슨 날","twist":"반전의 방향(한 구절)"}}`);
+${B?briefDirective(B,true):diversityDirective(STATE.ideaSpec,true)}
+먼저 설계하고, 아래 점검표로 설계를 스스로 확인한 뒤 낸다. 반전은 이 이야기에 자연스러울 때만 — 아니면 '그렇지' 하고 마음이 닿는 잔잔한 이야기로.
+${(typeof window!=="undefined"&&window.MINT_CHECK)||""}
+JSON: {"title":"짧은 제목 (20자 안팎, 답은 말하지 않고 궁금증만 — 예: 엄마 카톡 프사가 바뀌었다)","hook":"첫 문장 (장면으로 시작)","story":"사연 요약 4~6문장",
+ "design":{"kind":"반전 또는 공감 (이 이야기에 자연스러운 쪽)","insight":"보는 사람이 '그렇구나' 또는 '그렇지' 할 한 줄",
+  "narrator":{"who":"나는 누구 (예: 40대 딸, 30대 남편)","gender":"여성 또는 남성","age":"청년·중년·노년"},
+  "people":[{"call":"화자가 부르는 호칭 하나 — 글 끝까지 이것만","who":"관계·나이","speech":"말투"}],
+  "place":"주 공간 (요즘 한국)","when":"언제 (계절·요일·시간)",
+  "timeline":[{"n":1,"when":"","where":"","what":"무슨 일","knows":"이때 화자가 아는 것 / 아직 모르는 것"}],
+  "causes":["무엇 때문에 → 무엇 (빠진 고리 없이)"],
+  "realism":["눈에 띄는 행동마다: 요즘 실제 사람이 그렇게 하는 이유"],
+  "learn":"화자가 마지막에 무엇을, 어떻게(누가 말해 줌·무엇을 봄) 알게 되나",
+  "ending":"화자에게 남는 마음 한 줄"},
+ "fp":{"relation":"중심 인물","object":"이야기를 거는 물건","place":"주 공간","era":"때","event":"무슨 날","twist":"깨달음의 방향(한 구절)"}}`);
     const g=keyGuard(raw); if(g){ box.innerHTML=g; return; }
     const p=pj(raw);
     if(!p||!p.story){ box.innerHTML=rawFailBox("오늘의 사연"); return; }
     try{ localStorage.setItem('histara_idea_date', todayKey()); }catch(e){}
+    // v15.46 운영자 11/15: 설계 → 블로그(원본) → 쇼츠(블로그를 줄임) — 한 이야기, 한 번에
+    let D=(p.design&&typeof p.design==="object")?p.design:null, DC=null;
+    if(D && typeof window!=="undefined" && window.MINT_LOGIC){      // v15.46 설계 점검 — 글을 쓰기 전에 (예전엔 쇼츠를 다 만든 뒤 Mint가 따로 봄)
+      liveLog(box,"⓪-2 설계 점검 — 처음 보는 사람 눈으로 구멍 찾기 (NOVA)");
+      try{
+        const rr=await callClaude(`You are the HaJunNa story editor. Check the story DESIGN (not prose) the way a first-time reader would: causes, time, who knows what and when, how people are called, whether people act as real people in Korea today would. If there are holes, return the fixed design. Korean. Return ONLY JSON.
+${writingRules()}`,
+          `${window.MINT_LOGIC}
+${window.MINT_CHECK||""}
+
+제목: ${p.title}
+사연: ${p.story}
+설계표:
+${JSON.stringify(D).slice(0,5000)}
+
+`+
+          `구멍마다 problems에 한 줄. 구멍이 있으면 ok=false와 고친 설계 전체(design, 같은 형식)와 고친 사연 요약(story). 없으면 ok=true.
+JSON: {"ok":true,"problems":[""],"design":{},"story":""}`);
+        const r=pj(rr);
+        if(r){ DC={ok:r.ok!==false, problems:(r.problems||[]).filter(Boolean).slice(0,6)};
+          if(r.ok===false && r.design && typeof r.design==="object" && (r.design.timeline||[]).length){ D=r.design; if(r.story) p.story=r.story; DC.fixed=true; } }
+      }catch(e){}
+    }
+    let ES=null;
+    if(!(typeof window!=="undefined"&&window.MINT_BLOG_FIRST===false)){
+      liveLog(box,"①-0 설계대로 블로그 원본 쓰는 중... (SOL · 1~3분)");
+      try{ const er=await autoEssay({_seed:{title:p.title,story:p.story}, title:p.title, hook:p.hook||"", design:D, wisdom:W, brief:B, fmt:(B&&B.fmt)||""});
+           if(er&&er.ok) ES=er.essay; else liveLog(box,"①-0 블로그 원본 실패 — 사연으로 바로 쇼츠 (Mint가 뒤에서 블로그를 씀)"); }catch(e){}
+    }
     await approveAndProduce({title:p.title||(W&&W.title)||topic||"오늘의 사연", hook:p.hook||"", sections:[{heading:"",body:p.story}], wisdom:W,
-      brief:B, fp:(p.fp&&typeof p.fp==="object")?p.fp:null});
+      brief:B, fp:(p.fp&&typeof p.fp==="object")?p.fp:null, design:D, essay:ES, design_check:DC});
     const made=shortsItems()[0];
     if(!made || !LAST_SHORTS || made.pkg!==LAST_SHORTS) return;      // 제작 실패면 그 안내를 그대로 둔다
     STATE.openStudio=made.id; STATE.shortsFilter="all";
@@ -2832,9 +2833,7 @@ async function genIdea(){
   const sys=`You are Sol (ideation writer) and NOVA (content strategist) for ${myName()}'s creator brand.
 ${nowStamp()} 시의성 있는(지금 시점에 와닿는) 주제를 우선 고려하세요.
 Philosophy: "왜 사는가, 어떻게 함께 사는가" — universal human meaning; resonate with tired people seeking meaning and connection. Original, warm, not preachy.
-${RESONANCE_2026}
-
-${CORE_FORMULA}
+${writingRules()}
 Respond in Korean; keep platform/tool terms in English. Return ONLY JSON.`;
   try{
     STATE.ideaSpec = varietySpec();   // lock this idea's setting so the draft/short inherit it
@@ -4480,7 +4479,7 @@ async function requestRecruit(){
 // ═══════════════════════════════════
 //  INIT
 // ═══════════════════════════════════
-const BUILD_VERSION = "v15.45";
+const BUILD_VERSION = "v15.46";
 const BUILD_TIME = "2026-11-12 16:00 EST";
 STATE.advisorTab="papers";
 STATE.studioTab="idea";
