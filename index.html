@@ -170,6 +170,9 @@ input:focus,textarea:focus{border-color:var(--gold)}
   border-radius:50%;animation:spin 1s linear infinite;margin:20px auto}
 @keyframes spin{to{transform:rotate(360deg)}}
 .loading-txt{text-align:center;font-size:10px;color:var(--sub);margin-top:6px}
+.reload-btn{margin-top:5px;font-size:13px;font-weight:700;padding:6px 14px;border-radius:999px;border:1.5px solid var(--mint);
+  background:transparent;color:var(--mint);cursor:pointer;font-family:inherit;letter-spacing:0}
+.reload-btn:disabled{opacity:.6}
 .mint-ctl{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
 .mint-ctl button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:92px;padding:12px 8px;
   background:var(--deep);border:1.5px solid var(--border);border-radius:14px;color:var(--text);cursor:pointer;font-family:inherit}
@@ -4507,8 +4510,8 @@ async function requestRecruit(){
 // ═══════════════════════════════════
 //  INIT
 // ═══════════════════════════════════
-const BUILD_VERSION = "v15.50";
-const BUILD_TIME = "2026-11-16T13:57:00-05:00";   // 올린 시각 (화면에는 이 기기의 현지 시간으로)
+const BUILD_VERSION = "v15.51";
+const BUILD_TIME = "2026-11-16T14:08:00-05:00";   // 올린 시각 (화면에는 이 기기의 현지 시간으로)
 STATE.advisorTab="papers";
 STATE.studioTab="idea";
 STATE.investTab="money";
@@ -4523,9 +4526,16 @@ try{ autoSyncOnOpen(); }catch(e){}
     const now=new Date();
     const load=now.toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'});
     const bt=new Date(BUILD_TIME), btxt=isNaN(bt)?BUILD_TIME:bt.toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
-    el.innerHTML=`${BUILD_VERSION} · 올림 ${btxt}<br><span style="color:var(--mint);font-size:8px">로드됨 ${load}</span>`;
+    el.innerHTML=`${BUILD_VERSION} · 올림 ${btxt}<br><span style="color:var(--mint);font-size:8px">로드됨 ${load}</span>`
+      +`<br><button class="reload-btn" onclick="histaraReload(this)">↻ 새로고침</button>`;
   }
 })();
+// v15.51 운영자 11/16: 앱 안 새로고침 (홈 화면 앱엔 브라우저 새로고침이 없음) — 서버의 최신 화면을 다시 불러옴 (적어 둔 것은 기기·클라우드에 그대로)
+function histaraReload(btn){
+  if(btn){ btn.disabled=true; btn.textContent="불러오는 중…"; }
+  const u=new URL(location.href); u.searchParams.set("r", Date.now().toString(36));
+  setTimeout(()=>location.replace(u.toString()), 150);
+}
 // Auto-init advisor sub-tab after render
 setTimeout(()=>{if(STATE.tab==="advisor")switchAdvisor("papers");},100);
 </script>
