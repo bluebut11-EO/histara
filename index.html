@@ -533,8 +533,8 @@ function syncPanel(){
 function usagePanel(){
   // default range: from first usage month to current month
   const allMonths = usageByMonth();
-  const firstYM = allMonths.length?allMonths[0].ym:new Date().toISOString().slice(0,7);
-  const curYM = new Date().toISOString().slice(0,7);
+  const firstYM = allMonths.length?allMonths[0].ym:localDay().slice(0,7);
+  const curYM = localDay().slice(0,7);
   const fromYM = STATE.usageFrom||firstYM;
   const toYM = STATE.usageTo||curYM;
   const months = usageByMonth(fromYM,toYM);
@@ -1204,7 +1204,7 @@ function callCost(inTok,outTok,searches,model){
 }
 function recordCost(inTok,outTok,searches,searched,model){
   const now=new Date();
-  const rec={ ts:now.getTime(), day:now.toISOString().slice(0,10), in:inTok||0, out:outTok||0, searches:searches||0,
+  const rec={ ts:now.getTime(), day:localDay(now), in:inTok||0, out:outTok||0, searches:searches||0,
     cost:callCost(inTok,outTok,searches,model), searched:!!searched, feature:curFeature(), model:model||"" };
   USAGE.push(rec); persistUsage();
   // live refresh if on the usage tab
@@ -1251,7 +1251,7 @@ function usageRange(fromYM,toYM){
   const months=usageByMonth(fromYM,toYM);
   return months.reduce((s,m)=>({cost:s.cost+m.cost,in:s.in+m.in,out:s.out+m.out,searches:s.searches+m.searches,calls:s.calls+m.calls}),{cost:0,in:0,out:0,searches:0,calls:0});
 }
-function thisMonthCost(){ const ym=new Date().toISOString().slice(0,7); const m=usageByMonth(ym,ym)[0]; return m?m.cost:0; }
+function thisMonthCost(){ const ym=localDay().slice(0,7); const m=usageByMonth(ym,ym)[0]; return m?m.cost:0; }
 function searchToggleBar(){
   return `<div class="card" style="padding:10px 12px;margin-bottom:10px;border-color:${SEARCH_ON?'rgba(34,211,238,.35)':'var(--border)'}">
     <div style="display:flex;align-items:center;gap:9px">
@@ -1679,7 +1679,7 @@ JSON: {"scenes":[{"scene":"space","space":"안방 · 시골","time":"낮","peopl
       {role:b.role, sec:b.sec, narration:b.narration, captions:b.captions}));
     recordHealth("content",true);
     const no=shortsNo();
-    const dstr=new Date().toISOString().slice(0,10);
+    const dstr=localDay();
     const pub=p2.publish||{};
     const pkg={v:12, no, dstr, fmt:FMT||undefined, title:p1.title_ko||title, title_ko:p1.title_ko||title,
       narrator:p1.narrator==="남성"?"남성":"여성", narrator_age:["청년","중년","노년"].includes(p1.narrator_age)?p1.narrator_age:"", twist:p1.twist||"", concrete_anchor:p1.concrete_anchor||"",
@@ -2184,7 +2184,7 @@ function mintReqStatus(){
   if(MINT_REQ.err) return `<div style="font-size:10px;color:var(--rose);margin-bottom:8px">⚠ ${esc(MINT_REQ.err)}</div>`;
   if(!last.length) return "";
   return `<div style="font-size:10px;line-height:1.7;background:var(--deep);border-radius:8px;padding:7px 9px;margin-bottom:8px">${last.map(x=>
-    `<div>${({skip:"⏸",update:"⬆️",repic:"🖼"})[x.kind]||"📲"} ${esc(String(x.at||"").replace("T"," ").slice(5,16))} · ${esc(MINT_REQ_TXT[x.state]||x.state||"")}${x.msg?` — ${esc(String(x.msg).slice(0,90))}`:""}</div>`).join("")}</div>`;
+    `<div>${({skip:"⏸",update:"⬆️",repic:"🖼"})[x.kind]||"📲"} ${esc(localMDHM(x.at))} · ${esc(MINT_REQ_TXT[x.state]||x.state||"")}${x.msg?` — ${esc(String(x.msg).slice(0,90))}`:""}</div>`).join("")}</div>`;
 }
 async function mintReqRefresh(show){
   if(!syncConfigured()) return;
@@ -3020,7 +3020,7 @@ async function vaultExport(){
   const ct=await crypto.subtle.encrypt({name:"AES-GCM", iv}, await _vaultKey(pass, salt), new TextEncoder().encode(plain));
   const o={format:"histara-vault/1", created:new Date().toISOString(), salt:_b64e(salt), iv:_b64e(iv), data:_b64e(ct)};
   const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(o)],{type:'application/json'}));
-  a.download=`histara_백업_${new Date().toISOString().slice(0,10)}.hvault.json`; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1500);
+  a.download=`histara_백업_${localDay()}.hvault.json`; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1500);
   if(msg) msg.innerHTML='<span style="color:var(--mint)">✓ 백업 파일을 만들었어요 — Mint로 옮겨 HaJunNa Money에서 📥 백업 열기 (암호 없이는 열 수 없어요)</span>';
 }
 function _investLeft(){
@@ -3072,14 +3072,14 @@ let LIVE_FAMILY = (function(){ try{ return JSON.parse(localStorage.getItem('hist
 // 캘린더: 구글 캘린더 링크 + .ics(아이폰 캘린더)
 function _calStamp(date,time){ return String(date||"").replace(/-/g,"")+"T"+String(time||"10:00").replace(":","").padEnd(4,"0")+"00"; }
 function gcalUrl(e){
-  const d=e.date||new Date().toISOString().slice(0,10);
+  const d=e.date||localDay();
   return "https://calendar.google.com/calendar/render?action=TEMPLATE&text="+encodeURIComponent("🧺 "+(e.name||"가족 여가"))
     +"&dates="+_calStamp(d,e.start)+"/"+_calStamp(d,e.end||e.start)+"&ctz=America/New_York"
     +"&details="+encodeURIComponent((e.desc||"")+(e.link?"\n"+e.link:""))+"&location="+encodeURIComponent(e.addr||"");
 }
 function downloadIcs(i){
   const e=(LIVE_FAMILY&&LIVE_FAMILY.out||[])[i]; if(!e) return;
-  const d=e.date||new Date().toISOString().slice(0,10), clean=s=>String(s||"").replace(/[,;\\]/g," ").replace(/\n/g," ");
+  const d=e.date||localDay(), clean=s=>String(s||"").replace(/[,;\\]/g," ").replace(/\n/g," ");
   const ics=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Histara//Family//KO","BEGIN:VEVENT",
     "UID:"+Date.now()+"-"+i+"@histara","DTSTAMP:"+new Date().toISOString().replace(/[-:]/g,"").slice(0,15)+"Z",
     "DTSTART;TZID=America/New_York:"+_calStamp(d,e.start),"DTEND;TZID=America/New_York:"+_calStamp(d,e.end||e.start),
@@ -3514,7 +3514,11 @@ function renderAll(){renderTabs();renderContent();}
 let ENGLISH_ITEMS = (function(){ try{ return JSON.parse(localStorage.getItem('histara_english')||'[]'); }catch(e){ return []; } })();
 function persistEnglish(){ try{localStorage.setItem('histara_english', JSON.stringify(ENGLISH_ITEMS.slice(0,120)))}catch(e){} try{syncPushDebounced();}catch(e){} }
 function learnedWords(){ const s=[]; ENGLISH_ITEMS.forEach(it=>(it.words||[]).forEach(w=>{ if(w.word) s.push(w.word.toLowerCase()); })); return s; }
-function englishDoneToday(){ const d=new Date().toISOString().slice(0,10); return ENGLISH_ITEMS.some(it=>it.date===d); }
+// v15.48 운영자 11/15: 날짜·시각은 모두 이 기기의 현지 시간으로 (예전엔 UTC라 뉴욕 저녁 7시면 날짜가 다음 날로 넘어감)
+function localDay(d){ d=d||new Date(); const z=n=>String(n).padStart(2,"0"); return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}`; }
+function localMDHM(iso){ const d=new Date(iso); if(!iso||isNaN(d)) return String(iso||"").replace("T"," ").slice(5,16);
+  const z=n=>String(n).padStart(2,"0"); return `${z(d.getMonth()+1)}-${z(d.getDate())} ${z(d.getHours())}:${z(d.getMinutes())}`; }
+function englishDoneToday(){ const d=localDay(); return ENGLISH_ITEMS.some(it=>it.date===d); }
 // ── v12 영어 한 장 (Emma): 오늘 바로 쓸 회화 한 문장 + 고급 단어 하나 — 한눈에 ──
 const ENG_SITS=[["work","🔬 직장(랩)"],["school","🏫 아이 학교·학부모"],["small","☕ 이웃·스몰토크"],["call","📞 병원·전화·예약"],["shop","🛒 가게·서비스"],["home","🏠 집·아이와"]];
 function engSitToday(){ return STATE.engSit || ENG_SITS[new Date().getDate()%ENG_SITS.length][0]; }
@@ -3594,7 +3598,7 @@ JSON: {"situation":"구체적 장면 한 줄 (한국어, 예: 아침 교대 때 
     if(p && p.phrase){
       const now=new Date(), w=p.word||{};
       const item={ id:now.getTime(), v:12, ts:now.toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}),
-        date:now.toISOString().slice(0,10), sit, card:p, words:w.word?[w]:[], read:true };
+        date:localDay(now), sit, card:p, words:w.word?[w]:[], read:true };
       ENGLISH_ITEMS.unshift(item); persistEnglish();
       recordHealth("english",true);
       box.innerHTML="";
@@ -3675,7 +3679,7 @@ function englishSavedHTML(){
   return h;
 }
 function renderEnglish(){
-  const today=ENGLISH_ITEMS.find(x=>x.card && x.date===new Date().toISOString().slice(0,10));
+  const today=ENGLISH_ITEMS.find(x=>x.card && x.date===localDay());
   const sit=engSitToday();
   return `<div style="padding:14px 14px 8px">
     <h2>📚 영어 한 장</h2>
@@ -4205,7 +4209,7 @@ IMPORTANT: Keep all technical, scientific, medical, and industry terms in ENGLIS
 // ═══════════════════════════════════
 function renderAgents(){
   const layers=["command","hla","science","creative","family","edu","finance","security"];
-  const _ym=new Date().toISOString().slice(0,7);
+  const _ym=localDay().slice(0,7);
   const _fu={}; usageByFeature(_ym,_ym).forEach(r=>_fu[r.k]=r);
   const agentUse=(id)=>{ let calls=0,cost=0; Object.entries(FEATURE_AGENTS).forEach(([f,ids])=>{ if(ids.includes(id)&&_fu[f]){ calls+=_fu[f].calls; cost+=_fu[f].cost/ids.length; } }); return {calls,cost}; };
   let html=`<div style="padding:14px 14px 8px"><h2>팀원 ${AGENTS.length}명</h2><div class="pg-sub">v12 개편 · 이번 달 일한 기능의 호출 수·비용으로 쓸모를 봐요 · 탭하면 상세</div></div>
@@ -4479,8 +4483,8 @@ async function requestRecruit(){
 // ═══════════════════════════════════
 //  INIT
 // ═══════════════════════════════════
-const BUILD_VERSION = "v15.47";
-const BUILD_TIME = "2026-11-12 16:00 EST";
+const BUILD_VERSION = "v15.48";
+const BUILD_TIME = "2026-11-15T19:04:00-05:00";   // 올린 시각 (화면에는 이 기기의 현지 시간으로)
 STATE.advisorTab="papers";
 STATE.studioTab="idea";
 STATE.investTab="money";
@@ -4494,7 +4498,8 @@ try{ autoSyncOnOpen(); }catch(e){}
   if(el){
     const now=new Date();
     const load=now.toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'});
-    el.innerHTML=`${BUILD_VERSION} · BUILD ${BUILD_TIME}<br><span style="color:var(--mint);font-size:8px">로드됨 ${load}</span>`;
+    const bt=new Date(BUILD_TIME), btxt=isNaN(bt)?BUILD_TIME:bt.toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+    el.innerHTML=`${BUILD_VERSION} · 올림 ${btxt}<br><span style="color:var(--mint);font-size:8px">로드됨 ${load}</span>`;
   }
 })();
 // Auto-init advisor sub-tab after render
