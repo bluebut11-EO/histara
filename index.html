@@ -918,7 +918,8 @@ const WRITING_FALLBACK = `[HaJunNa 글쓰기 원칙]
 5. 시간·장소가 바뀌면 다리 한 구절. 누가 무엇을 언제·어떻게 알게 됐는지 빠짐없이. 모르는 걸 아는 듯 쓰지 않는다.
 6. 감정은 행동·말·물건으로. 설교·교훈·시청자를 '당신'으로 부르기 금지.
 7. 끝은 질문이 아니라 화자의 마음 한 줄.
-8. 독자는 내용이 정한다. 길이는 이야기와 형식이 정한다. 실명·상호·실화 주장·지어낸 인용 금지.`;
+8. 독자는 내용이 정한다. 길이는 이야기와 형식이 정한다. 실명·상호·실화 주장·지어낸 인용 금지.
+9. AI 티 금지: '~가 아니라 ~였다' 대구·셋씩 나열·'그것은 사랑이었다' 같은 추상 감정 명사로 끝맺기·교훈조·'어쩌면·그 순간·마치'의 반복·꾸밈말 남발·번역투·줄표·말줄임표 남발. 그 사람만의 구체적인 말·행동·물건으로.`;
 function writingRules(){ return (typeof window!=="undefined"&&window.MINT_WRITING)?String(window.MINT_WRITING):WRITING_FALLBACK; }
 
 // ── DIVERSITY ENGINE — rotate emotion/format/lens so content doesn't repeat ──
@@ -4483,8 +4484,8 @@ async function requestRecruit(){
 // ═══════════════════════════════════
 //  INIT
 // ═══════════════════════════════════
-const BUILD_VERSION = "v15.48";
-const BUILD_TIME = "2026-11-15T19:04:00-05:00";   // 올린 시각 (화면에는 이 기기의 현지 시간으로)
+const BUILD_VERSION = "v15.49";
+const BUILD_TIME = "2026-11-15T19:17:00-05:00";   // 올린 시각 (화면에는 이 기기의 현지 시간으로)
 STATE.advisorTab="papers";
 STATE.studioTab="idea";
 STATE.investTab="money";
