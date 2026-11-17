@@ -1685,9 +1685,10 @@ ${spaceList}
 - publish: 유튜브 제목(20자 안팎 — 짧게, 반전·결말은 말하지 않고 궁금증만), 설명(2~3문장, 반전은 말하지 않음), 해시태그 5~8개.
 - music: 배경음악 분위기 하나를 고른다 — ${Object.entries(MUSIC_MOODS).map(([k,v])=>`"${k}"(${v})`).join(", ")}. why에 이 이야기에 맞는 이유 한 줄, search에 YouTube 오디오 보관함에서 찾을 때 쓸 필터(장르·분위기)와 영어 검색어 1~2개 (예: "장르 Classical · 분위기 Sad · piano"). 곡 제목은 지어내지 마라.
 
-JSON: {"scenes":[{"scene":"space","space":"안방 · 시골","time":"낮","people":[{"who":"엄마","hair":"쪽진머리","cloth":"카디건","pose":"앉음","reach":true}]},{"scene":"symbol","symbol":"통장","detail":"매달 30,000원","time":"밤"},{"scene":"symbol","symbol":"반찬통","detail":"","time":"저녁","want":"이름표 붙은 김치통","want_en":"Close-up of exactly one glass kimchi container with a small blank paper label, standing alone on the middle shelf of a small Korean grocery store fridge, front view at eye level. Only two or three other side-dish containers softly blurred behind it. Warm evening light, 2020s Korean-American store."}],"publish":{"title":"...","description":"...","hashtags":["#엄마","#유품"]},"music":{"mood":"그리움","why":"...","search":"장르 Classical · 분위기 Sad · piano"}}`);
+JSON (publish·music을 맨 앞에 — 길어서 끝이 잘려도 남게): {"publish":{"title":"...","description":"...","hashtags":["#엄마","#유품"]},"music":{"mood":"그리움","why":"...","search":"장르 Classical · 분위기 Sad · piano"},"scenes":[{"scene":"space","space":"안방 · 시골","time":"낮","people":[{"who":"엄마","hair":"쪽진머리","cloth":"카디건","pose":"앉음","reach":true}]},{"scene":"symbol","symbol":"통장","detail":"매달 30,000원","time":"밤"},{"scene":"symbol","symbol":"반찬통","detail":"","time":"저녁","want":"이름표 붙은 김치통","want_en":"Close-up of exactly one glass kimchi container with a small blank paper label, standing alone on the middle shelf of a small Korean grocery store fridge, front view at eye level. Only two or three other side-dish containers softly blurred behind it. Warm evening light, 2020s Korean-American store."}]}`,{maxTokens:8000});
       const g2=keyGuard(raw2); if(g2){box.innerHTML=g2; return;}
       p2=pj(raw2)||{};
+      if(!(p2.publish&&p2.publish.description)||(p2.scenes||[]).length<p1.beats.length) console.warn('v15.54 장면표가 잘림',(p2.scenes||[]).length,p1.beats.length);
     }catch(e2){ p2={}; }
 
     // 장면표 = 나레이션 + 장면 (장면이 모자라면 기본 장면)
@@ -2066,6 +2067,7 @@ function coherenceCheck12(p){
   if(!(p.comment_bait||[]).length) issues.push("댓글 유도 문구가 비어 있어요.");
   if(cuts.some((c,i)=>i>0 && c.scene==="symbol" && cuts[i-1].scene==="symbol" && c.symbol===cuts[i-1].symbol)) issues.push("같은 물건 사진이 연달아 나와요 — 지루해 보여요. 다시 생성을 권해요.");
   if(p.scenes_ok===false) issues.push("장면표 일부를 AI가 못 채워 기본 장면(안방)으로 넣었어요. 다시 생성을 권해요.");
+  if(!((p.publish||{}).description||"").trim()) issues.push("유튜브 설명이 비어 있어요 — Mint가 다듬기에서 채워요.");
   return {ok:issues.length===0, issues};
 }
 
@@ -4518,8 +4520,8 @@ async function requestRecruit(){
 // ═══════════════════════════════════
 //  INIT
 // ═══════════════════════════════════
-const BUILD_VERSION = "v15.53";
-const BUILD_TIME = "2026-11-16T14:33:00-05:00";   // 올린 시각 (화면에는 이 기기의 현지 시간으로)
+const BUILD_VERSION = "v15.54";
+const BUILD_TIME = "2026-11-17T20:54:20Z";   // 올린 시각 (화면에는 이 기기의 현지 시간으로)
 STATE.advisorTab="papers";
 STATE.studioTab="idea";
 STATE.investTab="money";
