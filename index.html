@@ -2260,7 +2260,7 @@ function renderStudioBody(){
   const old=STUDIO_ITEMS.filter(x=>x&&x.type!=="notice"&&x.type!=="status").length-all.length;
   const notes=noticeItems();
   markSeenLater("studio", list.concat(notes).filter(x=>!x.read).map(x=>x.id));
-  return `${mintStatusCard()}${noticeSummary(notes)}${notes.map(noticeCard).join("")}${noticeArchive()}<div class="card" style="border-color:rgba(239,141,163,.4);background:linear-gradient(135deg,rgba(239,141,163,.1),transparent);margin-bottom:14px">
+  return `${mintStatusCard()}${protocolCard()}${noticeSummary(notes)}${notes.map(noticeCard).join("")}${noticeArchive()}<div class="card" style="border-color:rgba(239,141,163,.4);background:linear-gradient(135deg,rgba(239,141,163,.1),transparent);margin-bottom:14px">
     <div style="font-size:12px;font-weight:800;color:var(--rose)">📲 Mint에서 지금 만들기</div>
     <div style="font-size:10px;color:var(--sub);line-height:1.6;margin:4px 0 9px">이 버튼은 Mint 컴퓨터에 요청만 보내요 → Mint가 5분 안에 받아서 평소 자동 제작과 똑같이 (사연 → 감수 → 출고 관문 → 장면 맞춤 → 영상 → YouTube·블로그·페이스북) 만들어요. 이틀마다 자동 제작 날짜는 그대로예요. Mint가 켜져 있어야 해요.</div>
     ${mintReqStatus()}
@@ -2421,6 +2421,28 @@ function mintStatusCard(){
         ${m.result?`<div style="font-size:12px;color:${fail?'var(--gold)':'var(--muted)'};margin-top:2px;line-height:1.45">${fail?'⚠️ ':'· '}${esc(m.result)}</div>`:""}
       </div>
     </div>${todo}</div>`;
+}
+// v15.56 📜 HaJunNa 프로토콜 (운영자 11/18) — Mint 장부(auto/protocol.py)를 그대로 보여 줌. 현행 규칙 + 접힌 '바뀐 기록'. 손으로 고치는 곳 아님.
+function protocolCard(){
+  const m=mintStatus(); const P=m&&m.protocol; if(!P||!Array.isArray(P.areas)) return "";
+  const li=(t,sub)=>`<li style="margin:0 0 10px;line-height:1.6"><div style="font-size:15px;color:var(--text)">${esc(t)}</div>${sub?`<div style="font-size:12px;color:var(--muted);margin-top:2px">${esc(sub)}</div>`:""}</li>`;
+  const wait=(P.wait||[]).length?`<div style="margin:10px 0 4px;padding:10px 12px;border-radius:10px;background:rgba(232,193,92,.08);border:1px solid rgba(232,193,92,.35)">
+      <div style="font-size:14px;font-weight:800;color:var(--gold);margin-bottom:6px">⏳ 결정 대기·실험</div>
+      <ul style="margin:0;padding-left:18px">${P.wait.map(w=>li(w.rule,[w.status,w.since+"~",w.why].filter(Boolean).join(" · "))).join("")}</ul></div>`:"";
+  const areas=P.areas.map(a=>`<details style="margin-top:8px;border:1px solid var(--border);border-radius:10px;padding:8px 12px;background:var(--deep)">
+      <summary style="font-size:16px;font-weight:800;cursor:pointer;color:var(--text)">${esc(a.area)} <span style="font-size:12px;color:var(--muted);font-weight:600">· 현행 ${a.current.length}${a.old.length?" · 바뀐 기록 "+a.old.length:""}</span></summary>
+      <ul style="margin:10px 0 0;padding-left:18px">${a.current.map(e=>li(e.rule,[e.since,e.how,e.why?"왜: "+e.why:""].filter(Boolean).join(" · "))).join("")}</ul>
+      ${a.old.length?`<details style="margin-top:4px"><summary style="font-size:13px;color:var(--sub);cursor:pointer">바뀐 기록 ${a.old.length}</summary>
+        <ul style="margin:8px 0 0;padding-left:18px">${a.old.map(o=>`<li style="margin:0 0 8px;font-size:13px;line-height:1.55;color:var(--sub)"><s>${esc(o.rule)}</s> (${esc(o.since)}) → ${esc(o.to_since)}${o.dropped?" 폐기 —":""} ${esc(o.to)}</li>`).join("")}</ul></details>`:""}
+    </details>`).join("");
+  return `<details class="card" style="padding:10px 13px;margin-bottom:12px;border-color:rgba(127,215,190,.35)">
+    <summary style="cursor:pointer;list-style:none;display:flex;align-items:center;gap:10px">
+      <span style="font-size:26px">📜</span>
+      <div style="flex:1;min-width:0"><div style="font-size:16px;font-weight:800;color:var(--mint)">HaJunNa 프로토콜</div>
+        <div style="font-size:12px;color:var(--sub);margin-top:2px">현행 ${P.n_current} · 바뀐 기록 ${P.n_old}${(P.wait||[]).length?" · 결정 대기 "+P.wait.length:""} · Mint v${esc(P.ver||m.ver||"")} 장부 · 눌러서 보기</div></div>
+    </summary>
+    <div style="font-size:12px;color:var(--muted);margin:8px 0 0;line-height:1.5">지금 적용되는 규칙만 굵게 · 바뀐 기록은 순서와 이유를 남기려고 둠 (Mint가 업데이트될 때 자동으로 바뀜)</div>
+    ${wait}${areas}</details>`;
 }
 function noticeItems(){ return STUDIO_ITEMS.filter(x=>x&&x.type==="notice"&&!x.done); }
 // v15.45 알림 정리 (운영자 11/14 "너무 복잡 — 큰 글씨·큰 아이콘으로 한눈에, 확인하면 정리") — 한 줄 요점 · 자세히는 눌러서 · ✅ 확인하면 아래 '확인한 알림'으로 접힘
@@ -4500,8 +4522,8 @@ async function requestRecruit(){
 // ═══════════════════════════════════
 //  INIT
 // ═══════════════════════════════════
-const BUILD_VERSION = "v15.55";
-const BUILD_TIME = "2026-11-18T14:43:21Z";   // 올린 시각 (화면에는 이 기기의 현지 시간으로)
+const BUILD_VERSION = "v15.56";
+const BUILD_TIME = "2026-11-18T15:01:04Z";   // 올린 시각 (화면에는 이 기기의 현지 시간으로)
 STATE.advisorTab="papers";
 STATE.studioTab="idea";
 STATE.investTab="money";
