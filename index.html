@@ -180,11 +180,13 @@ input:focus,textarea:focus{border-color:var(--gold)}
   border-radius:16px;border:1.5px solid var(--mint);background:rgba(47,232,160,.08);color:var(--mint);cursor:pointer;font-family:inherit;padding:0}
 .reload-btn .rl-i{font-size:22px;line-height:1;font-weight:700}.reload-btn .rl-txt{font-size:10px;font-weight:700;letter-spacing:0}
 .reload-btn:disabled{opacity:.6}
-.mint-ctl{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
-.mint-ctl button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:92px;padding:12px 8px;
+.mint-ctl{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+.mint-remote{padding:13px 13px 11px;margin-bottom:14px;border-color:rgba(239,141,163,.4);background:linear-gradient(135deg,rgba(239,141,163,.1),transparent)}
+.hub-sec{font-size:11px;font-weight:800;letter-spacing:.06em;color:var(--muted);margin:4px 2px 8px}
+.mint-ctl button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:74px;padding:10px 4px;
   background:var(--deep);border:1.5px solid var(--border);border-radius:14px;color:var(--text);cursor:pointer;font-family:inherit}
 .mint-ctl button:active{transform:scale(.98)}
-.mint-ctl .i{font-size:28px;line-height:1.1}.mint-ctl .t{font-size:15px;font-weight:800}.mint-ctl .s{font-size:11px;color:var(--sub)}
+.mint-ctl .i{font-size:26px;line-height:1.1}.mint-ctl .t{font-size:13.5px;font-weight:800;white-space:nowrap}.mint-ctl .s{font-size:11px;color:var(--sub)}
 </style>
 </head>
 <body>
@@ -735,7 +737,8 @@ const NEW_DAYS=14;
 function _created(x){ const id=Number(x&&x.id); return id>1.5e12&&id<5e12?id:0; }
 function isNew(x){ return !!(x&&!x.read&&!x.done&&_created(x)&&(Date.now()-_created(x))<NEW_DAYS*864e5); }
 function studioVisible(){ return STUDIO_ITEMS.filter(x=>x&&(x.type==="shorts"||(x.type==="notice"&&!x.done))); }
-function unreadCount(sec){ if(sec==="studio") return studioVisible().filter(isNew).length; return sectionItems(sec).filter(isNew).length; }
+function unreadCount(sec){ if(sec==="studio") return shortsItems().filter(isNew).length;   // v15.57 알림은 홈에 있음 → 스튜디오 NEW는 만든 쇼츠만
+  return sectionItems(sec).filter(isNew).length; }
 // 14일이 지난 '안 읽음'은 새 글이 아님 → 읽음으로 정리 (동기화로 다른 기기에도)
 function expireOldNew(){ const now=Date.now(); let a=0,b=0;
   const old=x=>x&&!x.read&&_created(x)&&(now-_created(x))>=NEW_DAYS*864e5;
@@ -2177,7 +2180,7 @@ function lastIdeaDate(){ try{return localStorage.getItem('histara_idea_date')||"
 function renderStudio(){
   return `<div style="padding:14px 14px 8px">
     <h2>🎬 콘텐츠 스튜디오</h2>
-    <div class="pg-sub">버튼 하나로 오늘의 사연 → 쇼츠(Mint 영상 파일)까지 자동 · 하루 한 편</div>
+    <div class="pg-sub">만든 쇼츠 모아 보기 · 만들기·알림은 홈에서</div>
   </div>
   <div id="studio-body" style="padding:0 14px 20px">${renderStudioBody()}</div>`;
 }
@@ -2248,37 +2251,56 @@ function mintStatusPoll(){
     if(!s || s.state==="done" || s.state==="fail" || Date.now()-t0>7*60000){ clearInterval(_MS_POLL); _MS_POLL=null; }
   }, 30000);
 }
-function switchStudio(){ const b=document.getElementById("studio-body"); if(b) b.innerHTML=renderStudioBody(); }
+// v15.57 (운영자 11/18) Mint 상태·알림·리모컨·성과·프로토콜은 홈 첫 화면(#mint-hub) · 콘텐츠 스튜디오는 '만든 쇼츠'만
+function switchStudio(){
+  const t=document.getElementById("shortsTopic"), w=document.getElementById("wisdomChk");
+  const keep={v:t?t.value:"", c:w?w.checked:false, f:document.activeElement===t};   // 다시 그려도 적던 주제·체크는 그대로
+  const b=document.getElementById("studio-body"); if(b) b.innerHTML=renderStudioBody();
+  const h=document.getElementById("mint-hub"); if(h) h.innerHTML=renderMintHub();
+  const t2=document.getElementById("shortsTopic"), w2=document.getElementById("wisdomChk");
+  if(t2){ t2.value=keep.v; if(keep.f) t2.focus(); } if(w2) w2.checked=keep.c;
+}
 function shortsItems(){ return STUDIO_ITEMS.filter(x=>x.type==="shorts"); }
+function mintRemote(){
+  return `<div class="card mint-remote">
+    <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+      <span style="font-size:15px;font-weight:800;color:var(--rose)">📲 Mint 리모컨</span>
+      <span style="font-size:11px;color:var(--muted)">요청만 보내요 · Mint가 켜져 있으면 5분 안에 받아요</span></div>
+    ${mintReqStatus()}
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <input id="shortsTopic" placeholder="주제 (비우면 사연 엔진이 골라요)" style="flex:1;min-width:0;margin:0" onkeydown="if(event.key==='Enter')mintRequest('make')">
+      <label title="삶의 지혜 편 (씨앗 ${WISDOM_SEEDS.length}편 중 안 쓴 것부터)" style="display:flex;align-items:center;gap:4px;font-size:13px;color:var(--sub);cursor:pointer;white-space:nowrap"><input type="checkbox" id="wisdomChk" style="width:18px;height:18px;margin:0"> 🌿 지혜</label>
+    </div>
+    <button class="btn-gold" style="background:var(--rose);width:100%;font-size:16px;padding:13px" onclick="mintRequest('make')">📲 Mint에서 지금 만들기</button>
+    <div class="mint-ctl">${[["status","🔄","상태"],["update","⬆️","업데이트"],["repic","🖼️","그림 다시"],["skip","⏸️","건너뛰기"]].map(b=>
+      `<button onclick="mintRequest('${b[0]}')"><span class="i">${b[1]}</span><span class="t">${b[2]}</span></button>`).join("")}</div>
+    <div style="font-size:10.5px;color:var(--muted);margin-top:8px;line-height:1.5">만들기는 평소 자동 제작과 똑같이 사연 → 영상 → YouTube·블로그·페이스북까지 · 이틀마다 자동 날짜는 그대로</div>
+  </div>`;
+}
+function renderMintHub(){
+  const notes=noticeItems();
+  markSeenLater("studio", notes.filter(x=>!x.read).map(x=>x.id));
+  return `${mintStatusCard()}${noticeSummary(notes)}${notes.map(noticeCard).join("")}${mintRemote()}
+    <div class="hub-sec">한눈에</div>${perfBoard()}${blogBoard()}${protocolCard()}${noticeArchive()}`;
+}
 function renderStudioBody(){
-  const done=lastIdeaDate()===todayKey();
   const all=shortsItems();
   const st=r=>r.up?"up":((r.got||r.yt)?"got":"new");
   const cnt={all:all.length,new:all.filter(r=>st(r)==="new").length,got:all.filter(r=>st(r)==="got").length,up:all.filter(r=>st(r)==="up").length};
   const f=STATE.shortsFilter||"all";
   const list=all.filter(r=>f==="all"||st(r)===f);
   const old=STUDIO_ITEMS.filter(x=>x&&x.type!=="notice"&&x.type!=="status").length-all.length;
-  const notes=noticeItems();
-  markSeenLater("studio", list.concat(notes).filter(x=>!x.read).map(x=>x.id));
-  return `${mintStatusCard()}${protocolCard()}${noticeSummary(notes)}${notes.map(noticeCard).join("")}${noticeArchive()}<div class="card" style="border-color:rgba(239,141,163,.4);background:linear-gradient(135deg,rgba(239,141,163,.1),transparent);margin-bottom:14px">
-    <div style="font-size:12px;font-weight:800;color:var(--rose)">📲 Mint에서 지금 만들기</div>
-    <div style="font-size:10px;color:var(--sub);line-height:1.6;margin:4px 0 9px">이 버튼은 Mint 컴퓨터에 요청만 보내요 → Mint가 5분 안에 받아서 평소 자동 제작과 똑같이 (사연 → 감수 → 출고 관문 → 장면 맞춤 → 영상 → YouTube·블로그·페이스북) 만들어요. 이틀마다 자동 제작 날짜는 그대로예요. Mint가 켜져 있어야 해요.</div>
-    ${mintReqStatus()}
-    <input id="shortsTopic" placeholder="주제가 있으면 적어 주세요 (비워 두면 사연 엔진이 골라요)" style="margin-bottom:8px" onkeydown="if(event.key==='Enter')mintRequest('make')">
-    <label style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--sub);margin-bottom:8px;cursor:pointer"><input type="checkbox" id="wisdomChk" style="width:auto;margin:0"> 🌿 삶의 지혜 편으로 (씨앗 ${WISDOM_SEEDS.length}편 중 안 쓴 것부터)</label>
-    <button class="btn-gold" style="background:var(--rose);width:100%;font-size:16px;padding:14px" onclick="mintRequest('make')">📲 Mint에서 지금 만들기</button>
-    <div class="mint-ctl">${[["status","🔄","Mint 상태","지금 무엇을 하는지"],["update","⬆️","Mint 업데이트","새 버전 받기"],
-        ["repic","🖼️","그림 다시","편 번호 · 컷 번호"],["skip","⏸️","한 번 건너뛰기","다음 자동 제작"]].map(b=>
-      `<button onclick="mintRequest('${b[0]}')"><span class="i">${b[1]}</span><span class="t">${b[2]}</span><span class="s">${b[3]}</span></button>`).join("")}</div>
-    <div id="shortsResult" style="margin-top:10px"></div>
-  </div>
-  ${perfBoard()}
-  ${blogBoard()}
+  const nN=noticeItems().length;
+  markSeenLater("studio", list.filter(x=>!x.read).map(x=>x.id));
+  return `<div class="card" onclick="go('home')" style="padding:10px 13px;margin-bottom:12px;display:flex;align-items:center;gap:10px;cursor:pointer">
+    <span style="font-size:22px">🏠</span><div style="flex:1;min-width:0;font-size:13px;color:var(--sub);line-height:1.5">Mint 상태·알림${nN?` <b style="color:var(--gold)">${nN}개</b>`:""}·리모컨·성과·프로토콜은 <b style="color:var(--text)">홈 첫 화면</b>에 있어요</div>
+    <span style="color:var(--muted)">›</span></div>
   <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:9px">
     <span style="font-size:11px;font-weight:800;color:var(--text);margin-right:4px">🎞️ 만든 쇼츠</span>
     ${[["all","전체"],["new","만들 차례"],["got","올릴 차례"],["up","올림"]].map(([k,l])=>`<span class="pill ${f===k?'pill-on':''}" onclick="STATE.shortsFilter='${k}';switchStudio()">${l} ${cnt[k]}</span>`).join("")}
   </div>
-  ${list.length?list.map(shortsCard).join(""):`<div class="card" style="text-align:center;padding:18px;color:var(--muted);font-size:11px">${all.length?'이 조건의 쇼츠가 없어요.':'아직 만든 쇼츠가 없어요. 위 버튼을 눌러 보세요.'}</div>`}
+  ${list.length?list.map(shortsCard).join(""):`<div class="card" style="text-align:center;padding:18px;color:var(--muted);font-size:11px">${all.length?'이 조건의 쇼츠가 없어요.':'아직 만든 쇼츠가 없어요. 홈의 📲 Mint에서 지금 만들기를 눌러 보세요.'}</div>`}
+  <div id="shortsResult" style="margin-top:10px"></div>
   <div style="font-size:9px;color:var(--muted);line-height:1.7;margin-top:10px">만들 차례 = Mint 파일을 아직 안 받음 · 올릴 차례 = Mint 파일 받음 또는 🤖 Mint가 비공개로 올려 둠 · 올림 = 유튜브에 공개함</div>
   ${old>0?`<div style="text-align:center;margin-top:10px"><button class="pill" style="font-size:9px" onclick="if(confirm('예전 아이디어·초안·전자책·채널 분석 ${old}개를 지울까요? (만든 쇼츠는 그대로)')){forgetStudio(STUDIO_ITEMS.filter(x=>x&&!(x.type==='shorts'||x.type==='notice'||x.type==='status')).map(x=>x.id));switchStudio();}">🧹 예전 아이디어·초안·분석 ${old}개 지우기</button></div>`:""}`;
 }
@@ -3782,7 +3804,7 @@ function renderHome(){
   };
 
   const tiles=[
-    {id:"studio",  ic:"🎬", c:"--rose",  name:"콘텐츠 스튜디오", desc:"버튼 하나로 오늘의 쇼츠"},
+    {id:"studio",  ic:"🎬", c:"--rose",  name:"콘텐츠 스튜디오", desc:"만든 쇼츠 모아 보기"},
     {id:"family",  ic:"🧺", c:"--ok",    name:"가족 여가", desc:"날씨·계절·아이 나이 맞춤"},
     {id:"english", ic:"📚", c:"--gold",  name:"영어 한 장", desc:"오늘 쓸 표현 + 고급 단어"},
     {id:"advisor", ic:"🔬", c:"--hla",   name:"자문센터", desc:"질문·논문·표준·저장 글"},
@@ -3806,13 +3828,12 @@ function renderHome(){
   return `<div class="home-wrap">
     <div class="home-greet">${greet}${MY.name?", "+esc(MY.name):""} 👋</div>
     <div class="home-title">무엇을 할까요?</div>
-    <div style="padding:0 2px">
-      ${window.HOffice?'<div id="hofficeMount"></div>':(typeof mintStatusCard==='function'?mintStatusCard():'')}
-
-    </div>
+    <div id="mint-hub" style="padding:0 2px">${typeof renderMintHub==='function'?renderMintHub():''}</div>
+    <div class="hub-sec" style="margin-top:6px">바로 가기</div>
     <div class="home-grid">
       ${tileHTML}
     </div>
+    ${window.HOffice?'<div class="hub-sec" style="margin-top:18px">🏢 HaJunNa 사무실</div><div id="hofficeMount" style="padding:0 2px"></div>':''}
     <div style="text-align:center;margin-top:18px;font-size:9px;color:var(--muted)">Histara World · ${AGENTS.length} agents · 만 ${ageNow()}세 · 은퇴 D-${yearsToRetire()}년</div>
   </div>`;
 }
@@ -4522,8 +4543,8 @@ async function requestRecruit(){
 // ═══════════════════════════════════
 //  INIT
 // ═══════════════════════════════════
-const BUILD_VERSION = "v15.56";
-const BUILD_TIME = "2026-11-18T15:01:04Z";   // 올린 시각 (화면에는 이 기기의 현지 시간으로)
+const BUILD_VERSION = "v15.57";
+const BUILD_TIME = "2026-11-18T16:07:25Z";   // 올린 시각 (화면에는 이 기기의 현지 시간으로)
 STATE.advisorTab="papers";
 STATE.studioTab="idea";
 STATE.investTab="money";
