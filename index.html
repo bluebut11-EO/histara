@@ -2565,9 +2565,9 @@ function _pubTxt(t){ const k=new Date(t.toLocaleString("en-US",{timeZone:"Asia/S
   return `한국 ${k.getMonth()+1}/${k.getDate()} ${k.getHours()}시 (여기 ${t.getMonth()+1}/${t.getDate()} ${t.toLocaleTimeString("ko-KR",{hour:"numeric",minute:"2-digit"})})`; }
 function shortsCard(r){
   const p=r.pkg||{}; const open=STATE.openStudio===r.id;
-  const cuts=(p.mint&&p.mint.cuts)||[]; const sec=cuts.reduce((s,c)=>s+(Number(c.sec)||0),0);
+  const cuts=(p.mint&&p.mint.cuts)||[]; const sec=Math.round(cuts.reduce((s,c)=>s+(Number(c.sec)||0),0));   // v15.59 133.37199999초 → 133초
   const mood=(p.music&&p.music.mood)||"";
-  const ttl=(r.polish&&r.polish.title)||p.title||String(r.title||"").replace(/^\d+\w*\s*Shorts\s*·\s*/,"");
+  const ttl=(p.publish&&p.publish.title)||(r.polish&&r.polish.title)||p.title||   /* v15.59 YouTube에 실제로 올라간 제목 먼저 (예전: 사연 이름) */String(r.title||"").replace(/^\d+\w*\s*Shorts\s*·\s*/,"");
   const pol=r.polish;
   const fail=r.auto&&r.auto.ok===false;
   const pa=_pubAt(r);
@@ -4542,8 +4542,8 @@ async function requestRecruit(){
 // ═══════════════════════════════════
 //  INIT
 // ═══════════════════════════════════
-const BUILD_VERSION = "v15.58";
-const BUILD_TIME = "2026-11-18T17:07:45Z";   // 올린 시각 (화면에는 이 기기의 현지 시간으로)
+const BUILD_VERSION = "v15.59";
+const BUILD_TIME = "2026-11-18T22:37:12Z";   // 올린 시각 (화면에는 이 기기의 현지 시간으로)
 STATE.advisorTab="papers";
 STATE.studioTab="idea";
 STATE.investTab="money";
