@@ -1593,7 +1593,7 @@ async function approveAndProduce(payload){
   const briefCtx=BR&&FMT==="B"?"":BR?`\n🧭 이 편의 중심 물건은 "${BR.object||""}", 주 공간은 "${BR.place||""}" — 장면표(symbol·space)에 이 이름 그대로 쓰고, 같은 물건 사진을 세 번 넘게 쓰지 마라.\n`:"";
   const sys=`You are the Histara Shorts team for the YouTube channel @HaJunNa (Korean stories of real present-day life; the audience is whoever this story is about).
 Team: Theo (story), Rio (narration), Choi (Mint auto-video).
-The video is made AUTOMATICALLY on Linux Mint: ${FMT?"a calm Korean narrator VOICE reads every narration sentence aloud, and the same sentence appears as a big on-screen caption over photo scenes, with quiet background music":"there is NO voice — the narration sentences appear one by one as big on-screen captions over photo scenes, with soft background music only"}, and a 4-second HaJunNa subscribe end card is always added at the end. No manual editing happens, so everything you write is final.
+The video is made AUTOMATICALLY on Linux Mint: a calm Korean narrator VOICE reads every narration sentence aloud, and the same sentence appears as a big on-screen caption over photo scenes, with quiet background music, and a 4-second HaJunNa subscribe end card is always added at the end. No manual editing happens, so everything you write is final.
 
 ${writingRules()}
 
@@ -1934,7 +1934,7 @@ function renderMintBlock(p){
   return `<div style="margin-top:11px;padding:12px;border-radius:11px;background:rgba(80,200,255,.07);border:1px solid rgba(80,200,255,.35)">
     <div style="font-size:12px;font-weight:800;color:var(--cyan)">🎞️ Mint 자동 영상 <span style="font-size:9px;font-weight:600;color:var(--sub)">— 손대지 않고 바로 영상으로</span></div>
     ${m.fallback?`<div style="font-size:9px;color:var(--gold);margin-top:5px">⚠️ 이 패키지에는 AI 장면표가 없어 기본 장면(안방)으로 채웠어요. "다시 생성"하면 이야기에 맞는 장면으로 바뀝니다.</div>`:""}
-    <div style="font-size:9px;color:var(--sub);margin-top:4px">컷 ${m.cuts.length}개 · 이야기 ${total}초 + HaJunNa 구독 엔드카드 4초 · 💬 나레이션이 자막으로 한 장씩 · 🎵 배경음악 (목소리 없음)</div>
+    <div style="font-size:9px;color:var(--sub);margin-top:4px">컷 ${m.cuts.length}개 · 이야기 ${total}초 + HaJunNa 구독 엔드카드 4초 · 🎙 나레이션 목소리 + 같은 문장 자막 · 🎵 배경음악</div>
     <div style="margin-top:6px">${rows}</div>
     <button class="btn-gold" style="margin-top:9px;background:var(--cyan);color:#06131a" onclick="downloadMintStory(this)">⬇️ Mint 영상 파일 받기 (story.json)</button>
     <div style="font-size:9px;color:var(--sub);margin-top:6px;line-height:1.6">Mint에서: 이 파일이 <b>다운로드</b> 폴더에 저장되면 터미널에 <code>bash ~/hajuna/make.sh</code> 한 줄 → <b>완성영상</b> 폴더에 mp4(나레이션 자막·배경음악·구독 엔드카드) + 업로드정보.txt. 배경음악은 <code>~/hajuna/음악/</code> 폴더에 받아 둔 곡에서 자동으로 골라요.</div>
@@ -2777,27 +2777,7 @@ function studioIdeaPanel(){
     <div id="ideaResult" style="margin-top:10px"></div>
   </div>
 
-  <div class="card" style="border-color:rgba(239,141,163,.3);margin-bottom:12px;background:linear-gradient(135deg,rgba(239,141,163,.07),transparent)">
-    <div style="font-size:11px;font-weight:800;color:var(--rose);margin-bottom:7px">📊 내 채널 실측 전략 (12편 분석)</div>
-    <div style="font-size:10px;color:var(--text);line-height:1.75">
-      <b style="color:var(--gold)">① 소재가 조회수를 4배 가릅니다</b><br>
-      · 부모·죽음·유품 <b>1,018뷰</b> / 낯선사람 592 / 추상위로 <b>245</b><br>
-      → 부모·가족·유품 사연 우선<br><br>
-      <b style="color:var(--gold)">② 길이는 45~60초 (짧게 압축 금지)</b><br>
-      · 59초 "아버지 지갑" → 시청률 <b>86.5%</b>, 좋아요율 <b>4.5%</b> (채널 최고)<br>
-      · 49초로 압축 → 시청률 <b>70.8%</b>로 하락<br>
-      → 40~70대는 충분히 듣고 공감할 시간이 필요해요<br><br>
-      <b style="color:var(--gold)">③ 그 외</b><br>
-      🔄 반전 필수 · 🎣 첫 4초 궁금증 · ⏱️ 8~15초 2차 후킹<br>
-      💬 댓글 유도 + 업로드 직후 고정 댓글 (최대 약점)<br>
-      🔍 현실 고증 (지갑 속 신문지 같은 오류 방지)<br>
-      📐 9:16 · ⏰ 한국 저녁 8~10시(뉴욕 오전 7~9시) 예약<br>
-      📊 <b>3시간 조회수로 판단 금지</b> — 이 채널은 24시간 기준
-    </div>
-    
-    
-    <div style="font-size:8px;color:var(--muted);margin-top:7px">출처: 내 채널 실제 통계 + 2026 트렌드 데이터 분석</div>
-  </div>`;
+  <!-- v15.55 예전 "내 채널 실측 전략 (12편 분석)" 카드 지움: 반전 필수·40~70대·한국 저녁 8~10시 예약 등 지금은 바뀐 규칙 (운영자 11/18 — 지운 흔적이 새 결과에 영향 주지 않게). 현행 규칙은 Mint 프로토콜 장부. -->`;
 }
 function studioSavedList(){
   if(!STUDIO_ITEMS.length) return `<div style="font-size:10px;color:var(--muted);text-align:center;padding:6px">아이디어·초안·전자책·쇼츠·성과분석이 여기 종류별로 저장돼요.</div>`;
@@ -4520,8 +4500,8 @@ async function requestRecruit(){
 // ═══════════════════════════════════
 //  INIT
 // ═══════════════════════════════════
-const BUILD_VERSION = "v15.54";
-const BUILD_TIME = "2026-11-17T20:54:20Z";   // 올린 시각 (화면에는 이 기기의 현지 시간으로)
+const BUILD_VERSION = "v15.55";
+const BUILD_TIME = "2026-11-18T14:43:21Z";   // 올린 시각 (화면에는 이 기기의 현지 시간으로)
 STATE.advisorTab="papers";
 STATE.studioTab="idea";
 STATE.investTab="money";
