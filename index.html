@@ -2185,17 +2185,20 @@ function renderStudio(){
   <div id="studio-body" style="padding:0 14px 20px">${renderStudioBody()}</div>`;
 }
 // 📲 v15.20 Mint 리모컨 — 클라우드 동기화(같은 Supabase 표)에 작은 줄 하나("<동기화 코드>::mint")만 쓰고 읽는다. Mint가 5분마다 확인.
-let MINT_REQ={list:[], at:0, err:""};
+let MINT_REQ={list:[], at:0, err:"", reports:[], beat:null};   // v15.60 beat = Mint가 마지막으로 '살아 있음'을 쓴 때 (Mint 6.99.7부터)
 function _mintReqCode(){ return SYNC_CODE+"::mint"; }
 async function _mintReqGet(){
-  const r=await fetch(`${SUPA_URL}/rest/v1/histara_sync?code=eq.${encodeURIComponent(_mintReqCode())}&select=studio,updated_at`,{headers:_supaHeaders()});
+  const r=await fetch(`${SUPA_URL}/rest/v1/histara_sync?code=eq.${encodeURIComponent(_mintReqCode())}&select=studio,reports,updated_at`,{headers:_supaHeaders()});
   if(!r.ok) throw new Error("읽기 실패 ("+r.status+")");
-  const rows=await r.json(); return (rows&&rows[0]&&Array.isArray(rows[0].studio))?rows[0].studio:[];
+  const rows=await r.json();
+  const rep=(rows&&rows[0]&&Array.isArray(rows[0].reports))?rows[0].reports:[];
+  MINT_REQ.reports=rep; MINT_REQ.beat=(rep[0]&&rep[0].beat)||MINT_REQ.beat;
+  return (rows&&rows[0]&&Array.isArray(rows[0].studio))?rows[0].studio:[];
 }
 async function _mintReqPut(list){
   const r=await fetch(`${SUPA_URL}/rest/v1/histara_sync`,{method:"POST",
     headers:Object.assign({}, _supaHeaders(), {"Prefer":"resolution=merge-duplicates"}),
-    body:JSON.stringify([{code:_mintReqCode(), studio:list.slice(-20), reports:[], english:[], updated_at:new Date().toISOString()}])});
+    body:JSON.stringify([{code:_mintReqCode(), studio:list.slice(-20), reports:MINT_REQ.reports||[], english:[], updated_at:new Date().toISOString()}])});   // v15.60 Mint의 '살아 있음'은 그대로 둠
   if(!r.ok){ const tx=await r.text().catch(()=> ""); throw new Error("보내기 실패 ("+r.status+") "+tx.slice(0,60)); }
 }
 const MINT_REQ_TXT={new:"⏳ 보냄 — Mint가 5분 안에 받아요", wait:"⏳ Mint가 다른 일을 끝내는 중 — 이어서 시작", got:"🛠 Mint가 하는 중", done:"✅ 끝", fail:"⚠ 실패", skip:"⏸ 다음 자동 제작 한 번 건너뜀 — 받음"};
@@ -2277,10 +2280,24 @@ function mintRemote(){
     <div style="font-size:10.5px;color:var(--muted);margin-top:8px;line-height:1.5">만들기는 평소 자동 제작과 똑같이 사연 → 영상 → YouTube·블로그·페이스북까지 · 이틀마다 자동 날짜는 그대로</div>
   </div>`;
 }
+// v15.60 (운영자 11/23: 배터리가 다 돼 꺼졌다 켜졌는데 암호화된 홈 폴더가 잠겨 30분 넘게 아무 응답 없음) — Mint가 9분마다 '살아 있음'을 씀 → 30분 넘게 없으면 맨 위 경고
+function mintAliveCard(){
+  if(!MINT_REQ.beat) return "";
+  const mins=Math.floor((Date.now()-new Date(MINT_REQ.beat).getTime())/60000);
+  if(isNaN(mins)||mins<30) return "";
+  const busy=MINT_REQ.list.some(x=>x.state==="got" && (Date.now()-new Date(x.upd||x.at).getTime())<3*3600000);
+  if(busy) return "";                                         // Mint가 요청을 처리하는 중이면 (최대 3시간) 경고 안 함
+  const t=mins>=120?Math.floor(mins/60)+"시간":mins+"분";
+  return `<div class="card" style="padding:11px 13px;margin-bottom:12px;border-color:var(--danger);background:color-mix(in srgb, var(--danger) 10%, var(--card))">
+    <div style="display:flex;align-items:center;gap:9px"><span style="font-size:26px">🔌</span>
+      <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:800;color:var(--danger)">Mint 응답 없음 · ${t}째</div>
+      <div style="font-size:12px;color:var(--sub);margin-top:4px;line-height:1.6">① 노트북 충전기·전원 확인<br>② 꺼졌다 켜졌다면 <b>비밀번호로 로그인</b> — 로그인하면 자동 작업이 저절로 다시 켜져요<br>③ 그래도 안 되면 Mint 터미널: <code>bash ~/hajuna/auto/wake.sh --now</code></div></div></div></div>`;
+}
 function renderMintHub(){
   const notes=noticeItems();
   markSeenLater("studio", notes.filter(x=>!x.read).map(x=>x.id));
-  return `${mintStatusCard()}${noticeSummary(notes)}${notes.map(noticeCard).join("")}${mintRemote()}
+  if(syncConfigured() && Date.now()-MINT_REQ.at>60000) setTimeout(()=>mintReqRefresh(false),50);
+  return `${mintAliveCard()}${mintStatusCard()}${noticeSummary(notes)}${notes.map(noticeCard).join("")}${mintRemote()}
     <div class="hub-sec">한눈에</div>${perfBoard()}${blogBoard()}${protocolCard()}${noticeArchive()}`;
 }
 function renderStudioBody(){
@@ -4542,7 +4559,7 @@ async function requestRecruit(){
 // ═══════════════════════════════════
 //  INIT
 // ═══════════════════════════════════
-const BUILD_VERSION = "v15.59";
+const BUILD_VERSION = "v15.60";
 const BUILD_TIME = "2026-11-18T22:37:12Z";   // 올린 시각 (화면에는 이 기기의 현지 시간으로)
 STATE.advisorTab="papers";
 STATE.studioTab="idea";
