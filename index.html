@@ -2280,24 +2280,19 @@ function mintRemote(){
     <div style="font-size:10.5px;color:var(--muted);margin-top:8px;line-height:1.5">만들기는 평소 자동 제작과 똑같이 사연 → 영상 → YouTube·블로그·페이스북까지 · 이틀마다 자동 날짜는 그대로</div>
   </div>`;
 }
-// v15.60 (운영자 11/23: 배터리가 다 돼 꺼졌다 켜졌는데 암호화된 홈 폴더가 잠겨 30분 넘게 아무 응답 없음) — Mint가 9분마다 '살아 있음'을 씀 → 30분 넘게 없으면 맨 위 경고
-function mintAliveCard(){
-  if(!MINT_REQ.beat) return "";
-  const mins=Math.floor((Date.now()-new Date(MINT_REQ.beat).getTime())/60000);
-  if(isNaN(mins)||mins<30) return "";
-  const busy=MINT_REQ.list.some(x=>x.state==="got" && (Date.now()-new Date(x.upd||x.at).getTime())<3*3600000);
-  if(busy) return "";                                         // Mint가 요청을 처리하는 중이면 (최대 3시간) 경고 안 함
-  const t=mins>=120?Math.floor(mins/60)+"시간":mins+"분";
-  return `<div class="card" style="padding:11px 13px;margin-bottom:12px;border-color:var(--danger);background:color-mix(in srgb, var(--danger) 10%, var(--card))">
-    <div style="display:flex;align-items:center;gap:9px"><span style="font-size:26px">🔌</span>
-      <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:800;color:var(--danger)">Mint 응답 없음 · ${t}째</div>
-      <div style="font-size:12px;color:var(--sub);margin-top:4px;line-height:1.6">① 노트북 충전기·전원 확인<br>② 꺼졌다 켜졌다면 <b>비밀번호로 로그인</b> — 로그인하면 자동 작업이 저절로 다시 켜져요<br>③ 그래도 안 되면 Mint 터미널: <code>bash ~/hajuna/auto/wake.sh --now</code></div></div></div></div>`;
+// v15.61 (운영자 11/23) Mint '살아 있음'(9분마다, Mint 6.99.7~)을 상태 카드 하나에 합침 — 30분 넘게 없으면 그 카드가 🔴 '응답 없음'
+function mintBeatMin(){                                        // → 마지막 '살아 있음' 뒤 몇 분 (받은 적 없으면 null)
+  if(!MINT_REQ.beat) return null;
+  const m=Math.floor((Date.now()-new Date(MINT_REQ.beat).getTime())/60000); return isNaN(m)?null:Math.max(0,m);
 }
+function mintBusy(){ return MINT_REQ.list.some(x=>x.state==="got" && (Date.now()-new Date(x.upd||x.at).getTime())<3*3600000); }   // 요청 처리 중(최대 3시간)엔 '살아 있음'을 못 씀
+function _ago(m){ return m<60?m+"분":m<2880?Math.floor(m/60)+"시간":Math.floor(m/1440)+"일"; }
+const MINT_DOWN_TODO=["노트북 충전기·전원 확인 (배터리가 다 되면 꺼짐)","꺼졌다 켜졌다면 비밀번호로 로그인 — 로그인하면 자동 작업이 저절로 다시 켜져요","그래도 안 되면 Mint 터미널(Ctrl+Alt+T): bash ~/hajuna/auto/wake.sh --now"];
 function renderMintHub(){
   const notes=noticeItems();
   markSeenLater("studio", notes.filter(x=>!x.read).map(x=>x.id));
   if(syncConfigured() && Date.now()-MINT_REQ.at>60000) setTimeout(()=>mintReqRefresh(false),50);
-  return `${mintAliveCard()}${mintStatusCard()}${noticeSummary(notes)}${notes.map(noticeCard).join("")}${mintRemote()}
+  return `${mintStatusCard()}${noticeSummary(notes)}${notes.map(noticeCard).join("")}${mintRemote()}
     <div class="hub-sec">한눈에</div>${perfBoard()}${blogBoard()}${protocolCard()}${noticeArchive()}`;
 }
 function renderStudioBody(){
@@ -2427,21 +2422,25 @@ function blogBoard(){
 function _todoList(t){ if(!t||!t.length) return "";
   return `<div style="margin-top:7px;padding:8px 10px;background:var(--deep);border:1px solid var(--border);border-radius:8px">
     <div style="font-size:9px;font-weight:800;color:var(--gold);margin-bottom:4px">📋 해야 할 일</div>
-    <ol style="margin:0;padding-left:18px;font-size:10px;line-height:1.7;color:var(--text)">${t.map(x=>`<li>${esc(x).replace(/(python3 [^\s].*?(?:--\w+|\.py))(?=\s|$)/g,'<code style="font-size:9.5px;word-break:break-all">$1</code>')}</li>`).join("")}</ol></div>`; }
+    <ol style="margin:0;padding-left:18px;font-size:10px;line-height:1.7;color:var(--text)">${t.map(x=>`<li>${esc(x).replace(/((?:python3|bash) [^\s].*?(?:--\w+|\.py|\.sh))(?=\s|$)/g,'<code style="font-size:9.5px;word-break:break-all">$1</code>')}</li>`).join("")}</ol></div>`; }
 // 🖥️ Mint 자동 제작 상태 — Mint가 매일 확인할 때 올리는 한 줄 (이틀 넘게 소식이 없으면 경고)
 function mintStatus(){ return STUDIO_ITEMS.find(x=>x&&x.type==="status"); }
 function _mdh(iso){ if(!iso) return ""; const d=new Date(iso); if(isNaN(d)) return ""; return `${d.getMonth()+1}/${d.getDate()}(${"일월화수목금토"[d.getDay()]}) ${d.toLocaleTimeString('ko-KR',{hour:'numeric',minute:'2-digit'})}`; }
 function _md(iso){ if(!iso) return ""; const d=new Date(iso); if(isNaN(d)) return ""; return `${d.getMonth()+1}/${d.getDate()}(${"일월화수목금토"[d.getDay()]})`; }
 function mintStatusCard(){
-  const m=mintStatus(); if(!m) return "";
+  const m=mintStatus()||{}; const bm=mintBeatMin();
+  if(!m.checked_at && bm===null) return "";
   const now=Date.now(), chk=new Date(m.checked_at).getTime();
   const hrs=isNaN(chk)?999:(now-chk)/3600000;
-  const stale=hrs>50;                                        // 매일 확인 → 이틀 넘게 소식 없음
+  const down=bm!==null && bm>=30 && !mintBusy();              // v15.61 9분마다 오는 '살아 있음'이 30분 넘게 없음
+  const stale=bm===null && hrs>50;                           // 예전 Mint(살아 있음 없음): 매일 확인 → 이틀 넘게 소식 없음
   const loginLeft=m.login_until?(new Date(m.login_until).getTime()-now)/86400000:null;
   const fail=m.kind==="fail";
-  const st= stale?["🔴","Mint 소식이 "+Math.floor(hrs/24)+"일째 없어요","var(--danger)"]
+  const st= down?["🔴","Mint 응답 없음 · "+_ago(bm)+"째","var(--danger)"]
+          : stale?["🔴","Mint 소식이 "+Math.floor(hrs/24)+"일째 없어요","var(--danger)"]
           : fail?["🟠","Mint 자동 제작 · 지난 확인에서 문제","var(--gold)"]
           : ["🟢","Mint 자동 제작 · 정상","var(--mint)"];
+  const alive=bm===null?"":` · 응답 <b style="color:${down?'var(--danger)':'inherit'}">${bm<1?'방금':_ago(bm)+' 전'}</b>`;
   let next="";
   if(m.next&&parseFloat(m.ver||0)>=6.8){ const due=new Date(m.next);       // Mint v6.8: 실제로 돌 시각(날짜 + 확인 시각)을 보냄
     if(!isNaN(due)) next=`다음 제작 <b>${_md(due.toISOString())} ${due.toLocaleTimeString("ko-KR",{hour:"numeric",minute:"2-digit"})}</b>`; }
@@ -2450,13 +2449,13 @@ function mintStatusCard(){
     due.setHours(hh,mm,0,0); if(due.getTime()<now) due.setTime(now);
     next=`다음 제작 <b>${_md(due.toISOString())} 저녁</b>`; }
   const login=loginLeft===null?"":` · YouTube 로그인 <b style="color:${loginLeft<=3?'var(--gold)':'inherit'}">${loginLeft<0?'풀림':_md(m.login_until)+'까지'}</b>`;
-  const todo=stale?_todoList(["Mint 노트북 전원·잠자기 확인 (뚜껑을 닫았다면 잠들었는지)","Mint 터미널(Ctrl+Alt+T)에서 systemctl --user list-timers hajuna-auto.timer → LAST 시각 확인","지금 바로 확인만: python3 ~/hajuna/auto/run.py"]):"";
+  const todo=down?_todoList(MINT_DOWN_TODO):stale?_todoList(["Mint 노트북 전원·잠자기 확인 (뚜껑을 닫았다면 잠들었는지)","Mint 터미널(Ctrl+Alt+T)에서 systemctl --user list-timers hajuna-auto.timer → LAST 시각 확인","지금 바로 확인만: python3 ~/hajuna/auto/run.py"]):"";
   return `<div class="card" style="padding:10px 13px;margin-bottom:12px;border-color:${st[2]}66">
     <div style="display:flex;align-items:center;gap:8px">
       <span style="font-size:26px">${st[0]}</span>
       <div style="flex:1;min-width:0">
         <div style="font-size:15px;font-weight:800;color:${st[2]}">${st[1]}</div>
-        <div style="font-size:12px;color:var(--sub);margin-top:3px;line-height:1.55">마지막 확인 ${_mdh(m.checked_at)}${next?' · '+next:''}${login}${m.pending?' · <span style="color:var(--gold)">못 올린 영상 1편 대기</span>':''}${m.book?' · 📚 '+esc(m.book):''}${(()=>{ const b=m.blog_stats; if(!b) return ''; const n=(b.posts||[]).filter(r=>r.status==="예약"&&r.at&&new Date(r.at)>Date.now()).sort((x,y)=>x.at>y.at?1:-1)[0]; return n?` · 📝 다음 글 <b>${_mdh(n.at)}</b>`:''; })()}</div>
+        <div style="font-size:12px;color:var(--sub);margin-top:3px;line-height:1.55">${m.checked_at?'마지막 확인 '+_mdh(m.checked_at):''}${alive}${next?' · '+next:''}${login}${m.pending?' · <span style="color:var(--gold)">못 올린 영상 1편 대기</span>':''}${m.book?' · 📚 '+esc(m.book):''}${(()=>{ const b=m.blog_stats; if(!b) return ''; const n=(b.posts||[]).filter(r=>r.status==="예약"&&r.at&&new Date(r.at)>Date.now()).sort((x,y)=>x.at>y.at?1:-1)[0]; return n?` · 📝 다음 글 <b>${_mdh(n.at)}</b>`:''; })()}</div>
         ${m.result?`<div style="font-size:12px;color:${fail?'var(--gold)':'var(--muted)'};margin-top:2px;line-height:1.45">${fail?'⚠️ ':'· '}${esc(m.result)}</div>`:""}
       </div>
     </div>${todo}</div>`;
@@ -4559,7 +4558,7 @@ async function requestRecruit(){
 // ═══════════════════════════════════
 //  INIT
 // ═══════════════════════════════════
-const BUILD_VERSION = "v15.60";
+const BUILD_VERSION = "v15.61";
 const BUILD_TIME = "2026-11-18T22:37:12Z";   // 올린 시각 (화면에는 이 기기의 현지 시간으로)
 STATE.advisorTab="papers";
 STATE.studioTab="idea";
