@@ -7,3 +7,15 @@
   for = "/index.html"
   [headers.values]
     Cache-Control = "no-cache"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://api.anthropic.com https://*.supabase.co https://api.open-meteo.com; frame-src https://maps.google.com https://www.google.com; manifest-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "no-referrer"
+
+# v15.62 보안 점검(11/25): 이 화면에 API 열쇠가 있어서 — 정해진 곳(Anthropic·Supabase·날씨)으로만 연결, 다른 곳으로 보내기·다른 사이트에 끼워 넣기 막음
+[[headers]]
+  for = "/"
+  [headers.values]
+    Cache-Control = "no-cache"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://api.anthropic.com https://*.supabase.co https://api.open-meteo.com; frame-src https://maps.google.com https://www.google.com; manifest-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "no-referrer"

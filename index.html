@@ -3520,7 +3520,7 @@ function _jsonRepair(b){ const st=[]; let str=false,esc_=false,lastSafe=0;
   t=t.replace(/,\s*$/,"");
   while(st2.length){ t+=st2.pop()==="{"?"}":"]"; }
   return t; }
-function esc(s){return(s||"").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");}   // v15.62 따옴표·&도 — 속성(href·title) 안에서도 안전 (보안 점검 11/25)
 function rawFailBox(label){
   try{ if(LAST_CK) _cache.delete(LAST_CK); }catch(e){}     // 같은 실패 응답을 다시 꺼내 주지 않게
   const snip = (LAST_RAW||"(빈 응답)").slice(0,600);
@@ -4558,7 +4558,7 @@ async function requestRecruit(){
 // ═══════════════════════════════════
 //  INIT
 // ═══════════════════════════════════
-const BUILD_VERSION = "v15.61";
+const BUILD_VERSION = "v15.62";
 const BUILD_TIME = "2026-11-18T22:37:12Z";   // 올린 시각 (화면에는 이 기기의 현지 시간으로)
 STATE.advisorTab="papers";
 STATE.studioTab="idea";
